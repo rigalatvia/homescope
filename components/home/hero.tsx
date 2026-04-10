@@ -11,7 +11,7 @@ export function HeroSection() {
           Find Your Next Home in the GTA
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-brand-800">
-          Browse curated public listings across Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto through a clean,
+          Browse curated public listings across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto through a clean,
           modern home search experience.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">

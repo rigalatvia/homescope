@@ -1,4 +1,3 @@
-import { SITE_CONFIG } from "@/config/site";
 import { MockEmailProvider } from "@/lib/email/providers/consoleProvider";
 import { ResendEmailProvider } from "@/lib/email/providers/resendProvider";
 import type { EmailProvider, EmailSendResult } from "@/lib/email/types";
@@ -52,7 +51,7 @@ function getProviderSelection(): EmailProviderSelection {
 export async function sendLeadNotification(lead: LeadSubmissionRecord): Promise<EmailSendResult> {
   const { subject, text, html } = buildLeadEmail(lead);
   const selection = getProviderSelection();
-  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || SITE_CONFIG.email;
+  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || "notifications@homescopegta.local";
 
   console.info("[leads][email] Provider mode selected", {
     provider: selection.provider.name,
@@ -77,7 +76,7 @@ export async function sendLeadNotification(lead: LeadSubmissionRecord): Promise<
 export async function sendContactNotification(contact: ContactSubmissionRecord): Promise<EmailSendResult> {
   const { subject, text, html } = buildContactEmail(contact);
   const selection = getProviderSelection();
-  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || SITE_CONFIG.email;
+  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || "notifications@homescopegta.local";
 
   console.info("[contact][email] Provider mode selected", {
     provider: selection.provider.name,

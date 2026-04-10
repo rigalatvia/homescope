@@ -1,4 +1,4 @@
-import type { MLSConnectorKind, MLSSyncResult, MLSSyncStats } from "@/lib/mls/types";
+import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
@@ -17,6 +17,7 @@ export async function runIncrementalSync(params?: {
     included: 0,
     excluded: 0,
     excludedPermToAdvertiseFalse: 0,
+    hiddenByReason: {},
     upserted: 0,
     hidden: 0,
     unchanged: 0,
@@ -39,13 +40,11 @@ export async function runIncrementalSync(params?: {
     stats.normalized = normalized.length;
     stats.included = normalized.filter((l) => l.isVisible).length;
     stats.excluded = normalized.length - stats.included;
+    stats.hiddenByReason = buildHiddenReasonCounts(normalized);
     stats.excludedPermToAdvertiseFalse = normalized.filter(
       (listing) => listing.hiddenReason === "perm_to_advertise_false"
     ).length;
-    logSyncInfo("Incremental sync exclusion breakdown", {
-      excludedTotal: stats.excluded,
-      excludedPermToAdvertiseFalse: stats.excludedPermToAdvertiseFalse
-    });
+    logSyncInfo("Incremental sync exclusion breakdown", { hiddenByReason: stats.hiddenByReason });
 
     const upsert = await upsertNormalizedListings(normalized, nowIso);
     stats.upserted = upsert.upserted;
@@ -53,6 +52,13 @@ export async function runIncrementalSync(params?: {
     stats.snapshotsWritten = upsert.snapshotsWritten;
 
     const finishedAt = new Date().toISOString();
+    logSyncInfo("Incremental sync summary", {
+      totalFetched: stats.fetched,
+      totalWritten: stats.upserted,
+      totalVisible: stats.included,
+      totalHidden: stats.excluded,
+      hiddenByReason: stats.hiddenByReason
+    });
     logSyncInfo("Incremental sync completed", { stats });
 
     return {
@@ -68,4 +74,14 @@ export async function runIncrementalSync(params?: {
     logSyncError("Incremental sync failed", error, { stats });
     throw error;
   }
+}
+
+function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats["hiddenByReason"] {
+  const counts: MLSSyncStats["hiddenByReason"] = {};
+  for (const listing of listings) {
+    if (!listing.hiddenReason) continue;
+    const reason = listing.hiddenReason as MLSHiddenReason;
+    counts[reason] = (counts[reason] || 0) + 1;
+  }
+  return counts;
 }

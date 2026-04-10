@@ -12,6 +12,7 @@ export const allowedMunicipalities: MLSMunicipality[] = [
   "Newmarket",
   "Richmond Hill",
   "Vaughan",
+  "King",
   "Toronto"
 ];
 

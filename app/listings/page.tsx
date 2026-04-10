@@ -8,7 +8,7 @@ import { getPublicListings } from "@/lib/listings/service";
 export const metadata: Metadata = {
   title: "Listings",
   description:
-    "Browse publicly advertisable listings in Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto."
+    "Browse publicly advertisable listings in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto."
 };
 
 export const revalidate = 60;
@@ -35,7 +35,7 @@ export default async function ListingsPage({
     <section className="site-container py-12">
       <h1 className="font-heading text-4xl text-brand-900">Find Your Next Home in the GTA</h1>
       <p className="mt-2 text-brand-700">
-        Browse available homes in Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto.
+        Browse available homes in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto.
       </p>
 
       <div className="mt-6">

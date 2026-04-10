@@ -6,7 +6,7 @@ export type PropertyClass =
   | "Residential Condo & Other"
   | "Residential Condo & Other Lease";
 
-export type AllowedMunicipality = "Aurora" | "Newmarket" | "Richmond Hill" | "Vaughan" | "Toronto";
+export type AllowedMunicipality = "Aurora" | "Newmarket" | "Richmond Hill" | "Vaughan" | "King" | "Toronto";
 
 export type ListingStatus = "active" | "sold" | "leased" | "suspended" | "expired" | "terminated" | "draft";
 
@@ -127,6 +127,9 @@ export interface LeadSubmissionDocument {
   listingSlug: string;
   municipality: string | null;
   intent: "showing_request";
+  leadTransactionType?: "sale" | "lease";
+  isReadyToProvideDocs?: boolean;
+  hasMortgagePreapproval?: boolean;
   createdAt: string;
   source: "website";
 }

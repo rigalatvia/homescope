@@ -16,7 +16,7 @@ export function SiteFooter() {
             />
           </Link>
           <p className="mt-2 max-w-md text-sm text-brand-700">
-            Browse homes across Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto.
+            Browse homes across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto.
           </p>
         </div>
         <Link href="/contact" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">

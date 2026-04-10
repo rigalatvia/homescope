@@ -65,6 +65,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             listingAddress={listing.address}
             listingCity={listing.city}
             listingUrl={listingUrl}
+            listingTransactionType={listing.transactionType}
           />
         </div>
       </div>

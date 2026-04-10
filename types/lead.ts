@@ -1,4 +1,5 @@
 export type LeadIntent = "showing_request" | "question";
+export type LeadTransactionType = "sale" | "lease";
 
 export interface LeadSubmissionInput {
   fullName: string;
@@ -12,6 +13,9 @@ export interface LeadSubmissionInput {
   listingAddress: string;
   listingCity: string;
   listingUrl: string;
+  leadTransactionType: LeadTransactionType;
+  isReadyToProvideDocs?: boolean;
+  hasMortgagePreapproval?: boolean;
   website?: string;
 }
 

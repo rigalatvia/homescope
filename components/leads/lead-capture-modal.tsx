@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
   listingId: string;
@@ -8,6 +10,7 @@ interface LeadCaptureModalProps {
   listingAddress: string;
   listingCity: string;
   listingUrl: string;
+  listingTransactionType: ListingTransactionType;
 }
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -18,15 +21,25 @@ const initialForm = {
   phone: "",
   preferredDateTime: "",
   message: "",
+  isReadyToProvideDocs: false,
+  hasMortgagePreapproval: false,
   website: ""
 };
 
-export function LeadCaptureModal({ listingId, listingTitle, listingAddress, listingCity, listingUrl }: LeadCaptureModalProps) {
+export function LeadCaptureModal({
+  listingId,
+  listingTitle,
+  listingAddress,
+  listingCity,
+  listingUrl,
+  listingTransactionType
+}: LeadCaptureModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [qualificationError, setQualificationError] = useState("");
 
   const heading = "Book a Private Showing";
 
@@ -43,10 +56,27 @@ export function LeadCaptureModal({ listingId, listingTitle, listingAddress, list
     setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
+  const onCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [event.target.name]: event.target.checked }));
+    setQualificationError("");
+  };
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (listingTransactionType === "lease" && form.isReadyToProvideDocs !== true) {
+      setQualificationError("Please confirm you are ready to provide the required lease documents.");
+      return;
+    }
+
+    if (listingTransactionType === "sale" && form.hasMortgagePreapproval !== true) {
+      setQualificationError("Please confirm your mortgage pre-approval acknowledgement before submitting.");
+      return;
+    }
+
     setSubmitState("submitting");
     setErrorMessage("");
+    setQualificationError("");
 
     try {
       const response = await fetch("/api/leads", {
@@ -59,7 +89,8 @@ export function LeadCaptureModal({ listingId, listingTitle, listingAddress, list
           listingTitle,
           listingAddress,
           listingCity,
-          listingUrl
+          listingUrl,
+          leadTransactionType: listingTransactionType
         })
       });
 
@@ -188,6 +219,61 @@ export function LeadCaptureModal({ listingId, listingTitle, listingAddress, list
                   className="hidden"
                   autoComplete="off"
                 />
+
+                {listingTransactionType === "lease" ? (
+                  <div className="rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+                    <p className="font-semibold text-brand-900">Before scheduling a showing</p>
+                    <p className="mt-2 text-sm text-brand-700">
+                      Most landlords require the following documents before approving a showing:
+                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-brand-700">
+                      <li>Proof of income</li>
+                      <li>Credit report</li>
+                      <li>Employment letter</li>
+                      <li>References</li>
+                    </ul>
+                    <p className="mt-2 text-sm text-brand-700">
+                      Need a checklist?{" "}
+                      <Link href="/guides/lease-documents" className="font-semibold text-brand-900 underline underline-offset-2">
+                        View Lease Documents
+                      </Link>
+                    </p>
+                    <label htmlFor="isReadyToProvideDocs" className="mt-3 flex items-start gap-2 text-sm text-brand-800">
+                      <input
+                        id="isReadyToProvideDocs"
+                        name="isReadyToProvideDocs"
+                        type="checkbox"
+                        checked={form.isReadyToProvideDocs}
+                        onChange={onCheckboxChange}
+                        className="mt-0.5 h-4 w-4 rounded border-brand-300"
+                        required
+                      />
+                      <span>I understand and I am ready to provide these documents</span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+                    <p className="text-sm text-brand-700">
+                      For a smooth buying process, mortgage pre-approval may be required.
+                    </p>
+                    <label htmlFor="hasMortgagePreapproval" className="mt-3 flex items-start gap-2 text-sm text-brand-800">
+                      <input
+                        id="hasMortgagePreapproval"
+                        name="hasMortgagePreapproval"
+                        type="checkbox"
+                        checked={form.hasMortgagePreapproval}
+                        onChange={onCheckboxChange}
+                        className="mt-0.5 h-4 w-4 rounded border-brand-300"
+                        required
+                      />
+                      <span>I understand and I have mortgage pre-approval (if needed)</span>
+                    </label>
+                  </div>
+                )}
+
+                {qualificationError && (
+                  <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{qualificationError}</p>
+                )}
 
                 {submitState === "error" && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p>}
 

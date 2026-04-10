@@ -12,6 +12,7 @@ export const ALLOWED_MUNICIPALITIES: AllowedMunicipality[] = [
   "Newmarket",
   "Richmond Hill",
   "Vaughan",
+  "King",
   "Toronto"
 ];
 

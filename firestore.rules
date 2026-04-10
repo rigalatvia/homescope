@@ -6,7 +6,7 @@ service cloud.firestore {
     match /listings/{listingId} {
       allow read: if resource.data.isVisible == true
                   && resource.data.permToAdvertise == true
-                  && resource.data.municipality in ["Aurora", "Newmarket", "Richmond Hill", "Vaughan", "Toronto"];
+                  && resource.data.municipality in ["Aurora", "Newmarket", "Richmond Hill", "Vaughan", "King", "Toronto"];
       allow write: if false; // server-only sync writes
     }
 

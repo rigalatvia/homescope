@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | HomeScope GTA"
   },
   description:
-    "Browse curated homes in Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto. Book a private showing directly with HomeScope GTA.",
+    "Browse curated homes in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto. Book a private showing directly with HomeScope GTA.",
   openGraph: {
     title: "HomeScope GTA",
     description:

@@ -13,6 +13,7 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
     included: 0,
     excluded: 0,
     excludedPermToAdvertiseFalse: 0,
+    hiddenByReason: {},
     upserted: 0,
     hidden: 0,
     unchanged: 0,
@@ -28,7 +29,15 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
   try {
     const nowIso = new Date().toISOString();
     stats.hidden = await hideStaleListings(staleBeforeIso, nowIso);
+    stats.hiddenByReason = stats.hidden > 0 ? { stale_listing: stats.hidden } : {};
     const finishedAt = new Date().toISOString();
+    logSyncInfo("Stale cleanup summary", {
+      totalFetched: stats.fetched,
+      totalWritten: stats.upserted,
+      totalVisible: stats.included,
+      totalHidden: stats.hidden,
+      hiddenByReason: stats.hiddenByReason
+    });
     logSyncInfo("Stale cleanup completed", { hidden: stats.hidden });
 
     return {

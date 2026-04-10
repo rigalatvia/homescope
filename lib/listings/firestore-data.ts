@@ -77,6 +77,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     bedrooms: raw.bedrooms ?? 0,
     bathrooms: raw.bathrooms ?? 0,
     propertyType: raw.propertyType || "Residential",
+    transactionType: parseTransactionType(raw),
     description: raw.publicRemarks || "Listing description will be available shortly.",
     images: raw.images.length > 0 ? raw.images : [FALLBACK_IMAGE],
     isPubliclyAdvertisable: raw.isVisible === true,
@@ -94,4 +95,21 @@ function buildListingTitle(raw: MLSListingFirestoreDocument): string {
   const bits = [raw.propertyType, raw.area, raw.municipality].filter(Boolean);
   if (bits.length === 0) return "Featured Home";
   return bits.join(" in ");
+}
+
+function parseTransactionType(raw: Pick<MLSListingFirestoreDocument, "transactionType" | "propertyClass" | "status">): Listing["transactionType"] {
+  const transactionType = (raw.transactionType || "").trim().toLowerCase();
+  const propertyClass = (raw.propertyClass || "").trim().toLowerCase();
+  const status = (raw.status || "").trim().toLowerCase();
+
+  if (
+    transactionType.includes("lease") ||
+    transactionType.includes("rent") ||
+    propertyClass.includes("lease") ||
+    status.includes("leased")
+  ) {
+    return "lease";
+  }
+
+  return "sale";
 }

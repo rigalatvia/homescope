@@ -16,6 +16,9 @@ export function mapLeadInputToFirestoreDoc(input: LeadSubmissionInput): LeadSubm
     listingSlug,
     municipality: input.listingCity || null,
     intent: "showing_request",
+    leadTransactionType: input.leadTransactionType,
+    isReadyToProvideDocs: input.isReadyToProvideDocs === true,
+    hasMortgagePreapproval: input.hasMortgagePreapproval === true,
     createdAt: new Date().toISOString(),
     source: "website"
   };

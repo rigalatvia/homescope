@@ -16,6 +16,18 @@ export function validateLeadInput(input: LeadSubmissionInput): string[] {
   if (!input.listingAddress.trim()) errors.push("Listing address is missing.");
   if (!input.listingCity.trim()) errors.push("Listing city is missing.");
   if (!input.listingUrl.trim()) errors.push("Listing URL is missing.");
+  if (!input.leadTransactionType || !["sale", "lease"].includes(input.leadTransactionType)) {
+    errors.push("Listing transaction type is missing.");
+  }
+
+  if (input.leadTransactionType === "lease" && input.isReadyToProvideDocs !== true) {
+    errors.push("Please confirm you are ready to provide required lease documents.");
+  }
+
+  if (input.leadTransactionType === "sale" && input.hasMortgagePreapproval !== true) {
+    errors.push("Please confirm mortgage pre-approval acknowledgement.");
+  }
+
   if (input.website && input.website.trim().length > 0) errors.push("Spam protection triggered.");
 
   return errors;

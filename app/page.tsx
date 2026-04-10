@@ -9,7 +9,7 @@ import { getAllPublicListings } from "@/lib/listings/service";
 export const metadata: Metadata = {
   title: "Home",
   description:
-    "HomeScope GTA helps buyers browse and view homes across Vaughan, Richmond Hill, Aurora, Newmarket, and Toronto."
+    "HomeScope GTA helps buyers browse and view homes across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto."
 };
 
 export default async function HomePage() {

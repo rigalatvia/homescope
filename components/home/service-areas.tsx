@@ -8,7 +8,7 @@ export function ServiceAreasSection() {
         <p className="mt-3 max-w-3xl text-brand-700">
           Discover available homes across some of the most in-demand communities in the Greater Toronto Area.
         </p>
-        <ul className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <ul className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {SITE_CONFIG.primaryMarkets.map((city) => (
             <li
               key={city}

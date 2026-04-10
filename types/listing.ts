@@ -1,4 +1,5 @@
 export type ListingStatus = "active" | "sold" | "leased" | "pending";
+export type ListingTransactionType = "sale" | "lease";
 
 export type PropertyType = string;
 
@@ -14,6 +15,7 @@ export interface Listing {
   bedrooms: number;
   bathrooms: number;
   propertyType: PropertyType;
+  transactionType: ListingTransactionType;
   description: string;
   images: string[];
   isPubliclyAdvertisable: boolean;

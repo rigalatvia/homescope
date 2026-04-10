@@ -6,7 +6,7 @@ export type MLSPropertyClass =
   | "Residential Condo & Other"
   | "Residential Condo & Other Lease";
 
-export type MLSMunicipality = "Aurora" | "Newmarket" | "Richmond Hill" | "Vaughan" | "Toronto";
+export type MLSMunicipality = "Aurora" | "Newmarket" | "Richmond Hill" | "Vaughan" | "King" | "Toronto";
 
 export type MLSListingStatus = "active" | "sold" | "leased" | "suspended" | "expired" | "terminated" | "draft";
 
@@ -145,6 +145,7 @@ export interface MLSSyncStats {
   included: number;
   excluded: number;
   excludedPermToAdvertiseFalse: number;
+  hiddenByReason: Partial<Record<MLSHiddenReason, number>>;
   upserted: number;
   hidden: number;
   unchanged: number;

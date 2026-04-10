@@ -13,6 +13,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_CONFIG.baseUrl, lastModified: new Date() },
     { url: `${SITE_CONFIG.baseUrl}/listings`, lastModified: new Date() },
     { url: `${SITE_CONFIG.baseUrl}/contact`, lastModified: new Date() },
+    { url: `${SITE_CONFIG.baseUrl}/guides`, lastModified: new Date() },
+    { url: `${SITE_CONFIG.baseUrl}/guides/buying`, lastModified: new Date() },
+    { url: `${SITE_CONFIG.baseUrl}/guides/leasing`, lastModified: new Date() },
+    { url: `${SITE_CONFIG.baseUrl}/guides/lease-documents`, lastModified: new Date() },
     ...listingPages
   ];
 }

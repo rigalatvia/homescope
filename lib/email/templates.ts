@@ -15,6 +15,9 @@ export function buildLeadEmail(lead: LeadSubmissionRecord): {
     `Email: ${lead.email}`,
     `Phone: ${lead.phone}`,
     `Preferred Viewing Time: ${lead.preferredDateTime}`,
+    `Transaction Type: ${lead.leadTransactionType}`,
+    `Lease Docs Ready: ${lead.isReadyToProvideDocs === true ? "Yes" : "No"}`,
+    `Mortgage Pre-Approval: ${lead.hasMortgagePreapproval === true ? "Yes" : "No"}`,
     `Message: ${lead.message}`,
     "",
     "Listing Details",
@@ -34,6 +37,9 @@ export function buildLeadEmail(lead: LeadSubmissionRecord): {
     <p><strong>Email:</strong> ${escapeHtml(lead.email)}</p>
     <p><strong>Phone:</strong> ${escapeHtml(lead.phone)}</p>
     <p><strong>Preferred Viewing Time:</strong> ${escapeHtml(lead.preferredDateTime)}</p>
+    <p><strong>Transaction Type:</strong> ${escapeHtml(lead.leadTransactionType)}</p>
+    <p><strong>Lease Docs Ready:</strong> ${lead.isReadyToProvideDocs === true ? "Yes" : "No"}</p>
+    <p><strong>Mortgage Pre-Approval:</strong> ${lead.hasMortgagePreapproval === true ? "Yes" : "No"}</p>
     <p><strong>Message:</strong> ${escapeHtml(lead.message)}</p>
     <h3>Listing Details</h3>
     <p><strong>Listing ID:</strong> ${escapeHtml(lead.listingId)}</p>

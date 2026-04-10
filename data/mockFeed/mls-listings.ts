@@ -62,6 +62,31 @@ export const mockMLSFeedListings: RawMLSFeedListing[] = [
   {
     sourceSystem: "approved-mls-ddf",
     sourceListingKey: "mock-mls-1003",
+    mlsNumber: "N9003006",
+    propertyClass: "Residential Freehold",
+    transactionType: "Sale",
+    permToAdvertise: "Yes",
+    municipality: "King",
+    area: "Nobleton",
+    address: {
+      streetNumber: "18",
+      streetName: "Willow Ridge Court",
+      fullAddress: "18 Willow Ridge Court, King",
+      postalCode: "L7B0A1"
+    },
+    listPrice: 1895000,
+    bedrooms: 4,
+    bathrooms: 4,
+    propertyType: "Detached",
+    style: "2-Storey",
+    publicRemarks: "Eligible listing in King with public-safe data and active status.",
+    images: [{ url: "https://images.unsplash.com/photo-1576941089067-2de3c901e126", type: "photo", sortOrder: 1 }],
+    status: "Active",
+    sourceUpdatedAt: "2026-04-09T01:45:00.000Z"
+  },
+  {
+    sourceSystem: "approved-mls-ddf",
+    sourceListingKey: "mock-mls-1004",
     mlsNumber: "N9003003",
     propertyClass: "Residential Freehold",
     transactionType: "Sale",
@@ -86,7 +111,7 @@ export const mockMLSFeedListings: RawMLSFeedListing[] = [
   },
   {
     sourceSystem: "approved-mls-ddf",
-    sourceListingKey: "mock-mls-1004",
+    sourceListingKey: "mock-mls-1006",
     mlsNumber: "N9003004",
     propertyClass: "Commercial",
     transactionType: "Sale",
@@ -111,7 +136,7 @@ export const mockMLSFeedListings: RawMLSFeedListing[] = [
   },
   {
     sourceSystem: "approved-mls-ddf",
-    sourceListingKey: "mock-mls-1005",
+    sourceListingKey: "mock-mls-1007",
     mlsNumber: "N9003005",
     propertyClass: "Residential Condo & Other Lease",
     transactionType: "Lease",
