@@ -1,0 +1,10 @@
+<svg width="500" height="120" viewBox="0 0 500 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="120" rx="20" fill="#F7FAFB"/>
+  <path d="M38 75L82 35L126 75V90H38V75Z" fill="#2D3B40"/>
+  <path d="M57 76V57H73V76" stroke="#B98A44" stroke-width="4"/>
+  <path d="M154 42H322" stroke="#4F7D88" stroke-width="4" stroke-linecap="round"/>
+  <path d="M154 61H282" stroke="#4F7D88" stroke-width="4" stroke-linecap="round"/>
+  <text x="154" y="88" fill="#2D3B40" font-family="Avenir Next, Segoe UI, sans-serif" font-size="34" font-weight="700">
+    HomeScope GTA
+  </text>
+</svg>

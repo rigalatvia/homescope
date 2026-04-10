@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public-safe listing reads only.
+    match /listings/{listingId} {
+      allow read: if resource.data.isVisible == true
+                  && resource.data.permToAdvertise == true
+                  && resource.data.municipality in ["Aurora", "Newmarket", "Richmond Hill", "Vaughan", "Toronto"];
+      allow write: if false; // server-only sync writes
+    }
+
+    // Private operational collections: server only
+    match /listingSnapshots/{docId} {
+      allow read, write: if false;
+    }
+
+    match /syncJobs/{docId} {
+      allow read, write: if false;
+    }
+
+    match /settings/{docId} {
+      allow read, write: if false;
+    }
+
+    match /leads/{docId} {
+      allow read, write: if false; // through controlled backend endpoints only
+    }
+
+    match /contactMessages/{docId} {
+      allow read, write: if false; // through controlled backend endpoints only
+    }
+  }
+}

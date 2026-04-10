@@ -1,0 +1,1 @@
+export const DEFAULT_LISTINGS_PAGE_SIZE = 6;
