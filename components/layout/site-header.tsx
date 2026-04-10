@@ -16,8 +16,7 @@ export function SiteHeader() {
             alt={`${SITE_CONFIG.name} logo`}
             width={100}
             height={100}
-            priority
-            className="h-100 w-auto sm:h-100"
+            priority            
           />
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-4 text-sm font-semibold text-brand-700 sm:gap-6">
