@@ -113,7 +113,7 @@ export function LeadCaptureModal({ listingId, listingTitle, listingAddress, list
                 Close
               </button>
             </div>
-            <p className="mt-1 text-sm text-brand-700">We'll contact you shortly to confirm your visit.</p>
+            <p className="mt-1 text-sm text-brand-700">We&apos;ll contact you shortly to confirm your visit.</p>
 
             <p className="mt-2 text-sm text-brand-700">
               Listing: {listingAddress}, {listingCity}

@@ -13,7 +13,7 @@ export default function ContactPage() {
         <div className="mb-6 text-center">
           <h1 className="font-heading text-4xl text-brand-900">Contact HomeScope GTA</h1>
           <p className="mt-3 text-brand-700">
-            Have a question or want help with your home search? Send a message and we'll get back to you shortly.
+            Have a question or want help with your home search? Send a message and we&apos;ll get back to you shortly.
           </p>
         </div>
         <ContactForm />
