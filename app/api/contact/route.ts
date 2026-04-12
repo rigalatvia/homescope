@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendContactNotification } from "@/lib/email";
+import { storeContactCommunication } from "@/lib/leads/communications-store";
 import { storeContactSubmission, updateContactEmailDeliveryStatus } from "@/lib/leads/contact-store";
 import { validateContactInput } from "@/lib/leads/validation";
 import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
     }
 
     const record = await storeContactSubmission(payload);
+    await storeContactCommunication(record);
+
     try {
       const emailResult = await sendContactNotification(record);
       const emailDeliveryStatus = emailResult.mode === "live" ? "sent" : "mock";
@@ -60,11 +63,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error: "Your message was saved, but we could not send the notification email right now. Please try again shortly.",
+          success: true,
           id: record.id,
-          saved: true
+          message: "Your message was received successfully.",
+          emailMode: "failed"
         },
-        { status: 502 }
+        { status: 201 }
       );
     }
   } catch (error) {
