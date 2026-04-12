@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { runFullSync } from "@/lib/mls/sync/runFullSync";
-import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
+import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 export async function POST(request: Request) {
-  await ensureServerSecretsLoaded();
-
-  const schedulerToken = process.env.MLS_SCHEDULER_TOKEN;
+  const schedulerToken = await getServerConfigValue("MLS_SCHEDULER_TOKEN");
   const requestToken = request.headers.get("x-scheduler-token");
 
   if (!schedulerToken) {

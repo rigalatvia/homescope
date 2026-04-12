@@ -1,6 +1,4 @@
 const SECRET_MANAGER_BASE = "https://secretmanager.googleapis.com/v1";
-const METADATA_TOKEN_URL =
-  "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
 const DEFAULT_SECRET_ENV_KEYS = [
   "DDF_CLIENT_ID",
@@ -21,7 +19,7 @@ const DEFAULT_SECRET_ENV_KEYS = [
 let secretsLoaded = false;
 let inFlightLoad: Promise<void> | null = null;
 
-function getProjectId(): string | null {
+function getEnvProjectId(): string | null {
   return (
     process.env.GOOGLE_CLOUD_PROJECT ||
     process.env.GCLOUD_PROJECT ||
@@ -50,25 +48,38 @@ function getSecretEnvKeys(): string[] {
   return customKeys.length > 0 ? customKeys : [...DEFAULT_SECRET_ENV_KEYS];
 }
 
-async function getMetadataAccessToken(): Promise<string> {
-  const response = await fetch(METADATA_TOKEN_URL, {
-    method: "GET",
-    headers: {
-      "Metadata-Flavor": "Google"
-    },
-    cache: "no-store"
+async function getGoogleAuthClient() {
+  const { GoogleAuth } = await import("google-auth-library");
+  const auth = new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/cloud-platform"]
   });
+  const client = await auth.getClient();
+  return { auth, client };
+}
 
-  if (!response.ok) {
-    throw new Error(`Metadata token request failed (${response.status}).`);
+async function getProjectId(): Promise<string | null> {
+  const fromEnv = getEnvProjectId();
+  if (fromEnv) return fromEnv;
+
+  try {
+    const { auth } = await getGoogleAuthClient();
+    const detectedProjectId = await auth.getProjectId();
+    return detectedProjectId || null;
+  } catch {
+    return null;
+  }
+}
+
+async function getAccessToken(): Promise<string> {
+  const { client } = await getGoogleAuthClient();
+  const token = await client.getAccessToken();
+  const accessToken = typeof token === "string" ? token : token?.token;
+
+  if (!accessToken) {
+    throw new Error("Could not obtain Google access token for Secret Manager.");
   }
 
-  const payload = (await response.json()) as { access_token?: string };
-  if (!payload.access_token) {
-    throw new Error("Metadata token response missing access_token.");
-  }
-
-  return payload.access_token;
+  return accessToken;
 }
 
 async function readSecretValue(projectId: string, secretName: string, accessToken: string): Promise<string | null> {
@@ -100,6 +111,14 @@ async function readSecretValue(projectId: string, secretName: string, accessToke
   return Buffer.from(encodedData, "base64").toString("utf8");
 }
 
+async function readAndSetSecret(projectId: string, secretName: string, accessToken: string): Promise<string | null> {
+  const secretValue = await readSecretValue(projectId, secretName, accessToken);
+  if (secretValue == null || secretValue.trim() === "") return null;
+
+  process.env[secretName] = secretValue.trim();
+  return process.env[secretName] ?? null;
+}
+
 async function loadServerSecretsOnce(): Promise<void> {
   if (secretsLoaded) return;
   if (shouldSkipSecretFetch()) {
@@ -107,7 +126,7 @@ async function loadServerSecretsOnce(): Promise<void> {
     return;
   }
 
-  const projectId = getProjectId();
+  const projectId = await getProjectId();
   if (!projectId) {
     console.warn("[secrets] No project id found. Skipping Secret Manager autoload.");
     secretsLoaded = true;
@@ -125,13 +144,12 @@ async function loadServerSecretsOnce(): Promise<void> {
   }
 
   try {
-    const accessToken = await getMetadataAccessToken();
+    const accessToken = await getAccessToken();
     let loadedCount = 0;
 
     for (const key of missingKeys) {
-      const secretValue = await readSecretValue(projectId, key, accessToken);
-      if (secretValue == null || secretValue.trim() === "") continue;
-      process.env[key] = secretValue.trim();
+      const secretValue = await readAndSetSecret(projectId, key, accessToken);
+      if (!secretValue) continue;
       loadedCount += 1;
     }
 
@@ -162,3 +180,22 @@ export async function ensureServerSecretsLoaded(): Promise<void> {
   }
 }
 
+export async function getServerConfigValue(key: string): Promise<string | null> {
+  const existing = process.env[key];
+  if (existing && existing.trim()) return existing.trim();
+
+  await ensureServerSecretsLoaded();
+  const loaded = process.env[key];
+  if (loaded && loaded.trim()) return loaded.trim();
+
+  const projectId = await getProjectId();
+  if (!projectId) return null;
+
+  try {
+    const accessToken = await getAccessToken();
+    return await readAndSetSecret(projectId, key, accessToken);
+  } catch (error) {
+    console.warn("[secrets] On-demand secret read failed", { key, error });
+    return null;
+  }
+}

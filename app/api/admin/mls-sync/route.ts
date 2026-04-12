@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { MLSConnectorKind, MLSSyncMode } from "@/lib/mls/types";
 import { runMLSSync } from "@/lib/mls/sync/runSync";
-import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
+import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 interface ManualSyncBody {
   mode?: MLSSyncMode;
@@ -10,9 +10,7 @@ interface ManualSyncBody {
 }
 
 export async function POST(request: Request) {
-  await ensureServerSecretsLoaded();
-
-  const adminToken = process.env.MLS_SYNC_ADMIN_TOKEN;
+  const adminToken = await getServerConfigValue("MLS_SYNC_ADMIN_TOKEN");
   const requestToken = request.headers.get("x-admin-sync-token");
 
   if (!adminToken) {
