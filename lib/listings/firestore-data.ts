@@ -35,6 +35,9 @@ export async function getPublicListings(filters?: ListingFilters): Promise<Listi
     : await getCachedPublicMLSListings();
 
   const mappedListings = listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
+  if (filters?.transactionType) {
+    return mappedListings.filter((listing) => listing.transactionType === filters.transactionType);
+  }
   if (filters?.propertyType) {
     return mappedListings.filter((listing) => listing.propertyType === filters.propertyType);
   }

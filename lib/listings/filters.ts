@@ -3,6 +3,7 @@ import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
 
 export function parseListingFilters(params: {
   city?: string;
+  transactionType?: string;
   minPrice?: string;
   maxPrice?: string;
   bedrooms?: string;
@@ -13,6 +14,7 @@ export function parseListingFilters(params: {
 }): ListingFilters {
   return {
     city: params.city || undefined,
+    transactionType: parseTransactionType(params.transactionType),
     minPrice: parseNumber(params.minPrice),
     maxPrice: parseNumber(params.maxPrice),
     bedrooms: parseNumber(params.bedrooms),
@@ -26,6 +28,7 @@ export function parseListingFilters(params: {
 export function applyListingFilters(listings: Listing[], filters: ListingFilters): Listing[] {
   return listings.filter((listing) => {
     if (filters.city && listing.city !== filters.city) return false;
+    if (filters.transactionType && listing.transactionType !== filters.transactionType) return false;
     if (filters.minPrice && listing.price < filters.minPrice) return false;
     if (filters.maxPrice && listing.price > filters.maxPrice) return false;
     if (filters.bedrooms && listing.bedrooms < filters.bedrooms) return false;
@@ -33,6 +36,13 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
     if (filters.propertyType && listing.propertyType !== filters.propertyType) return false;
     return true;
   });
+}
+
+function parseTransactionType(value?: string): ListingFilters["transactionType"] | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "sale" || normalized === "lease") return normalized;
+  return undefined;
 }
 
 export function paginateListings(listings: Listing[], filters: ListingFilters): PaginatedListings {

@@ -29,6 +29,9 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     snapshotsWritten: 0,
     failed: 0
   };
+  const rawPropertyClassCounts = new Map<string, number>();
+  const rawPropertyClassMissing = { count: 0 };
+  const mappedPropertyClassCounts = new Map<string, number>();
 
   logSyncInfo("Full sync started", {
     connector: connector.connectorName,
@@ -66,6 +69,8 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
 
       const nowIso = new Date().toISOString();
       const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
+      collectRawPropertyClassStats(filteredRaw.included, rawPropertyClassCounts, rawPropertyClassMissing);
+      collectMappedPropertyClassStats(normalized, mappedPropertyClassCounts);
       stats.normalized += normalized.length;
       const includedCount = normalized.filter((l) => l.isVisible).length;
       stats.included += includedCount;
@@ -115,6 +120,12 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
         staleHideSkipped: true
       });
     }
+    const rawClassTop = formatTopCounts(rawPropertyClassCounts, 12);
+    const mappedClassTop = formatTopCounts(mappedPropertyClassCounts, 8);
+    notes.push(
+      `rawPropertyClassSummary missing=${rawPropertyClassMissing.count} top=${rawClassTop || "none"}`
+    );
+    notes.push(`mappedPropertyClassSummary top=${mappedClassTop || "none"}`);
 
     const finishedAt = new Date().toISOString();
     logSyncInfo("Full sync summary", {
@@ -144,6 +155,46 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     logSyncError("Full sync failed", error, { stats });
     throw error;
   }
+}
+
+function collectRawPropertyClassStats(
+  rawListings: Array<{ propertyClass?: string | null }>,
+  counts: Map<string, number>,
+  missing: { count: number }
+): void {
+  for (const raw of rawListings) {
+    const value = normalizeRawClassValue(raw.propertyClass);
+    if (!value) {
+      missing.count += 1;
+      continue;
+    }
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+}
+
+function collectMappedPropertyClassStats(
+  normalized: NormalizedMLSListing[],
+  counts: Map<string, number>
+): void {
+  for (const listing of normalized) {
+    const value = listing.propertyClass || "null";
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+}
+
+function normalizeRawClassValue(value?: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed;
+}
+
+function formatTopCounts(counts: Map<string, number>, limit: number): string {
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([key, value]) => `${key}:${value}`)
+    .join(", ");
 }
 
 function incrementHiddenReasonCounts(

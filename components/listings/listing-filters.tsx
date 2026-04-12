@@ -14,7 +14,7 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
 
   return (
     <div className="space-y-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-      <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+      <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-7">
         <FilterLabel label="City">
           <select name="city" defaultValue={filters.city || ""} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
             <option value="">All Cities</option>
@@ -23,6 +23,18 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
                 {city}
               </option>
             ))}
+          </select>
+        </FilterLabel>
+
+        <FilterLabel label="Listing Type">
+          <select
+            name="transactionType"
+            defaultValue={filters.transactionType || ""}
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          >
+            <option value="">Sale + Lease</option>
+            <option value="sale">For Sale</option>
+            <option value="lease">For Lease</option>
           </select>
         </FilterLabel>
 
@@ -83,7 +95,7 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           </select>
         </FilterLabel>
 
-        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-6">
+        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-7">
           <button
             type="submit"
             className="rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
@@ -125,6 +137,7 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
   const chips: { label: string }[] = [];
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
+  if (filters.transactionType) chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
   if (filters.minPrice) chips.push({ label: `Min: ${formatPrice(filters.minPrice)}` });
   if (filters.maxPrice) chips.push({ label: `Max: ${formatPrice(filters.maxPrice)}` });
   if (filters.bedrooms) chips.push({ label: `${filters.bedrooms}+ Beds` });

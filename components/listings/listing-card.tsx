@@ -9,6 +9,8 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
+  const transactionLabel = listing.transactionType === "lease" ? "For Lease" : "For Sale";
+
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-soft transition hover:-translate-y-1">
       <div className="relative">
@@ -26,6 +28,9 @@ export function ListingCard({ listing }: ListingCardProps) {
             {listing.badge}
           </span>
         )}
+        <span className="absolute right-3 top-3 rounded-full bg-brand-900/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow">
+          {transactionLabel}
+        </span>
       </div>
       <div className="space-y-3 p-5">
         <div className="flex items-start justify-between gap-3">

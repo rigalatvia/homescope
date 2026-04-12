@@ -221,12 +221,27 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       propertyClass: pickString(record, [
         "PropertyClass",
         "PropertyClassName",
+        "PropertyCategory",
+        "PropertyTypeGroup",
+        "PropertyTypeDetail",
+        "PropertyUse",
+        "OwnershipType",
         "Class",
         "PropertyType",
         "PropertySubType",
-        "TypeOwn1Out"
+        "TypeOwn1Out",
+        "TypeOwn",
+        "BuildingType",
+        "BuildingTypeName"
       ]),
-      transactionType: pickString(record, ["TransactionType", "Transaction", "ForSaleOrRent", "LeaseType"]),
+      transactionType: pickString(record, [
+        "TransactionType",
+        "Transaction",
+        "ForSaleOrRent",
+        "LeaseType",
+        "ListingContractDateType",
+        "BusinessType"
+      ]),
       permToAdvertise: pickPermToAdvertise(record),
       municipality: pickString(record, ["Municipality", "City", "CommunityName"]),
       area: pickString(record, ["Area", "Community", "Neighbourhood"]),

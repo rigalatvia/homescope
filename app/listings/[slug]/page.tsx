@@ -50,10 +50,11 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5">
             <Stat label="Beds" value={listing.bedrooms} />
             <Stat label="Baths" value={listing.bathrooms} />
             <Stat label="Type" value={listing.propertyType} />
+            <Stat label="Listing" value={listing.transactionType === "lease" ? "For Lease" : "For Sale"} />
             <Stat label="MLS" value={listing.mlsNumber} />
           </div>
 

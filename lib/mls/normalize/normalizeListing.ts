@@ -6,8 +6,9 @@ import { createListingSlug } from "@/lib/mls/utils/slug";
 export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): NormalizedMLSListing {
   const transactionType = raw.transactionType?.trim() || null;
   const propertyType = raw.propertyType?.trim() || null;
+  const style = raw.style?.trim() || null;
   const publicRemarks = raw.publicRemarks?.trim() || null;
-  const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, publicRemarks);
+  const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, style, publicRemarks);
 
   const normalized: NormalizedMLSListing = {
     listingId: `${raw.sourceSystem}:${raw.sourceListingKey}`,
@@ -30,7 +31,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     bedrooms: parseNullableNumber(raw.bedrooms),
     bathrooms: parseNullableNumber(raw.bathrooms),
     propertyType,
-    style: raw.style?.trim() || null,
+    style,
     publicRemarks,
     images: mapImageUrls(raw),
     coordinates: {
@@ -65,9 +66,12 @@ function derivePropertyClass(
   rawPropertyClass: string | null | undefined,
   transactionType: string | null,
   propertyType: string | null,
+  style: string | null,
   publicRemarks: string | null
 ): NormalizedMLSListing["propertyClass"] {
   const normalizedRaw = (rawPropertyClass || "").trim().toLowerCase();
+  if (containsCommercialKeywords(normalizedRaw)) return null;
+
   if (normalizedRaw.includes("residential freehold lease")) return "Residential Freehold Lease";
   if (normalizedRaw.includes("residential freehold")) return "Residential Freehold";
   if (normalizedRaw.includes("residential condo")) {
@@ -82,15 +86,40 @@ function derivePropertyClass(
     if (normalizedRaw.includes("lease")) return "Residential Freehold Lease";
     return "Residential Freehold";
   }
+  if (/\bsingle[-\s]family\b/.test(normalizedRaw)) {
+    if (normalizedRaw.includes("lease")) return "Residential Freehold Lease";
+    return "Residential Freehold";
+  }
+  if (/\bmulti[-\s]family\b/.test(normalizedRaw)) {
+    if (normalizedRaw.includes("lease")) return "Residential Freehold Lease";
+    return "Residential Freehold";
+  }
 
-  const text = [transactionType, propertyType, publicRemarks].filter(Boolean).join(" ").toLowerCase();
+  const text = [rawPropertyClass, transactionType, propertyType, style, publicRemarks].filter(Boolean).join(" ").toLowerCase();
+  if (containsCommercialKeywords(text)) return null;
+
   const isLease = /\blease\b|\brent\b|\bfor rent\b|\bleased\b/.test(text);
-  const looksCondo = /\bcondo\b|\bapartment\b|\bcondominium\b|\bapt\b/.test(text);
-  const looksFreehold = /\bdetached\b|\bsemi-detached\b|\btownhouse\b|\bfreehold\b/.test(text);
+  const looksCondo = /\bcondo\b|\bapartment\b|\bcondominium\b|\bapt\b|\bco-op\b/.test(text);
+  const looksFreehold =
+    /\bdetached\b|\bsemi-detached\b|\btownhouse\b|\btownhome\b|\blink\b|\bfreehold\b|\btriplex\b|\bduplex\b|\bfourplex\b|\bsingle[-\s]family\b|\bhouse\b|\bmulti[-\s]family\b/.test(
+      text
+    );
+  const looksResidential = /\bresidential\b|\bsingle family\b/.test(text) || looksCondo || looksFreehold;
+
+  if (!looksResidential) return null;
 
   if (looksCondo) return isLease ? "Residential Condo & Other Lease" : "Residential Condo & Other";
   if (looksFreehold) return isLease ? "Residential Freehold Lease" : "Residential Freehold";
   return null;
+}
+
+function containsCommercialKeywords(input: string): boolean {
+  if (!input.trim()) return false;
+  return (
+    /\bcommercial\b|\bindustrial\b|\boffice\b|\bretail\b|\bplaza\b|\bstorefront\b|\bwarehouse\b|\bbusiness\b|\bagricultural\b|\binvestment\b/.test(
+      input
+    ) && !/\bresidential\b/.test(input)
+  );
 }
 
 function parsePermToAdvertise(value: RawMLSFeedListing["permToAdvertise"]): boolean {

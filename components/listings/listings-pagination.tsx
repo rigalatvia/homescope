@@ -39,6 +39,7 @@ export function ListingsPagination({ page, totalPages, filters }: ListingsPagina
 function buildUrl(page: number, filters: ListingFilters): string {
   const params = new URLSearchParams();
   if (filters.city) params.set("city", filters.city);
+  if (filters.transactionType) params.set("transactionType", filters.transactionType);
   if (filters.minPrice) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice) params.set("maxPrice", String(filters.maxPrice));
   if (filters.bedrooms) params.set("bedrooms", String(filters.bedrooms));

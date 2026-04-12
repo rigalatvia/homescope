@@ -20,6 +20,7 @@ export default async function ListingsPage({
 }) {
   const filters = parseListingFilters({
     city: toString(searchParams.city),
+    transactionType: toString(searchParams.transactionType),
     minPrice: toString(searchParams.minPrice),
     maxPrice: toString(searchParams.maxPrice),
     bedrooms: toString(searchParams.bedrooms),

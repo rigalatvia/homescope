@@ -30,6 +30,7 @@ export interface Listing {
 
 export interface ListingFilters {
   city?: string;
+  transactionType?: ListingTransactionType;
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
