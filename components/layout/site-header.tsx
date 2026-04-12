@@ -18,12 +18,11 @@ export function SiteHeader() {
           className="inline-flex items-center rounded-xl border border-transparent px-2 py-1 transition hover:border-brand-100"
         >
           <Image
-            src={SITE_CONFIG.logoPath}
-            alt={`${SITE_CONFIG.name} logo`}
-            width={100}
-            height={100}
-            priority            
-          />
+              src={SITE_CONFIG.logoPath}
+              alt={`${SITE_CONFIG.name} logo`}
+              width={100}
+              height={100}              
+            />
         </Link>
         <nav aria-label="Main navigation" className="hidden items-center gap-4 text-sm font-semibold text-brand-700 sm:gap-6 md:flex">
           <Link href="/listings" className="transition hover:text-brand-900">

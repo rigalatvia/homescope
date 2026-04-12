@@ -7,18 +7,21 @@ import { SiteFooter } from "@/components/layout/site-footer";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.baseUrl),
   title: {
-    default: "HomeScope GTA | GTA Listings",
+    default: "HomeScope GTA",
     template: "%s | HomeScope GTA"
   },
-  description:
-    "Browse curated homes in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto. Book a private showing directly with HomeScope GTA.",
+  description: "Real estate search platform for GTA",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png"
+  },
   openGraph: {
     title: "HomeScope GTA",
-    description:
-      "Discover publicly advertisable GTA listings and book your private showing with HomeScope GTA.",
+    description: "Find homes across Toronto and GTA",
     url: SITE_CONFIG.baseUrl,
     siteName: "HomeScope GTA",
-    type: "website"
+    type: "website",
+    images: ["/og-image.png"]
   }
 };
 

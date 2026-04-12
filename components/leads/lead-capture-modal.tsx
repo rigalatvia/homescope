@@ -6,6 +6,7 @@ import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
   listingId: string;
+  listingMlsNumber: string;
   listingTitle: string;
   listingAddress: string;
   listingCity: string;
@@ -28,6 +29,7 @@ const initialForm = {
 
 export function LeadCaptureModal({
   listingId,
+  listingMlsNumber,
   listingTitle,
   listingAddress,
   listingCity,
@@ -86,6 +88,7 @@ export function LeadCaptureModal({
           ...form,
           intent: "showing_request",
           listingId,
+          listingMlsNumber,
           listingTitle,
           listingAddress,
           listingCity,

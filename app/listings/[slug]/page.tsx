@@ -61,6 +61,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
           <LeadCaptureModal
             listingId={listing.id}
+            listingMlsNumber={listing.mlsNumber}
             listingTitle={listing.title}
             listingAddress={listing.address}
             listingCity={listing.city}

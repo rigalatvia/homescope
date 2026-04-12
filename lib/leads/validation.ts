@@ -12,6 +12,7 @@ export function validateLeadInput(input: LeadSubmissionInput): string[] {
   if (!input.preferredDateTime.trim()) errors.push("Preferred date/time is required.");
   if (!input.message.trim()) errors.push("Message is required.");
   if (!input.listingId.trim()) errors.push("Listing reference is missing.");
+  if (!input.listingMlsNumber.trim()) errors.push("MLS number is missing.");
   if (!input.listingTitle.trim()) errors.push("Listing title is missing.");
   if (!input.listingAddress.trim()) errors.push("Listing address is missing.");
   if (!input.listingCity.trim()) errors.push("Listing city is missing.");

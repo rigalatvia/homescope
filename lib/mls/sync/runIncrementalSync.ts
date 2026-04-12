@@ -2,6 +2,7 @@ import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, No
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
+import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 
@@ -59,12 +60,21 @@ export async function runIncrementalSync(params?: {
     ).length;
     logSyncInfo("Incremental sync exclusion breakdown", { hiddenByReason: stats.hiddenByReason });
 
-    const upsert = await upsertNormalizedListings(normalized, nowIso);
+    const visibleListings = normalized.filter((listing) => listing.isVisible);
+    const hiddenListings = normalized.filter((listing) => !listing.isVisible);
+
+    const upsert = await upsertNormalizedListings(visibleListings, nowIso);
     stats.created = upsert.created;
     stats.updated = upsert.updated;
     stats.upserted = upsert.upserted;
     stats.unchanged = upsert.unchanged;
     stats.snapshotsWritten = upsert.snapshotsWritten;
+
+    if (hiddenListings.length > 0) {
+      for (const listing of hiddenListings) {
+        await deleteListingDocument(listing.listingId);
+      }
+    }
 
     const finishedAt = new Date().toISOString();
     logSyncInfo("Incremental sync summary", {

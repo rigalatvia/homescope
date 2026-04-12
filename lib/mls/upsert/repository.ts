@@ -40,6 +40,11 @@ export async function hideListingDocument(listingId: string, hiddenReason: MLSHi
   );
 }
 
+export async function deleteListingDocument(listingId: string): Promise<void> {
+  const firestore = getFirebaseAdminFirestore();
+  await firestore.collection(COLLECTIONS.listings).doc(listingId).delete();
+}
+
 export async function listAllListingIds(): Promise<string[]> {
   const firestore = getFirebaseAdminFirestore();
   const snapshot = await firestore.collection(COLLECTIONS.listings).select().get();

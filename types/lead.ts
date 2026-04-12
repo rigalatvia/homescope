@@ -9,6 +9,7 @@ export interface LeadSubmissionInput {
   message: string;
   intent: LeadIntent;
   listingId: string;
+  listingMlsNumber: string;
   listingTitle: string;
   listingAddress: string;
   listingCity: string;

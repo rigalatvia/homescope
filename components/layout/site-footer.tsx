@@ -11,8 +11,9 @@ export function SiteFooter() {
             <Image
               src={SITE_CONFIG.logoPath}
               alt={`${SITE_CONFIG.name} logo`}
-              width={100}
-              height={100}              
+              width={160}
+              height={64}
+              className="h-auto w-[120px] sm:w-[140px]"
             />
           </Link>
           <p className="mt-2 max-w-md text-sm text-brand-700">

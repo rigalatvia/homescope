@@ -4,13 +4,18 @@ import { computeRawListingHash } from "@/lib/mls/utils/hash";
 import { createListingSlug } from "@/lib/mls/utils/slug";
 
 export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): NormalizedMLSListing {
+  const transactionType = raw.transactionType?.trim() || null;
+  const propertyType = raw.propertyType?.trim() || null;
+  const publicRemarks = raw.publicRemarks?.trim() || null;
+  const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, publicRemarks);
+
   const normalized: NormalizedMLSListing = {
     listingId: `${raw.sourceSystem}:${raw.sourceListingKey}`,
     mlsNumber: raw.mlsNumber?.trim() || null,
     sourceSystem: raw.sourceSystem,
     sourceListingKey: raw.sourceListingKey,
-    propertyClass: (raw.propertyClass?.trim() as NormalizedMLSListing["propertyClass"]) || null,
-    transactionType: raw.transactionType?.trim() || null,
+    propertyClass,
+    transactionType,
     permToAdvertise: parsePermToAdvertise(raw.permToAdvertise),
     municipality: parseMunicipality(raw.municipality),
     area: raw.area?.trim() || null,
@@ -24,9 +29,9 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     price: parseNullableNumber(raw.listPrice),
     bedrooms: parseNullableNumber(raw.bedrooms),
     bathrooms: parseNullableNumber(raw.bathrooms),
-    propertyType: raw.propertyType?.trim() || null,
+    propertyType,
     style: raw.style?.trim() || null,
-    publicRemarks: raw.publicRemarks?.trim() || null,
+    publicRemarks,
     images: mapImageUrls(raw),
     coordinates: {
       latitude: raw.coordinates?.latitude ?? null,
@@ -54,6 +59,38 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
   normalized.badges = computeBadges(normalized);
 
   return normalized;
+}
+
+function derivePropertyClass(
+  rawPropertyClass: string | null | undefined,
+  transactionType: string | null,
+  propertyType: string | null,
+  publicRemarks: string | null
+): NormalizedMLSListing["propertyClass"] {
+  const normalizedRaw = (rawPropertyClass || "").trim().toLowerCase();
+  if (normalizedRaw.includes("residential freehold lease")) return "Residential Freehold Lease";
+  if (normalizedRaw.includes("residential freehold")) return "Residential Freehold";
+  if (normalizedRaw.includes("residential condo")) {
+    if (normalizedRaw.includes("lease")) return "Residential Condo & Other Lease";
+    return "Residential Condo & Other";
+  }
+  if (normalizedRaw.includes("condo")) {
+    if (normalizedRaw.includes("lease")) return "Residential Condo & Other Lease";
+    return "Residential Condo & Other";
+  }
+  if (normalizedRaw.includes("freehold")) {
+    if (normalizedRaw.includes("lease")) return "Residential Freehold Lease";
+    return "Residential Freehold";
+  }
+
+  const text = [transactionType, propertyType, publicRemarks].filter(Boolean).join(" ").toLowerCase();
+  const isLease = /\blease\b|\brent\b|\bfor rent\b|\bleased\b/.test(text);
+  const looksCondo = /\bcondo\b|\bapartment\b|\bcondominium\b|\bapt\b/.test(text);
+  const looksFreehold = /\bdetached\b|\bsemi-detached\b|\btownhouse\b|\bfreehold\b/.test(text);
+
+  if (looksCondo) return isLease ? "Residential Condo & Other Lease" : "Residential Condo & Other";
+  if (looksFreehold) return isLease ? "Residential Freehold Lease" : "Residential Freehold";
+  return null;
 }
 
 function parsePermToAdvertise(value: RawMLSFeedListing["permToAdvertise"]): boolean {

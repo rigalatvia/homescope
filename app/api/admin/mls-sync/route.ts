@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("[mls-sync] Manual trigger failed", error);
-    return NextResponse.json({ error: "MLS sync failed." }, { status: 500 });
+    const detail = error instanceof Error ? error.message : "Unknown sync error";
+    return NextResponse.json({ error: "MLS sync failed.", detail }, { status: 500 });
   }
 }

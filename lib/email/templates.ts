@@ -25,6 +25,7 @@ export function buildLeadEmail(
     "",
     "Listing Details",
     `Listing ID: ${lead.listingId}`,
+    `MLS Number: ${lead.listingMlsNumber}`,
     `Title: ${lead.listingTitle}`,
     `Address: ${lead.listingAddress}`,
     `City: ${lead.listingCity}`,
@@ -46,6 +47,7 @@ export function buildLeadEmail(
     <p><strong>Message:</strong> ${escapeHtml(lead.message)}</p>
     <h3>Listing Details</h3>
     <p><strong>Listing ID:</strong> ${escapeHtml(lead.listingId)}</p>
+    <p><strong>MLS Number:</strong> ${escapeHtml(lead.listingMlsNumber)}</p>
     <p><strong>Title:</strong> ${escapeHtml(lead.listingTitle)}</p>
     <p><strong>Address:</strong> ${escapeHtml(lead.listingAddress)}</p>
     <p><strong>City:</strong> ${escapeHtml(lead.listingCity)}</p>
