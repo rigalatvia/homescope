@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendContactNotification } from "@/lib/email";
-import { storeContactCommunication } from "@/lib/leads/communications-store";
+import { upsertContactFromMessage } from "@/lib/leads/contacts-store";
 import { storeContactSubmission, updateContactEmailDeliveryStatus } from "@/lib/leads/contact-store";
 import { validateContactInput } from "@/lib/leads/validation";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
@@ -22,7 +22,14 @@ export async function POST(request: Request) {
     }
 
     const record = await storeContactSubmission(payload);
-    await storeContactCommunication(record);
+    try {
+      await upsertContactFromMessage(record);
+    } catch (contactsError) {
+      console.error("[contacts] Failed to upsert profile from contact message", {
+        contactId: record.id,
+        error: contactsError
+      });
+    }
 
     try {
       const emailResult = await sendContactNotification(record);
