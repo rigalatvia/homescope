@@ -317,13 +317,10 @@ function pickNumber(record: JsonObject, keys: string[]): number | null {
 }
 
 function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean {
-  const boolValue = pickBoolean(record, [
-    "PermToAdvertise",
-    "PermToAdvertiseYN",
-    "PermitToAdvertise",
-    "InternetEntireListingDisplayYN",
-    "InternetAddressDisplayYN"
-  ]);
+  // IMPORTANT:
+  // Only explicit advertise-permission fields should drive this flag.
+  // Internet display flags are not equivalent to "Perm to Advertise" in all board systems.
+  const boolValue = pickBoolean(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
   if (boolValue != null) return boolValue;
 
   const raw = pickString(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
