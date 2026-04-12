@@ -18,6 +18,7 @@ interface DdfConfig {
   maxRetries: number;
   topParam: string;
   sinceFilterField: string;
+  baseFilter: string | null;
 }
 
 export class DdfTrebFeedConnector implements MLSFeedConnector {
@@ -39,7 +40,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       pageSize: Math.min(Number(process.env.DDF_PAGE_SIZE || process.env.MLS_PAGE_SIZE || 100), 100),
       maxRetries: Number(process.env.DDF_MAX_RETRIES || 3),
       topParam: process.env.DDF_TOP_PARAM || "$top",
-      sinceFilterField: process.env.DDF_SINCE_FILTER_FIELD || "ModificationTimestamp"
+      sinceFilterField: process.env.DDF_SINCE_FILTER_FIELD || "ModificationTimestamp",
+      baseFilter: process.env.DDF_BASE_FILTER || buildDefaultResidentialFilter()
     };
     this.sourceSystem = this.config.sourceSystem;
   }
@@ -117,9 +119,16 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     if (skip > 0) {
       url.searchParams.set("$skip", String(skip));
     }
+    const filters: string[] = [];
+    if (this.config.baseFilter) {
+      filters.push(this.config.baseFilter);
+    }
     if (since && isFirstPage) {
       const iso = since.toISOString();
-      url.searchParams.set("$filter", `${this.config.sinceFilterField} gt ${iso}`);
+      filters.push(`${this.config.sinceFilterField} gt ${iso}`);
+    }
+    if (filters.length > 0) {
+      url.searchParams.set("$filter", filters.map((part) => `(${part})`).join(" and "));
     }
     return url.toString();
   }
@@ -308,9 +317,35 @@ function pickNumber(record: JsonObject, keys: string[]): number | null {
 }
 
 function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean {
+  const boolValue = pickBoolean(record, [
+    "PermToAdvertise",
+    "PermToAdvertiseYN",
+    "PermitToAdvertise",
+    "InternetEntireListingDisplayYN",
+    "InternetAddressDisplayYN"
+  ]);
+  if (boolValue != null) return boolValue;
+
   const raw = pickString(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
   if (!raw) return false;
   return /^(yes|y|true|1)$/i.test(raw) ? "Yes" : "No";
+}
+
+function pickBoolean(record: JsonObject, keys: string[]): boolean | null {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+    if (typeof value === "string" && value.trim()) {
+      const normalized = value.trim().toLowerCase();
+      if (["true", "yes", "y", "1"].includes(normalized)) return true;
+      if (["false", "no", "n", "0"].includes(normalized)) return false;
+    }
+  }
+  return null;
 }
 
 function mapImages(record: JsonObject): RawMLSFeedListing["images"] {
@@ -377,4 +412,12 @@ function shouldRetryDdfError(error: unknown): boolean {
     return true;
   }
   return /429|5\d\d|timeout|network|fetch/i.test(message);
+}
+
+function buildDefaultResidentialFilter(): string {
+  const residentialSubTypes = ["Single Family", "Multi-family"];
+  const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
+  const internetFilter = "(InternetEntireListingDisplayYN eq true or InternetAddressDisplayYN eq true)";
+  const statusFilter = "StandardStatus eq 'Active'";
+  return `(${subTypeFilter}) and ${internetFilter} and (${statusFilter})`;
 }
