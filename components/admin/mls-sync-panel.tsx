@@ -19,6 +19,13 @@ interface SyncResponse {
   error?: string;
 }
 
+interface SecretsCheckResponse {
+  success: boolean;
+  logs?: string[];
+  error?: string;
+  detail?: string;
+}
+
 export function MlsSyncPanel() {
   const [adminToken, setAdminToken] = useState("");
   const [sinceIso, setSinceIso] = useState("");
@@ -27,6 +34,8 @@ export function MlsSyncPanel() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [lastCounts, setLastCounts] = useState<SyncCounts | null>(null);
+  const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
+  const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
 
   async function runSync(mode: SyncMode) {
     if (!adminToken.trim()) {
@@ -66,6 +75,37 @@ export function MlsSyncPanel() {
     } finally {
       setIsSubmitting(false);
       setActiveMode(null);
+    }
+  }
+
+  async function checkSecretsAccess() {
+    setIsCheckingSecrets(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const response = await fetch("/api/admin/secrets-check", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-sync-token": adminToken.trim()
+        },
+        body: JSON.stringify({})
+      });
+
+      const json = (await response.json()) as SecretsCheckResponse;
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || json.detail || "Secrets check failed.");
+      }
+
+      const logs = (json.logs ?? []).join("\n");
+      setDiagnosticLogs(logs || "No diagnostics logs returned.");
+      setSuccessMessage("Secrets diagnostics completed.");
+    } catch (error) {
+      setDiagnosticLogs("");
+      setErrorMessage(error instanceof Error ? error.message : "Secrets diagnostics failed.");
+    } finally {
+      setIsCheckingSecrets(false);
     }
   }
 
@@ -120,6 +160,15 @@ export function MlsSyncPanel() {
             {isSubmitting && activeMode === "cleanup" ? "Running..." : "Run Cleanup"}
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={checkSecretsAccess}
+          disabled={isCheckingSecrets}
+          className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
+        >
+          {isCheckingSecrets ? "Checking Secrets..." : "Check Secrets Access"}
+        </button>
       </div>
 
       {successMessage && (
@@ -140,7 +189,17 @@ export function MlsSyncPanel() {
           </div>
         </div>
       )}
+
+      <div className="mt-5">
+        <p className="mb-2 text-sm font-semibold text-brand-900">Diagnostics Log</p>
+        <textarea
+          readOnly
+          value={diagnosticLogs}
+          placeholder="Run 'Check Secrets Access' to view server secret/env diagnostics."
+          rows={10}
+          className="w-full rounded-xl border border-brand-200 bg-brand-50/50 p-3 font-mono text-xs text-brand-900"
+        />
+      </div>
     </div>
   );
 }
-

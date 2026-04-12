@@ -19,8 +19,19 @@ const DEFAULT_SECRET_ENV_KEYS = [
 let secretsLoaded = false;
 let inFlightLoad: Promise<void> | null = null;
 
+export type ServerConfigSource = "env" | "secret" | "missing";
+
+export interface ServerConfigResolution {
+  key: string;
+  hasValue: boolean;
+  source: ServerConfigSource;
+  projectId: string | null;
+  error?: string;
+}
+
 function getEnvProjectId(): string | null {
   return (
+    process.env.GCP_SECRETS_PROJECT_ID ||
     process.env.GOOGLE_CLOUD_PROJECT ||
     process.env.GCLOUD_PROJECT ||
     process.env.GCP_PROJECT ||
@@ -181,21 +192,91 @@ export async function ensureServerSecretsLoaded(): Promise<void> {
 }
 
 export async function getServerConfigValue(key: string): Promise<string | null> {
+  const resolution = await resolveServerConfigValue(key);
+  if (!resolution.hasValue) return null;
+  const value = process.env[key];
+  return value ? value.trim() : null;
+}
+
+export async function resolveServerConfigValue(key: string): Promise<ServerConfigResolution> {
   const existing = process.env[key];
-  if (existing && existing.trim()) return existing.trim();
+  if (existing && existing.trim()) {
+    return {
+      key,
+      hasValue: true,
+      source: "env",
+      projectId: await getProjectId()
+    };
+  }
 
   await ensureServerSecretsLoaded();
   const loaded = process.env[key];
-  if (loaded && loaded.trim()) return loaded.trim();
+  if (loaded && loaded.trim()) {
+    return {
+      key,
+      hasValue: true,
+      source: "secret",
+      projectId: await getProjectId()
+    };
+  }
 
   const projectId = await getProjectId();
-  if (!projectId) return null;
+  if (!projectId) {
+    return {
+      key,
+      hasValue: false,
+      source: "missing",
+      projectId: null,
+      error: "No GCP project id available for Secret Manager lookup."
+    };
+  }
 
   try {
     const accessToken = await getAccessToken();
-    return await readAndSetSecret(projectId, key, accessToken);
+    const value = await readAndSetSecret(projectId, key, accessToken);
+    if (value && value.trim()) {
+      return {
+        key,
+        hasValue: true,
+        source: "secret",
+        projectId
+      };
+    }
+
+    return {
+      key,
+      hasValue: false,
+      source: "missing",
+      projectId,
+      error: `Secret "${key}" not found or empty.`
+    };
   } catch (error) {
     console.warn("[secrets] On-demand secret read failed", { key, error });
-    return null;
+    return {
+      key,
+      hasValue: false,
+      source: "missing",
+      projectId,
+      error: error instanceof Error ? error.message : "Unknown secret read error."
+    };
   }
+}
+
+export async function checkServerConfigValues(keys: string[]): Promise<{
+  projectId: string | null;
+  checkedAt: string;
+  results: ServerConfigResolution[];
+}> {
+  const projectId = await getProjectId();
+  const results: ServerConfigResolution[] = [];
+
+  for (const key of keys) {
+    results.push(await resolveServerConfigValue(key));
+  }
+
+  return {
+    projectId,
+    checkedAt: new Date().toISOString(),
+    results
+  };
 }
