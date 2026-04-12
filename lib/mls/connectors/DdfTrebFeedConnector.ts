@@ -35,7 +35,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       clientId: requiredEnv("DDF_CLIENT_ID"),
       clientSecret: requiredEnv("DDF_CLIENT_SECRET"),
       scope: process.env.DDF_SCOPE || "DDFApi_Read",
-      requestTimeoutMs: Number(process.env.DDF_REQUEST_TIMEOUT_MS || 20000),
+      requestTimeoutMs: Number(process.env.DDF_REQUEST_TIMEOUT_MS || 60000),
       pageSize: Math.min(Number(process.env.DDF_PAGE_SIZE || process.env.MLS_PAGE_SIZE || 100), 100),
       maxRetries: Number(process.env.DDF_MAX_RETRIES || 3),
       topParam: process.env.DDF_TOP_PARAM || "$top",
@@ -76,6 +76,16 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   private async fetchPaginated(since?: Date, options?: MLSFetchOptions): Promise<JsonObject[]> {
     const rows: JsonObject[] = [];
     const limitPageSize = options?.pageSize ?? this.config.pageSize;
+    const requestedPage = options?.page && options.page > 0 ? options.page : null;
+
+    if (requestedPage != null) {
+      const url = this.buildListingsUrl(limitPageSize, since, true, requestedPage);
+      const payload = await this.fetchListingsPage(url, since);
+      const items = extractListingsArray(payload);
+      logSyncInfo("DDF page fetched", { requestedPage, count: items.length });
+      return items;
+    }
+
     let nextUrl: string | null = null;
     let isFirstPage = true;
 
@@ -99,10 +109,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     return rows;
   }
 
-  private buildListingsUrl(pageSize: number, since?: Date, isFirstPage = true): string {
+  private buildListingsUrl(pageSize: number, since?: Date, isFirstPage = true, page = 1): string {
     const baseUrl = since ? this.config.replicationUrl : this.config.listingsUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
+    const skip = Math.max(0, page - 1) * pageSize;
+    if (skip > 0) {
+      url.searchParams.set("$skip", String(skip));
+    }
     if (since && isFirstPage) {
       const iso = since.toISOString();
       url.searchParams.set("$filter", `${this.config.sinceFilterField} gt ${iso}`);

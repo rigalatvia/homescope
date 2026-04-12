@@ -1,4 +1,5 @@
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
+import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
@@ -9,6 +10,7 @@ import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
   const startedAt = new Date().toISOString();
   const connector = createMLSConnector(connectorKind);
+  const notes: string[] = [];
   const stats: MLSSyncStats = {
     fetched: 0,
     filtered: 0,
@@ -33,38 +35,76 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   });
 
   try {
-    const rawListings = await connector.fetchAllListings();
-    stats.fetched = rawListings.length;
-    logSyncInfo("Full sync fetched listings", { count: stats.fetched });
-    const filteredRaw = filterRawListingsByTargetPostalAreas(rawListings);
-    stats.filtered = filteredRaw.included.length;
-    if (filteredRaw.excludedCount > 0) {
-      logSyncInfo("Full sync target-area filter applied", {
-        kept: stats.filtered,
-        excludedOutsideTargetAreas: filteredRaw.excludedCount
+    const seenListingIds = new Set<string>();
+    let page = 1;
+    let reachedEnd = false;
+
+    while (page <= mlsSyncConfig.fullSyncMaxPagesPerRun) {
+      const rawPage = await connector.fetchAllListings({
+        page,
+        pageSize: mlsSyncConfig.pageSize
       });
+
+      if (rawPage.length === 0) {
+        reachedEnd = true;
+        break;
+      }
+
+      stats.fetched += rawPage.length;
+      logSyncInfo("Full sync fetched page", { page, count: rawPage.length });
+
+      const filteredRaw = filterRawListingsByTargetPostalAreas(rawPage);
+      stats.filtered += filteredRaw.included.length;
+      if (filteredRaw.excludedCount > 0) {
+        logSyncInfo("Full sync target-area filter applied", {
+          page,
+          kept: filteredRaw.included.length,
+          excludedOutsideTargetAreas: filteredRaw.excludedCount
+        });
+      }
+
+      const nowIso = new Date().toISOString();
+      const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
+      stats.normalized += normalized.length;
+      const includedCount = normalized.filter((l) => l.isVisible).length;
+      stats.included += includedCount;
+      stats.excluded += normalized.length - includedCount;
+      incrementHiddenReasonCounts(stats.hiddenByReason, buildHiddenReasonCounts(normalized));
+      stats.excludedPermToAdvertiseFalse += normalized.filter(
+        (listing) => listing.hiddenReason === "perm_to_advertise_false"
+      ).length;
+
+      const upsert = await upsertNormalizedListings(normalized, nowIso);
+      stats.created += upsert.created;
+      stats.updated += upsert.updated;
+      stats.upserted += upsert.upserted;
+      stats.unchanged += upsert.unchanged;
+      stats.snapshotsWritten += upsert.snapshotsWritten;
+
+      for (const listing of normalized) {
+        seenListingIds.add(listing.listingId);
+      }
+
+      if (rawPage.length < mlsSyncConfig.pageSize) {
+        reachedEnd = true;
+        break;
+      }
+
+      page += 1;
     }
 
-    const nowIso = new Date().toISOString();
-    const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
-    stats.normalized = normalized.length;
-    stats.included = normalized.filter((l) => l.isVisible).length;
-    stats.excluded = normalized.length - stats.included;
-    stats.hiddenByReason = buildHiddenReasonCounts(normalized);
-    stats.excludedPermToAdvertiseFalse = normalized.filter(
-      (listing) => listing.hiddenReason === "perm_to_advertise_false"
-    ).length;
-    logSyncInfo("Full sync exclusion breakdown", { hiddenByReason: stats.hiddenByReason });
-
-    const upsert = await upsertNormalizedListings(normalized, nowIso);
-    stats.created = upsert.created;
-    stats.updated = upsert.updated;
-    stats.upserted = upsert.upserted;
-    stats.unchanged = upsert.unchanged;
-    stats.snapshotsWritten = upsert.snapshotsWritten;
-
-    stats.hidden = await hideNotReturnedListings(new Set(normalized.map((l) => l.listingId)), nowIso);
-    stats.archived = stats.hidden;
+    if (reachedEnd) {
+      const nowIso = new Date().toISOString();
+      stats.hidden = await hideNotReturnedListings(seenListingIds, nowIso);
+      stats.archived = stats.hidden;
+    } else {
+      const note = `Full sync processed partial dataset (${mlsSyncConfig.fullSyncMaxPagesPerRun} pages). Stale-hide skipped.`;
+      notes.push(note);
+      logSyncInfo("Full sync partial run", {
+        maxPagesPerRun: mlsSyncConfig.fullSyncMaxPagesPerRun,
+        staleHideSkipped: true
+      });
+    }
 
     const finishedAt = new Date().toISOString();
     logSyncInfo("Full sync summary", {
@@ -86,12 +126,24 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       sourceSystem: connector.sourceSystem,
       startedAt,
       finishedAt,
-      stats
+      stats,
+      notes
     };
   } catch (error) {
     stats.failed += 1;
     logSyncError("Full sync failed", error, { stats });
     throw error;
+  }
+}
+
+function incrementHiddenReasonCounts(
+  target: MLSSyncStats["hiddenByReason"],
+  source: MLSSyncStats["hiddenByReason"]
+): void {
+  for (const [reason, count] of Object.entries(source)) {
+    if (!reason || !count) continue;
+    const key = reason as MLSHiddenReason;
+    target[key] = (target[key] || 0) + count;
   }
 }
 

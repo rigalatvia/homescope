@@ -20,6 +20,7 @@ interface SyncResponse {
     mode?: string;
     startedAt?: string;
     finishedAt?: string;
+    notes?: string[];
     stats?: {
       fetched?: number;
       filtered?: number;
@@ -126,6 +127,9 @@ export function MlsSyncPanel() {
         `[sync] archived=${stats?.archived ?? json.counts?.archived ?? 0} hidden=${stats?.hidden ?? 0} snapshotsWritten=${stats?.snapshotsWritten ?? 0} failed=${stats?.failed ?? json.counts?.failed ?? 0}`,
         `[sync] hiddenByReason=${hiddenByReasonText}`
       ]);
+      if (json.result?.notes && json.result.notes.length > 0) {
+        appendDiagnosticLog(json.result.notes.map((note) => `[sync-note] ${note}`));
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed.";
       setErrorMessage(message);
