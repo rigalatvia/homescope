@@ -44,9 +44,7 @@ export function ContactForm() {
 
       setSubmitState("success");
       setSuccessMessage(
-        typeof json.message === "string"
-          ? json.message
-          : "Your message was captured successfully. Email delivery is currently in setup mode."
+        typeof json.message === "string" ? json.message : "Thank you! Your message has been sent successfully."
       );
       setForm(initialForm);
     } catch (error) {

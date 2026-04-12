@@ -33,3 +33,44 @@ export async function storeLeadSubmission(input: LeadSubmissionInput): Promise<L
     throw error;
   }
 }
+
+interface LeadEmailDeliveryUpdate {
+  emailDeliveryStatus: "sent" | "failed" | "mock";
+  emailRecipientUsed: string;
+  subjectUsed: string;
+  emailProviderUsed: string;
+  emailMode: "live" | "mock";
+  emailError?: string;
+}
+
+export async function updateLeadEmailDeliveryStatus(
+  leadId: string,
+  update: LeadEmailDeliveryUpdate
+): Promise<void> {
+  try {
+    const firestore = getFirebaseAdminFirestore();
+    await firestore
+      .collection(LEADS_COLLECTION)
+      .doc(leadId)
+      .set(
+        {
+          ...update,
+          emailProcessedAt: new Date().toISOString(),
+          emailProcessedAtServer: FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+    console.info("[leads][persistence] Firestore email delivery status updated", {
+      collection: LEADS_COLLECTION,
+      documentId: leadId,
+      emailDeliveryStatus: update.emailDeliveryStatus
+    });
+  } catch (error) {
+    console.error("[leads][persistence] Failed to update email delivery status", {
+      leadId,
+      error
+    });
+    throw error;
+  }
+}

@@ -12,14 +12,14 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     propertyClass: (raw.propertyClass?.trim() as NormalizedMLSListing["propertyClass"]) || null,
     transactionType: raw.transactionType?.trim() || null,
     permToAdvertise: parsePermToAdvertise(raw.permToAdvertise),
-    municipality: (raw.municipality?.trim() as NormalizedMLSListing["municipality"]) || null,
+    municipality: parseMunicipality(raw.municipality),
     area: raw.area?.trim() || null,
     address: {
       streetNumber: raw.address?.streetNumber?.trim() || null,
       streetName: raw.address?.streetName?.trim() || null,
       unit: raw.address?.unit?.trim() || null,
       fullAddress: raw.address?.fullAddress?.trim() || null,
-      postalCode: raw.address?.postalCode?.trim() || null
+      postalCode: normalizePostalCode(raw.address?.postalCode)
     },
     price: parseNullableNumber(raw.listPrice),
     bedrooms: parseNullableNumber(raw.bedrooms),
@@ -60,6 +60,23 @@ function parsePermToAdvertise(value: RawMLSFeedListing["permToAdvertise"]): bool
   if (typeof value === "boolean") return value;
   if (typeof value === "string") return value.trim().toLowerCase() === "yes";
   return false;
+}
+
+function parseMunicipality(value: string | null | undefined): NormalizedMLSListing["municipality"] {
+  const normalized = (value || "").trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes("toronto")) return "Toronto";
+  if (normalized.includes("vaughan")) return "Vaughan";
+  if (normalized.includes("richmond hill")) return "Richmond Hill";
+  if (normalized.includes("newmarket")) return "Newmarket";
+  if (normalized.includes("aurora")) return "Aurora";
+  if (normalized.includes("king")) return "King";
+  return null;
+}
+
+function normalizePostalCode(value: string | null | undefined): string | null {
+  const normalized = (value || "").trim().toUpperCase().replace(/\s+/g, "");
+  return normalized || null;
 }
 
 function parseNullableNumber(value: number | string | null | undefined): number | null {

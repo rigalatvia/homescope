@@ -2,6 +2,7 @@ import { MockEmailProvider } from "@/lib/email/providers/consoleProvider";
 import { ResendEmailProvider } from "@/lib/email/providers/resendProvider";
 import type { EmailProvider, EmailSendResult } from "@/lib/email/types";
 import { buildContactEmail, buildLeadEmail } from "@/lib/email/templates";
+import { getSiteSettings } from "@/lib/settings/site-settings";
 import type { ContactSubmissionRecord } from "@/types/contact";
 import type { LeadSubmissionRecord } from "@/types/lead";
 
@@ -49,14 +50,16 @@ function getProviderSelection(): EmailProviderSelection {
 }
 
 export async function sendLeadNotification(lead: LeadSubmissionRecord): Promise<EmailSendResult> {
-  const { subject, text, html } = buildLeadEmail(lead);
+  const siteSettings = await getSiteSettings();
+  const { subject, text, html } = buildLeadEmail(lead, { subject: siteSettings.leadEmailSubject });
   const selection = getProviderSelection();
-  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || "notifications@homescopegta.local";
+  const notificationEmail = siteSettings.leadRecipientEmail;
 
   console.info("[leads][email] Provider mode selected", {
     provider: selection.provider.name,
     mode: selection.mode,
-    reason: selection.reason
+    reason: selection.reason,
+    recipient: notificationEmail
   });
 
   await selection.provider.sendLeadNotification({
@@ -69,19 +72,23 @@ export async function sendLeadNotification(lead: LeadSubmissionRecord): Promise<
 
   return {
     mode: selection.mode,
-    provider: selection.provider.name
+    provider: selection.provider.name,
+    recipientUsed: notificationEmail,
+    subjectUsed: subject
   };
 }
 
 export async function sendContactNotification(contact: ContactSubmissionRecord): Promise<EmailSendResult> {
-  const { subject, text, html } = buildContactEmail(contact);
+  const siteSettings = await getSiteSettings();
+  const { subject, text, html } = buildContactEmail(contact, { subject: siteSettings.leadEmailSubject });
   const selection = getProviderSelection();
-  const notificationEmail = process.env.LEADS_NOTIFICATION_EMAIL || "notifications@homescopegta.local";
+  const notificationEmail = siteSettings.leadRecipientEmail;
 
   console.info("[contact][email] Provider mode selected", {
     provider: selection.provider.name,
     mode: selection.mode,
-    reason: selection.reason
+    reason: selection.reason,
+    recipient: notificationEmail
   });
 
   await selection.provider.sendContactNotification({
@@ -94,6 +101,8 @@ export async function sendContactNotification(contact: ContactSubmissionRecord):
 
   return {
     mode: selection.mode,
-    provider: selection.provider.name
+    provider: selection.provider.name,
+    recipientUsed: notificationEmail,
+    subjectUsed: subject
   };
 }

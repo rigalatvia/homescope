@@ -33,3 +33,44 @@ export async function storeContactSubmission(input: ContactSubmissionInput): Pro
     throw error;
   }
 }
+
+interface ContactEmailDeliveryUpdate {
+  emailDeliveryStatus: "sent" | "failed" | "mock";
+  emailRecipientUsed: string;
+  subjectUsed: string;
+  emailProviderUsed: string;
+  emailMode: "live" | "mock";
+  emailError?: string;
+}
+
+export async function updateContactEmailDeliveryStatus(
+  contactId: string,
+  update: ContactEmailDeliveryUpdate
+): Promise<void> {
+  try {
+    const firestore = getFirebaseAdminFirestore();
+    await firestore
+      .collection(CONTACT_COLLECTION)
+      .doc(contactId)
+      .set(
+        {
+          ...update,
+          emailProcessedAt: new Date().toISOString(),
+          emailProcessedAtServer: FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+    console.info("[contact][persistence] Firestore email delivery status updated", {
+      collection: CONTACT_COLLECTION,
+      documentId: contactId,
+      emailDeliveryStatus: update.emailDeliveryStatus
+    });
+  } catch (error) {
+    console.error("[contact][persistence] Failed to update email delivery status", {
+      contactId,
+      error
+    });
+    throw error;
+  }
+}

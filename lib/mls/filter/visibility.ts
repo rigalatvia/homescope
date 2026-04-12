@@ -1,4 +1,5 @@
 import { allowedDisplayStatuses, allowedMunicipalities, allowedPropertyClasses } from "@/lib/mls/config";
+import { isTargetPostalCode } from "@/lib/mls/filter/targetPostalAreas";
 import type {
   MLSHiddenReason,
   MLSListingStatus,
@@ -49,6 +50,9 @@ export function computeVisibility(listing: NormalizedMLSListing): {
   }
   if (!isAllowedMunicipality(listing.municipality)) {
     return { isVisible: false, hiddenReason: "unsupported_municipality" };
+  }
+  if (!isTargetPostalCode(listing.address.postalCode)) {
+    return { isVisible: false, hiddenReason: "outside_target_fsa" };
   }
   if (!isDisplayableStatus(listing.status)) {
     return { isVisible: false, hiddenReason: "status_not_displayable" };

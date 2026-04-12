@@ -3,6 +3,8 @@ export * from "@/lib/mls/types";
 export * from "@/lib/mls/connectors/MLSFeedConnector";
 export * from "@/lib/mls/connectors/MockMLSFeedConnector";
 export * from "@/lib/mls/connectors/PlaceholderApprovedFeedConnector";
+export * from "@/lib/mls/connectors/DdfTrebFeedConnector";
+export * from "@/lib/mls/filter/targetPostalAreas";
 export * from "@/lib/mls/filter/visibility";
 export * from "@/lib/mls/normalize/normalizeListing";
 export * from "@/lib/mls/sync/runFullSync";

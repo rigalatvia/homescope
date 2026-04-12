@@ -1,4 +1,4 @@
-export type MLSConnectorKind = "mock" | "approved-placeholder";
+export type MLSConnectorKind = "mock" | "approved-placeholder" | "ddf-treb";
 
 export type MLSPropertyClass =
   | "Residential Freehold"
@@ -14,6 +14,7 @@ export type MLSHiddenReason =
   | "perm_to_advertise_false"
   | "unsupported_property_class"
   | "unsupported_municipality"
+  | "outside_target_fsa"
   | "status_not_displayable"
   | "missing_required_public_fields"
   | "stale_listing"
@@ -141,11 +142,15 @@ export interface MLSFetchOptions {
 
 export interface MLSSyncStats {
   fetched: number;
+  filtered: number;
   normalized: number;
   included: number;
   excluded: number;
   excludedPermToAdvertiseFalse: number;
   hiddenByReason: Partial<Record<MLSHiddenReason, number>>;
+  created: number;
+  updated: number;
+  archived: number;
   upserted: number;
   hidden: number;
   unchanged: number;

@@ -28,4 +28,6 @@ export type EmailDeliveryMode = "mock" | "live";
 export interface EmailSendResult {
   mode: EmailDeliveryMode;
   provider: string;
+  recipientUsed: string;
+  subjectUsed: string;
 }

@@ -9,11 +9,14 @@ interface ManualSyncBody {
 }
 
 export async function POST(request: Request) {
-  const isProduction = process.env.NODE_ENV === "production";
   const adminToken = process.env.MLS_SYNC_ADMIN_TOKEN;
   const requestToken = request.headers.get("x-admin-sync-token");
 
-  if (isProduction && adminToken && requestToken !== adminToken) {
+  if (!adminToken) {
+    return NextResponse.json({ error: "MLS sync admin token is not configured." }, { status: 503 });
+  }
+
+  if (requestToken !== adminToken) {
     return NextResponse.json({ error: "Unauthorized sync trigger." }, { status: 401 });
   }
 
@@ -25,7 +28,21 @@ export async function POST(request: Request) {
       sinceIso: body.sinceIso
     });
 
-    return NextResponse.json({ success: true, result }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        counts: {
+          fetched: result.stats.fetched,
+          filtered: result.stats.filtered,
+          created: result.stats.created,
+          updated: result.stats.updated,
+          archived: result.stats.archived,
+          failed: result.stats.failed
+        },
+        result
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("[mls-sync] Manual trigger failed", error);
     return NextResponse.json({ error: "MLS sync failed." }, { status: 500 });

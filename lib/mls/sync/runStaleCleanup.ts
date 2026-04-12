@@ -9,11 +9,15 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
   const staleBeforeIso = new Date(now - mlsSyncConfig.staleThresholdHours * 60 * 60 * 1000).toISOString();
   const stats: MLSSyncStats = {
     fetched: 0,
+    filtered: 0,
     normalized: 0,
     included: 0,
     excluded: 0,
     excludedPermToAdvertiseFalse: 0,
     hiddenByReason: {},
+    created: 0,
+    updated: 0,
+    archived: 0,
     upserted: 0,
     hidden: 0,
     unchanged: 0,
@@ -29,13 +33,15 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
   try {
     const nowIso = new Date().toISOString();
     stats.hidden = await hideStaleListings(staleBeforeIso, nowIso);
+    stats.archived = stats.hidden;
     stats.hiddenByReason = stats.hidden > 0 ? { stale_listing: stats.hidden } : {};
     const finishedAt = new Date().toISOString();
     logSyncInfo("Stale cleanup summary", {
       totalFetched: stats.fetched,
       totalWritten: stats.upserted,
       totalVisible: stats.included,
-      totalHidden: stats.hidden,
+      totalHidden: stats.archived,
+      totalArchived: stats.archived,
       hiddenByReason: stats.hiddenByReason
     });
     logSyncInfo("Stale cleanup completed", { hidden: stats.hidden });

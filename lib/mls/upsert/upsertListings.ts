@@ -6,10 +6,14 @@ import { logSyncInfo } from "@/lib/mls/utils/logger";
 const TRACKED_FIELDS: Array<keyof MLSListingFirestoreDocument> = ["price", "status", "publicRemarks", "isVisible", "hiddenReason"];
 
 export async function upsertNormalizedListings(listings: NormalizedMLSListing[], nowIso: string): Promise<{
+  created: number;
+  updated: number;
   upserted: number;
   unchanged: number;
   snapshotsWritten: number;
 }> {
+  let created = 0;
+  let updated = 0;
   let upserted = 0;
   let unchanged = 0;
   let snapshotsWritten = 0;
@@ -25,6 +29,11 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
 
     await upsertListingDocument(doc);
     upserted += 1;
+    if (existing) {
+      updated += 1;
+    } else {
+      created += 1;
+    }
 
     logSyncInfo("Listing upserted", {
       listingId: doc.listingId,
@@ -49,7 +58,7 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
     }
   }
 
-  return { upserted, unchanged, snapshotsWritten };
+  return { created, updated, upserted, unchanged, snapshotsWritten };
 }
 
 function toFirestoreDoc(

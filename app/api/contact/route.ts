@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { sendContactNotification } from "@/lib/email";
-import { storeContactSubmission } from "@/lib/leads/contact-store";
+import { storeContactSubmission, updateContactEmailDeliveryStatus } from "@/lib/leads/contact-store";
 import { validateContactInput } from "@/lib/leads/validation";
+import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
 import type { ContactSubmissionInput } from "@/types/contact";
 
 export async function POST(request: Request) {
+  const defaultSettings = getDefaultSiteSettings();
+
   try {
     const payload = (await request.json()) as ContactSubmissionInput;
     const errors = validateContactInput(payload);
@@ -15,20 +18,55 @@ export async function POST(request: Request) {
     }
 
     const record = await storeContactSubmission(payload);
-    const emailResult = await sendContactNotification(record);
+    try {
+      const emailResult = await sendContactNotification(record);
+      const emailDeliveryStatus = emailResult.mode === "live" ? "sent" : "mock";
 
-    const message =
-      emailResult.mode === "mock"
-        ? "Your message was captured successfully. Email delivery is currently in setup mode."
-        : "Thank you! Your message has been sent successfully.";
+      await updateContactEmailDeliveryStatus(record.id, {
+        emailDeliveryStatus,
+        emailRecipientUsed: emailResult.recipientUsed,
+        subjectUsed: emailResult.subjectUsed,
+        emailProviderUsed: emailResult.provider,
+        emailMode: emailResult.mode
+      });
 
-    console.info("[contact] Submission processed", {
-      contactId: record.id,
-      emailMode: emailResult.mode,
-      provider: emailResult.provider
-    });
+      const message =
+        emailResult.mode === "live"
+          ? "Thank you! Your message has been sent successfully."
+          : "Your message was received successfully.";
 
-    return NextResponse.json({ success: true, id: record.id, message, emailMode: emailResult.mode }, { status: 201 });
+      console.info("[contact] Submission processed", {
+        contactId: record.id,
+        emailMode: emailResult.mode,
+        provider: emailResult.provider,
+        emailDeliveryStatus
+      });
+
+      return NextResponse.json({ success: true, id: record.id, message, emailMode: emailResult.mode }, { status: 201 });
+    } catch (emailError) {
+      await updateContactEmailDeliveryStatus(record.id, {
+        emailDeliveryStatus: "failed",
+        emailRecipientUsed: "",
+        subjectUsed: defaultSettings.leadEmailSubject,
+        emailProviderUsed: "unknown",
+        emailMode: "live",
+        emailError: emailError instanceof Error ? emailError.message : "Unknown email error"
+      });
+
+      console.error("[contact] Submission saved but email send failed", {
+        contactId: record.id,
+        error: emailError
+      });
+
+      return NextResponse.json(
+        {
+          error: "Your message was saved, but we could not send the notification email right now. Please try again shortly.",
+          id: record.id,
+          saved: true
+        },
+        { status: 502 }
+      );
+    }
   } catch (error) {
     console.error("[contact] Submission failed", error);
     return NextResponse.json(

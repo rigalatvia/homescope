@@ -4,6 +4,7 @@ import {
   runScheduledStaleCleanup
 } from "../../../lib/firebase-sync/functions/scheduled-sync";
 import {
+  scheduledMLS3HourSync,
   scheduledMLSFullSync,
   scheduledMLSIncrementalSync,
   scheduledMLSStaleCleanup
@@ -38,6 +39,13 @@ export async function scheduledStaleCleanup(): Promise<void> {
  */
 export async function mlsScheduledFullSync(): Promise<void> {
   await scheduledMLSFullSync();
+}
+
+/**
+ * Recommended schedule target: every 3 hours.
+ */
+export async function mlsScheduledEvery3Hours(): Promise<void> {
+  await scheduledMLS3HourSync();
 }
 
 export async function mlsScheduledIncrementalSync(): Promise<void> {

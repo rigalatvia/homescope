@@ -1,4 +1,5 @@
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
+import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
@@ -13,11 +14,15 @@ export async function runIncrementalSync(params?: {
   const since = params?.since ?? new Date(Date.now() - 15 * 60 * 1000);
   const stats: MLSSyncStats = {
     fetched: 0,
+    filtered: 0,
     normalized: 0,
     included: 0,
     excluded: 0,
     excludedPermToAdvertiseFalse: 0,
     hiddenByReason: {},
+    created: 0,
+    updated: 0,
+    archived: 0,
     upserted: 0,
     hidden: 0,
     unchanged: 0,
@@ -34,9 +39,17 @@ export async function runIncrementalSync(params?: {
     const rawListings = await connector.fetchUpdatedListings(since);
     stats.fetched = rawListings.length;
     logSyncInfo("Incremental sync fetched listings", { count: stats.fetched });
+    const filteredRaw = filterRawListingsByTargetPostalAreas(rawListings);
+    stats.filtered = filteredRaw.included.length;
+    if (filteredRaw.excludedCount > 0) {
+      logSyncInfo("Incremental sync target-area filter applied", {
+        kept: stats.filtered,
+        excludedOutsideTargetAreas: filteredRaw.excludedCount
+      });
+    }
 
     const nowIso = new Date().toISOString();
-    const normalized = rawListings.map((raw) => normalizeListing(raw, nowIso));
+    const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
     stats.normalized = normalized.length;
     stats.included = normalized.filter((l) => l.isVisible).length;
     stats.excluded = normalized.length - stats.included;
@@ -47,6 +60,8 @@ export async function runIncrementalSync(params?: {
     logSyncInfo("Incremental sync exclusion breakdown", { hiddenByReason: stats.hiddenByReason });
 
     const upsert = await upsertNormalizedListings(normalized, nowIso);
+    stats.created = upsert.created;
+    stats.updated = upsert.updated;
     stats.upserted = upsert.upserted;
     stats.unchanged = upsert.unchanged;
     stats.snapshotsWritten = upsert.snapshotsWritten;
@@ -54,9 +69,13 @@ export async function runIncrementalSync(params?: {
     const finishedAt = new Date().toISOString();
     logSyncInfo("Incremental sync summary", {
       totalFetched: stats.fetched,
+      totalFiltered: stats.filtered,
       totalWritten: stats.upserted,
+      totalCreated: stats.created,
+      totalUpdated: stats.updated,
       totalVisible: stats.included,
       totalHidden: stats.excluded,
+      totalArchived: stats.archived,
       hiddenByReason: stats.hiddenByReason
     });
     logSyncInfo("Incremental sync completed", { stats });

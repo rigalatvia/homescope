@@ -1,12 +1,15 @@
 import type { LeadSubmissionRecord } from "@/types/lead";
 import type { ContactSubmissionRecord } from "@/types/contact";
 
-export function buildLeadEmail(lead: LeadSubmissionRecord): {
+export function buildLeadEmail(
+  lead: LeadSubmissionRecord,
+  options?: { subject?: string }
+): {
   subject: string;
   text: string;
   html: string;
 } {
-  const subject = `New ${lead.intent === "showing_request" ? "showing request" : "listing question"} - ${lead.listingAddress}`;
+  const subject = options?.subject?.trim() || "Homescope GTA LEAD";
   const text = [
     "New lead from HomeScope GTA website",
     "",
@@ -53,12 +56,15 @@ export function buildLeadEmail(lead: LeadSubmissionRecord): {
   return { subject, text, html };
 }
 
-export function buildContactEmail(contact: ContactSubmissionRecord): {
+export function buildContactEmail(
+  contact: ContactSubmissionRecord,
+  options?: { subject?: string }
+): {
   subject: string;
   text: string;
   html: string;
 } {
-  const subject = `New contact message - ${contact.subject}`;
+  const subject = options?.subject?.trim() || "Homescope GTA LEAD";
   const text = [
     "New contact form message from HomeScope GTA website",
     "",

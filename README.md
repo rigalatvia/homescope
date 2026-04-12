@@ -203,6 +203,27 @@ Collections used by API routes:
 - `leads` (showing requests)
 - `contactMessages` (contact form submissions)
 
+## Lead Email Delivery Settings (Firestore-Backed)
+
+Lead/contact notification recipient and subject are resolved server-side from:
+
+- `settings/site`
+  - `leadRecipientEmail` (example: `yanginzburg@gmail.com`)
+  - `leadEmailSubject` (example: `Homescope GTA LEAD`)
+
+Fallback behavior if `settings/site` is missing:
+- `LEADS_NOTIFICATION_EMAIL`
+- `LEAD_EMAIL_SUBJECT` (or default `Homescope GTA LEAD`)
+
+Submission documents are always stored in Firestore first, then email is attempted.
+Each submission is updated with delivery metadata:
+- `emailDeliveryStatus` (`sent` | `failed` | `mock`)
+- `emailRecipientUsed`
+- `subjectUsed`
+- `emailProviderUsed`
+- `emailMode`
+- `emailProcessedAt`
+
 ## Important Note
 
 `createFirebaseAdminSyncRepository()` is intentionally a stub in:
@@ -214,28 +235,64 @@ This is the exact location to wire `firebase-admin` Firestore operations for the
 
 A dedicated sync module now exists under `lib/mls/` with:
 
-- connector interface + mock + approved placeholder connectors
+- connector interface + mock + approved placeholder connectors + Toronto Board DDF connector
 - normalization + eligibility filtering
 - Firestore upsert/hide/snapshot services
 - full/incremental/cleanup runners
 - scheduler-ready function entry points
 - manual admin route trigger
+- postal/FSA target-area filtering for GTA markets
 
 Manual trigger route (dev/admin):
 - `POST /api/admin/mls-sync`
+- required header: `x-admin-sync-token: <MLS_SYNC_ADMIN_TOKEN>`
 - body example:
-  - `{ "mode": "full", "connectorKind": "mock" }`
-  - `{ "mode": "incremental", "connectorKind": "mock", "sinceIso": "2026-04-09T00:00:00.000Z" }`
+  - `{ "mode": "full", "connectorKind": "ddf-treb" }`
+  - `{ "mode": "incremental", "connectorKind": "ddf-treb", "sinceIso": "2026-04-09T00:00:00.000Z" }`
   - `{ "mode": "cleanup" }`
 
-In production, pass `x-admin-sync-token` matching `MLS_SYNC_ADMIN_TOKEN`.
+Response includes sync counts:
+- `fetched`
+- `filtered`
+- `created`
+- `updated`
+- `archived`
+- `failed`
+
+### 3-Hour Scheduled Sync
+
+Recommended scheduler endpoint:
+- `POST /api/internal/mls-sync/scheduled`
+- required header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
+- executes full DDF sync (`ddf-treb`) and returns counts
+
+Use Cloud Scheduler (or Firebase scheduled function wiring) to call this endpoint every 3 hours.
+
+Example cron:
+- `0 */3 * * *`
+
+### DDF Environment Variables (Server-Only)
+
+Set these in secure server env / Secret Manager (never `NEXT_PUBLIC_*`):
+- `DDF_TOKEN_URL`
+- `DDF_LISTINGS_URL`
+- `DDF_REPLICATION_URL` (optional; defaults to `<DDF_LISTINGS_URL>/PropertyReplication()`)
+- `DDF_CLIENT_ID`
+- `DDF_CLIENT_SECRET`
+- `DDF_SCOPE` (default `DDFApi_Read`)
+- `DDF_TOP_PARAM` (default `$top`)
+- `DDF_SINCE_FILTER_FIELD` (default `ModificationTimestamp`)
+- `DDF_PAGE_SIZE` (default `200`)
+- `DDF_REQUEST_TIMEOUT_MS` (default `20000`)
+- `DDF_MAX_RETRIES` (default `3`)
 
 Scheduler-ready exports:
 - `firebase/functions/src/index.ts`
   - `mlsScheduledFullSync`
+  - `mlsScheduledEvery3Hours`
   - `mlsScheduledIncrementalSync`
   - `mlsScheduledStaleCleanup`
 
 Real approved connector plug-in point:
-- `lib/mls/connectors/PlaceholderApprovedFeedConnector.ts`
-  - replace TODO logic with official MLS/CREA DDF provider API integration
+- `lib/mls/connectors/DdfTrebFeedConnector.ts`
+  - update field mapping and endpoint/query parameter names if your DDF provider response shape differs

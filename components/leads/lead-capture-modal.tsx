@@ -102,9 +102,7 @@ export function LeadCaptureModal({
 
       setSubmitState("success");
       setSuccessMessage(
-        typeof json.message === "string"
-          ? json.message
-          : "Your request was captured successfully. Email delivery is currently in setup mode."
+        typeof json.message === "string" ? json.message : "Thank you! Your request has been sent successfully."
       );
       setForm(initialForm);
     } catch (error) {
