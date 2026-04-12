@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MlsSyncPanel } from "@/components/admin/mls-sync-panel";
 
 export const metadata: Metadata = {
@@ -19,10 +20,15 @@ export default function AdminSyncPage() {
           <p className="mt-3 text-brand-700">
             Trigger full, incremental, or cleanup sync runs using your protected admin token.
           </p>
+          <p className="mt-2 text-sm text-brand-700">
+            Need to pin listings first?{" "}
+            <Link href="/admin/featured" className="font-semibold text-brand-900 underline underline-offset-2">
+              Manage Featured Listings
+            </Link>
+          </p>
         </div>
         <MlsSyncPanel />
       </div>
     </section>
   );
 }
-

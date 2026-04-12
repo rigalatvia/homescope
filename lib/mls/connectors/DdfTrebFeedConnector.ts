@@ -332,19 +332,9 @@ function pickNumber(record: JsonObject, keys: string[]): number | null {
 }
 
 function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean | null {
-  // IMPORTANT:
-  // Only explicit advertise-permission fields should drive this flag.
-  // Internet display flags are not equivalent to "Perm to Advertise" in all board systems.
-  const boolValue = pickBoolean(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
-  if (boolValue != null) return boolValue;
-
-  const raw = pickString(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
-  if (raw) return /^(yes|y|true|1)$/i.test(raw) ? "Yes" : "No";
-
-  // Fallback only when explicit permission is absent in payload.
-  // Keeps compatibility with feeds that expose only internet display flags.
-  const internetFallback = pickBoolean(record, ["InternetEntireListingDisplayYN", "InternetAddressDisplayYN"]);
-  if (internetFallback != null) return internetFallback;
+  // For this feed, use InternetEntireListingDisplayYN as the authoritative public-display permission signal.
+  const internetEntire = pickBoolean(record, ["InternetEntireListingDisplayYN"]);
+  if (internetEntire != null) return internetEntire;
 
   return null;
 }

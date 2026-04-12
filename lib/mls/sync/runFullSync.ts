@@ -53,10 +53,15 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     const startPage = await getFullSyncStartPage();
     let page = startPage;
     let reachedEnd = false;
-    const maxPages = Math.max(1, mlsSyncConfig.fullSyncMaxPagesPerRun);
-    const stopPage = startPage + maxPages - 1;
+    const unlimited = mlsSyncConfig.fullSyncMaxPagesPerRun <= 0;
+    const maxPages = unlimited ? Number.POSITIVE_INFINITY : Math.max(1, mlsSyncConfig.fullSyncMaxPagesPerRun);
+    const stopPage = unlimited ? Number.POSITIVE_INFINITY : startPage + maxPages - 1;
 
-    logSyncInfo("Full sync cursor state", { startPage, stopPage, maxPagesPerRun: maxPages });
+    logSyncInfo("Full sync cursor state", {
+      startPage,
+      stopPage: Number.isFinite(stopPage) ? stopPage : "unlimited",
+      maxPagesPerRun: Number.isFinite(maxPages) ? maxPages : "unlimited"
+    });
 
     while (page <= stopPage) {
       const rawPage = await connector.fetchAllListings({
@@ -133,7 +138,8 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
     } else {
       await setFullSyncStartPage(page);
-      const note = `Full sync processed a batch (${maxPages} pages) from page ${startPage}. Continue from page ${page} on next run.`;
+      const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";
+      const note = `Full sync processed a batch (${pageLabel} pages) from page ${startPage}. Continue from page ${page} on next run.`;
       notes.push(note);
       logSyncInfo("Full sync partial run", {
         startPage,
