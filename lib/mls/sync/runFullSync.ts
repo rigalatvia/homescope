@@ -3,6 +3,7 @@ import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
+import { getDefaultFullSyncStartPage, getFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
 import { hideNotReturnedListings } from "@/lib/mls/sync/staleCleanup";
 import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
@@ -40,13 +41,15 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
 
   try {
     const seenListingIds = new Set<string>();
-    let page = 1;
+    const startPage = await getFullSyncStartPage();
+    let page = startPage;
     let reachedEnd = false;
+    const maxPages = Math.max(1, mlsSyncConfig.fullSyncMaxPagesPerRun);
+    const stopPage = startPage + maxPages - 1;
 
-    const hasPageCap = mlsSyncConfig.fullSyncMaxPagesPerRun > 0;
-    const maxPages = hasPageCap ? mlsSyncConfig.fullSyncMaxPagesPerRun : Number.POSITIVE_INFINITY;
+    logSyncInfo("Full sync cursor state", { startPage, stopPage, maxPagesPerRun: maxPages });
 
-    while (page <= maxPages) {
+    while (page <= stopPage) {
       const rawPage = await connector.fetchAllListings({
         page,
         pageSize: mlsSyncConfig.pageSize
@@ -115,11 +118,16 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       const nowIso = new Date().toISOString();
       stats.hidden = await hideNotReturnedListings(seenListingIds, nowIso);
       stats.archived = stats.hidden;
+      await setFullSyncStartPage(getDefaultFullSyncStartPage());
+      notes.push("Full sync reached end of feed. Cursor reset to page 1.");
     } else {
-      const note = `Full sync processed partial dataset (${mlsSyncConfig.fullSyncMaxPagesPerRun} pages). Stale-hide skipped.`;
+      await setFullSyncStartPage(page);
+      const note = `Full sync processed a batch (${maxPages} pages) from page ${startPage}. Continue from page ${page} on next run.`;
       notes.push(note);
       logSyncInfo("Full sync partial run", {
-        maxPagesPerRun: mlsSyncConfig.fullSyncMaxPagesPerRun,
+        startPage,
+        nextPage: page,
+        maxPagesPerRun: maxPages,
         staleHideSkipped: true
       });
     }

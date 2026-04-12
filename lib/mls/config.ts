@@ -22,9 +22,10 @@ export const mlsSyncConfig = {
   staleThresholdHours: Number(process.env.MLS_STALE_THRESHOLD_HOURS || 48),
   connectorKind: (process.env.MLS_CONNECTOR_KIND || "ddf-treb") as MLSConnectorKind,
   sourceSystem: process.env.MLS_SOURCE_SYSTEM || "toronto-board-ddf",
-  pageSize: 100,
-  // 0 or negative means "no cap" (process all pages in the source feed).
-  fullSyncMaxPagesPerRun: 0,
+  pageSize: 20,
+  // Full feed is processed across multiple runs using a persisted page cursor.
+  // This keeps each run under platform time limits and avoids upstream timeouts.
+  fullSyncMaxPagesPerRun: 5,
   featureFlags: {
     snapshotsEnabled: process.env.MLS_SNAPSHOTS_ENABLED !== "false",
     cleanupEnabled: process.env.MLS_CLEANUP_ENABLED !== "false",
