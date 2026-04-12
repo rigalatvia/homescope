@@ -3,10 +3,13 @@ import { sendLeadNotification } from "@/lib/email";
 import { storeLeadCommunication } from "@/lib/leads/communications-store";
 import { storeLeadSubmission, updateLeadEmailDeliveryStatus } from "@/lib/leads/store";
 import { validateLeadInput } from "@/lib/leads/validation";
+import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
 import type { LeadSubmissionInput } from "@/types/lead";
 
 export async function POST(request: Request) {
+  await ensureServerSecretsLoaded();
+
   const defaultSettings = getDefaultSiteSettings();
 
   try {

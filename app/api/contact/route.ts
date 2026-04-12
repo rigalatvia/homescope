@@ -3,10 +3,13 @@ import { sendContactNotification } from "@/lib/email";
 import { storeContactCommunication } from "@/lib/leads/communications-store";
 import { storeContactSubmission, updateContactEmailDeliveryStatus } from "@/lib/leads/contact-store";
 import { validateContactInput } from "@/lib/leads/validation";
+import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
 import type { ContactSubmissionInput } from "@/types/contact";
 
 export async function POST(request: Request) {
+  await ensureServerSecretsLoaded();
+
   const defaultSettings = getDefaultSiteSettings();
 
   try {

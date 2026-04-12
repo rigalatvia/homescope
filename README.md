@@ -286,6 +286,18 @@ Set these in secure server env / Secret Manager (never `NEXT_PUBLIC_*`):
 - `DDF_REQUEST_TIMEOUT_MS` (default `20000`)
 - `DDF_MAX_RETRIES` (default `3`)
 
+### Secret Manager Autoload (Server Runtime)
+
+The API routes now attempt to autoload missing server env values from Google Secret Manager at runtime.
+
+- Secret names should match env keys (example: `DDF_CLIENT_ID`, `DDF_CLIENT_SECRET`, `DDF_TOKEN_URL`, `DDF_LISTINGS_URL`, `MLS_SYNC_ADMIN_TOKEN`).
+- The runtime service account must have `roles/secretmanager.secretAccessor`.
+- Autoload runs once per instance and caches values in process memory.
+
+Optional controls:
+- `GCP_SECRET_NAMES` (comma-separated list to override default secret key list)
+- `SECRETS_AUTOLOAD_DISABLED=true` (disable autoload)
+
 Scheduler-ready exports:
 - `firebase/functions/src/index.ts`
   - `mlsScheduledFullSync`
