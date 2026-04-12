@@ -16,6 +16,28 @@ interface SyncCounts {
 interface SyncResponse {
   success: boolean;
   counts?: SyncCounts;
+  result?: {
+    mode?: string;
+    startedAt?: string;
+    finishedAt?: string;
+    stats?: {
+      fetched?: number;
+      filtered?: number;
+      normalized?: number;
+      included?: number;
+      excluded?: number;
+      excludedPermToAdvertiseFalse?: number;
+      hiddenByReason?: Record<string, number>;
+      created?: number;
+      updated?: number;
+      archived?: number;
+      upserted?: number;
+      hidden?: number;
+      unchanged?: number;
+      snapshotsWritten?: number;
+      failed?: number;
+    };
+  };
   error?: string;
 }
 
@@ -24,6 +46,17 @@ interface SecretsCheckResponse {
   logs?: string[];
   error?: string;
   detail?: string;
+}
+
+async function parseApiResponse<T>(response: Response): Promise<T | null> {
+  const raw = await response.text();
+  if (!raw.trim()) return null;
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new Error(raw);
+  }
 }
 
 export function MlsSyncPanel() {
@@ -36,6 +69,11 @@ export function MlsSyncPanel() {
   const [lastCounts, setLastCounts] = useState<SyncCounts | null>(null);
   const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
   const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
+
+  function appendDiagnosticLog(lines: string[]): void {
+    const payload = lines.join("\n");
+    setDiagnosticLogs((prev) => (prev ? `${prev}\n${payload}` : payload));
+  }
 
   async function runSync(mode: SyncMode) {
     if (!adminToken.trim()) {
@@ -63,15 +101,35 @@ export function MlsSyncPanel() {
         body: JSON.stringify(body)
       });
 
-      const json = (await response.json()) as SyncResponse;
-      if (!response.ok || !json.success) {
-        throw new Error(json.error || "Sync failed.");
+      const json = await parseApiResponse<SyncResponse>(response);
+      if (!json || !response.ok || !json.success) {
+        const apiError = json?.error || `Sync failed with status ${response.status}.`;
+        throw new Error(apiError);
       }
 
       setLastCounts(json.counts ?? null);
       setSuccessMessage(`Sync completed successfully (${mode}).`);
+      const stats = json.result?.stats;
+      const hiddenByReason = stats?.hiddenByReason ?? {};
+      const hiddenByReasonText =
+        Object.keys(hiddenByReason).length > 0
+          ? Object.entries(hiddenByReason)
+              .map(([key, value]) => `${key}:${value}`)
+              .join(", ")
+          : "none";
+
+      appendDiagnosticLog([
+        `[sync] ${new Date().toISOString()} mode=${mode} status=success`,
+        `[sync] fetched=${stats?.fetched ?? json.counts?.fetched ?? 0} filtered=${stats?.filtered ?? json.counts?.filtered ?? 0} normalized=${stats?.normalized ?? 0}`,
+        `[sync] included=${stats?.included ?? 0} excluded=${stats?.excluded ?? 0} excludedPermToAdvertiseFalse=${stats?.excludedPermToAdvertiseFalse ?? 0}`,
+        `[sync] created=${stats?.created ?? json.counts?.created ?? 0} updated=${stats?.updated ?? json.counts?.updated ?? 0} upserted=${stats?.upserted ?? 0} unchanged=${stats?.unchanged ?? 0}`,
+        `[sync] archived=${stats?.archived ?? json.counts?.archived ?? 0} hidden=${stats?.hidden ?? 0} snapshotsWritten=${stats?.snapshotsWritten ?? 0} failed=${stats?.failed ?? json.counts?.failed ?? 0}`,
+        `[sync] hiddenByReason=${hiddenByReasonText}`
+      ]);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Sync failed.");
+      const message = error instanceof Error ? error.message : "Sync failed.";
+      setErrorMessage(message);
+      appendDiagnosticLog([`[sync-error] ${new Date().toISOString()} mode=${mode} message=${message}`]);
     } finally {
       setIsSubmitting(false);
       setActiveMode(null);
@@ -93,13 +151,17 @@ export function MlsSyncPanel() {
         body: JSON.stringify({})
       });
 
-      const json = (await response.json()) as SecretsCheckResponse;
-      if (!response.ok || !json.success) {
-        throw new Error(json.error || json.detail || "Secrets check failed.");
+      const json = await parseApiResponse<SecretsCheckResponse>(response);
+      if (!json || !response.ok || !json.success) {
+        throw new Error(json?.error || json?.detail || `Secrets check failed with status ${response.status}.`);
       }
 
       const logs = (json.logs ?? []).join("\n");
-      setDiagnosticLogs(logs || "No diagnostics logs returned.");
+      if (logs) {
+        appendDiagnosticLog([logs]);
+      } else {
+        appendDiagnosticLog(["[secrets-check] No diagnostics logs returned."]);
+      }
       setSuccessMessage("Secrets diagnostics completed.");
     } catch (error) {
       setDiagnosticLogs("");
