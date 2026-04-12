@@ -43,7 +43,10 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     let page = 1;
     let reachedEnd = false;
 
-    while (page <= mlsSyncConfig.fullSyncMaxPagesPerRun) {
+    const hasPageCap = mlsSyncConfig.fullSyncMaxPagesPerRun > 0;
+    const maxPages = hasPageCap ? mlsSyncConfig.fullSyncMaxPagesPerRun : Number.POSITIVE_INFINITY;
+
+    while (page <= maxPages) {
       const rawPage = await connector.fetchAllListings({
         page,
         pageSize: mlsSyncConfig.pageSize
