@@ -1,12 +1,12 @@
 import { mlsSyncConfig } from "@/lib/mls/config";
 import type { MLSConnectorKind, MLSSyncResult, MLSSyncStats } from "@/lib/mls/types";
-import { hideStaleListings } from "@/lib/mls/sync/staleCleanup";
+import { getDefaultFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
+import { listAllListingIds, deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 
 export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
   const startedAt = new Date().toISOString();
-  const now = Date.now();
-  const staleBeforeIso = new Date(now - mlsSyncConfig.staleThresholdHours * 60 * 60 * 1000).toISOString();
+  const nowIso = new Date().toISOString();
   const stats: MLSSyncStats = {
     fetched: 0,
     filtered: 0,
@@ -25,18 +25,26 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
     failed: 0
   };
 
-  logSyncInfo("Stale cleanup started", {
-    staleBeforeIso,
-    thresholdHours: mlsSyncConfig.staleThresholdHours
+  logSyncInfo("Cleanup started (full listings reset mode)", {
+    sourceSystem: mlsSyncConfig.sourceSystem
   });
 
   try {
-    const nowIso = new Date().toISOString();
-    stats.hidden = await hideStaleListings(staleBeforeIso, nowIso);
+    const allListingIds = await listAllListingIds();
+    stats.fetched = allListingIds.length;
+
+    for (const listingId of allListingIds) {
+      await deleteListingDocument(listingId);
+    }
+
+    stats.hidden = allListingIds.length;
     stats.archived = stats.hidden;
     stats.hiddenByReason = stats.hidden > 0 ? { stale_listing: stats.hidden } : {};
+
+    await setFullSyncStartPage(getDefaultFullSyncStartPage());
+
     const finishedAt = new Date().toISOString();
-    logSyncInfo("Stale cleanup summary", {
+    logSyncInfo("Cleanup summary (full listings reset mode)", {
       totalFetched: stats.fetched,
       totalWritten: stats.upserted,
       totalVisible: stats.included,
@@ -44,7 +52,11 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
       totalArchived: stats.archived,
       hiddenByReason: stats.hiddenByReason
     });
-    logSyncInfo("Stale cleanup completed", { hidden: stats.hidden });
+    logSyncInfo("Cleanup completed", {
+      hidden: stats.hidden,
+      cursorResetToPage: getDefaultFullSyncStartPage(),
+      completedAt: nowIso
+    });
 
     return {
       mode: "cleanup",

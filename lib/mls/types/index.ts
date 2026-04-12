@@ -46,6 +46,13 @@ export interface RawMLSFeedListing {
   propertyClass?: string | null;
   transactionType?: string | null;
   permToAdvertise?: "Yes" | "No" | boolean | null;
+  permissionSignals?: {
+    permToAdvertise?: string | boolean | null;
+    permToAdvertiseYN?: string | boolean | null;
+    permitToAdvertise?: string | boolean | null;
+    internetEntireListingDisplayYN?: string | boolean | null;
+    internetAddressDisplayYN?: string | boolean | null;
+  } | null;
   municipality?: string | null;
   area?: string | null;
   address?: {

@@ -252,6 +252,13 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         "BusinessType"
       ]),
       permToAdvertise: pickPermToAdvertise(record),
+      permissionSignals: {
+        permToAdvertise: readRawPermissionSignal(record, "PermToAdvertise"),
+        permToAdvertiseYN: readRawPermissionSignal(record, "PermToAdvertiseYN"),
+        permitToAdvertise: readRawPermissionSignal(record, "PermitToAdvertise"),
+        internetEntireListingDisplayYN: readRawPermissionSignal(record, "InternetEntireListingDisplayYN"),
+        internetAddressDisplayYN: readRawPermissionSignal(record, "InternetAddressDisplayYN")
+      },
       municipality: pickString(record, ["Municipality", "City", "CommunityName"]),
       area: pickString(record, ["Area", "Community", "Neighbourhood"]),
       address: {
@@ -287,6 +294,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 }
 
+function readRawPermissionSignal(record: JsonObject, key: string): string | boolean | null {
+  const value = record[key];
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return value === 1 ? true : value === 0 ? false : String(value);
+  return null;
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -316,7 +331,7 @@ function pickNumber(record: JsonObject, keys: string[]): number | null {
   return null;
 }
 
-function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean {
+function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean | null {
   // IMPORTANT:
   // Only explicit advertise-permission fields should drive this flag.
   // Internet display flags are not equivalent to "Perm to Advertise" in all board systems.
@@ -324,8 +339,14 @@ function pickPermToAdvertise(record: JsonObject): "Yes" | "No" | boolean {
   if (boolValue != null) return boolValue;
 
   const raw = pickString(record, ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise"]);
-  if (!raw) return false;
-  return /^(yes|y|true|1)$/i.test(raw) ? "Yes" : "No";
+  if (raw) return /^(yes|y|true|1)$/i.test(raw) ? "Yes" : "No";
+
+  // Fallback only when explicit permission is absent in payload.
+  // Keeps compatibility with feeds that expose only internet display flags.
+  const internetFallback = pickBoolean(record, ["InternetEntireListingDisplayYN", "InternetAddressDisplayYN"]);
+  if (internetFallback != null) return internetFallback;
+
+  return null;
 }
 
 function pickBoolean(record: JsonObject, keys: string[]): boolean | null {
@@ -414,7 +435,6 @@ function shouldRetryDdfError(error: unknown): boolean {
 function buildDefaultResidentialFilter(): string {
   const residentialSubTypes = ["Single Family", "Multi-family"];
   const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
-  const internetFilter = "(InternetEntireListingDisplayYN eq true or InternetAddressDisplayYN eq true)";
   const statusFilter = "StandardStatus eq 'Active'";
-  return `(${subTypeFilter}) and ${internetFilter} and (${statusFilter})`;
+  return `(${subTypeFilter}) and (${statusFilter})`;
 }

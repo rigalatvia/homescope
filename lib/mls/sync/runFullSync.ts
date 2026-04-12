@@ -1,4 +1,11 @@
-import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
+import type {
+  MLSConnectorKind,
+  MLSHiddenReason,
+  MLSSyncResult,
+  MLSSyncStats,
+  NormalizedMLSListing,
+  RawMLSFeedListing
+} from "@/lib/mls/types";
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
@@ -32,7 +39,9 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   };
   const rawPropertyClassCounts = new Map<string, number>();
   const rawPropertyClassMissing = { count: 0 };
+  const rawPermToAdvertiseCounts = new Map<string, number>();
   const mappedPropertyClassCounts = new Map<string, number>();
+  const permissionAuditRows: string[] = [];
 
   logSyncInfo("Full sync started", {
     connector: connector.connectorName,
@@ -76,7 +85,9 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       const nowIso = new Date().toISOString();
       const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
       collectRawPropertyClassStats(filteredRaw.included, rawPropertyClassCounts, rawPropertyClassMissing);
+      collectRawPermToAdvertiseStats(filteredRaw.included, rawPermToAdvertiseCounts);
       collectMappedPropertyClassStats(normalized, mappedPropertyClassCounts);
+      collectPermissionAuditRows(filteredRaw.included, normalized, permissionAuditRows, 25);
       stats.normalized += normalized.length;
       const includedCount = normalized.filter((l) => l.isVisible).length;
       stats.included += includedCount;
@@ -132,11 +143,14 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       });
     }
     const rawClassTop = formatTopCounts(rawPropertyClassCounts, 12);
+    const rawPermTop = formatTopCounts(rawPermToAdvertiseCounts, 8);
     const mappedClassTop = formatTopCounts(mappedPropertyClassCounts, 8);
     notes.push(
       `rawPropertyClassSummary missing=${rawPropertyClassMissing.count} top=${rawClassTop || "none"}`
     );
+    notes.push(`rawPermToAdvertiseSummary top=${rawPermTop || "none"}`);
     notes.push(`mappedPropertyClassSummary top=${mappedClassTop || "none"}`);
+    notes.push(...buildPermissionAuditNotesForRun(permissionAuditRows));
 
     const finishedAt = new Date().toISOString();
     logSyncInfo("Full sync summary", {
@@ -168,6 +182,18 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   }
 }
 
+function buildPermissionAuditNotesForRun(rows: string[]): string[] {
+  if (rows.length === 0) {
+    return ["permissionAudit no rows captured in this batch"];
+  }
+
+  const lines = rows.slice(0, 12).map((row, idx) => `permissionAudit[${idx + 1}] ${row}`);
+  if (rows.length > 12) {
+    lines.push(`permissionAudit more=${rows.length - 12}`);
+  }
+  return lines;
+}
+
 function collectRawPropertyClassStats(
   rawListings: Array<{ propertyClass?: string | null }>,
   counts: Map<string, number>,
@@ -191,6 +217,64 @@ function collectMappedPropertyClassStats(
     const value = listing.propertyClass || "null";
     counts.set(value, (counts.get(value) || 0) + 1);
   }
+}
+
+function collectRawPermToAdvertiseStats(
+  rawListings: Array<{ permToAdvertise?: "Yes" | "No" | boolean | null }>,
+  counts: Map<string, number>
+): void {
+  for (const raw of rawListings) {
+    const value = raw.permToAdvertise;
+    const key =
+      value === true || value === "Yes"
+        ? "true_or_yes"
+        : value === false || value === "No"
+          ? "false_or_no"
+          : "missing";
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+}
+
+function collectPermissionAuditRows(
+  rawListings: RawMLSFeedListing[],
+  normalizedListings: NormalizedMLSListing[],
+  target: string[],
+  maxRows: number
+): void {
+  if (target.length >= maxRows) return;
+
+  for (let i = 0; i < rawListings.length; i += 1) {
+    if (target.length >= maxRows) break;
+    const raw = rawListings[i];
+    const normalized = normalizedListings[i];
+    if (!raw || !normalized) continue;
+
+    if (normalized.hiddenReason !== "perm_to_advertise_false" && normalized.isVisible !== true) {
+      continue;
+    }
+
+    target.push(
+      [
+        `mls=${normalized.mlsNumber || raw.mlsNumber || "unknown"}`,
+        `rawPerm=${stringifyPermissionValue(raw.permToAdvertise)}`,
+        `rawPermToAdvertise=${stringifyPermissionValue(raw.permissionSignals?.permToAdvertise)}`,
+        `rawPermToAdvertiseYN=${stringifyPermissionValue(raw.permissionSignals?.permToAdvertiseYN)}`,
+        `rawPermitToAdvertise=${stringifyPermissionValue(raw.permissionSignals?.permitToAdvertise)}`,
+        `rawInternetEntire=${stringifyPermissionValue(raw.permissionSignals?.internetEntireListingDisplayYN)}`,
+        `rawInternetAddress=${stringifyPermissionValue(raw.permissionSignals?.internetAddressDisplayYN)}`,
+        `normalizedPerm=${normalized.permToAdvertise}`,
+        `isVisible=${normalized.isVisible}`,
+        `hiddenReason=${normalized.hiddenReason || "none"}`
+      ].join(" | ")
+    );
+  }
+}
+
+function stringifyPermissionValue(value: string | boolean | null | undefined): string {
+  if (value == null) return "null";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  const text = String(value).trim();
+  return text.length > 0 ? text : "empty";
 }
 
 function normalizeRawClassValue(value?: string | null): string | null {
