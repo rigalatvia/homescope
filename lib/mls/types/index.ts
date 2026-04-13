@@ -64,6 +64,10 @@ export interface RawMLSFeedListing {
     postalCode?: string | null;
   } | null;
   listPrice?: number | string | null;
+  leaseAmount?: number | string | null;
+  leaseAmountFrequency?: string | null;
+  leasePerUnit?: string | null;
+  existingLeaseType?: string | null;
   bedrooms?: number | string | null;
   bathrooms?: number | string | null;
   propertyType?: string | null;

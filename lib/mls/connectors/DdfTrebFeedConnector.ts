@@ -222,6 +222,19 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   private mapDdfRecordToRawListing(record: JsonObject, index: number): RawMLSFeedListing {
     const sourceListingKey =
       pickString(record, ["ListingKey", "listingKey", "Id", "id", "ListingId"]) || `${Date.now()}-${index}`;
+    const explicitTransactionType = pickString(record, [
+      "TransactionType",
+      "Transaction",
+      "ForSaleOrRent",
+      "LeaseType",
+      "ListingContractDateType",
+      "BusinessType"
+    ]);
+    const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
+    const leaseAmountFrequency = pickString(record, ["LeaseAmountFrequency"]);
+    const leasePerUnit = pickString(record, ["LeasePerUnit"]);
+    const existingLeaseType = pickString(record, ["ExistingLeaseType", "LeaseType"]);
+    const listPrice = pickNumber(record, ["ListPrice", "Price"]) ?? leaseAmount;
 
     return {
       sourceSystem: this.sourceSystem,
@@ -244,14 +257,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         "BuildingType",
         "BuildingTypeName"
       ]),
-      transactionType: pickString(record, [
-        "TransactionType",
-        "Transaction",
-        "ForSaleOrRent",
-        "LeaseType",
-        "ListingContractDateType",
-        "BusinessType"
-      ]),
+      transactionType: inferTransactionType(record, explicitTransactionType),
       permToAdvertise: pickPermToAdvertise(record),
       permissionSignals: {
         permToAdvertise: readRawPermissionSignal(record, "PermToAdvertise"),
@@ -269,7 +275,11 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         fullAddress: pickString(record, ["UnparsedAddress", "Address", "FullAddress"]),
         postalCode: pickString(record, ["PostalCode", "Postcode", "Zip"])
       },
-      listPrice: pickNumber(record, ["ListPrice", "Price", "LeasePrice"]),
+      listPrice,
+      leaseAmount,
+      leaseAmountFrequency,
+      leasePerUnit,
+      existingLeaseType,
       bedrooms: pickNumber(record, ["BedroomsTotal", "Bedrooms", "Beds"]),
       bathrooms: pickNumber(record, ["BathroomsTotalInteger", "Bathrooms", "Baths"]),
       propertyType: pickString(record, [
@@ -423,9 +433,38 @@ function shouldRetryDdfError(error: unknown): boolean {
   return /429|5\d\d|timeout|network|fetch/i.test(message);
 }
 
+function inferTransactionType(record: JsonObject, explicitTransactionType: string | null): string | null {
+  const explicit = (explicitTransactionType || "").trim().toLowerCase();
+  if (explicit) {
+    if (/\bsale\b|\bfor sale\b/.test(explicit) && /\blease\b|\brent\b|\bfor rent\b/.test(explicit)) {
+      return "sale_or_lease";
+    }
+    if (/\blease\b|\brent\b|\bfor rent\b/.test(explicit)) return "lease";
+    if (/\bsale\b|\bfor sale\b/.test(explicit)) return "sale";
+  }
+
+  const listPrice = pickNumber(record, ["ListPrice", "Price"]);
+  const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
+  const leaseFrequency = pickString(record, ["LeaseAmountFrequency"]);
+  const leasePerUnit = pickString(record, ["LeasePerUnit"]);
+  const existingLeaseType = pickString(record, ["ExistingLeaseType", "LeaseType"]);
+  const remarks = pickString(record, ["PublicRemarks", "Remarks", "Description"])?.toLowerCase() || "";
+
+  const hasSaleSignal = listPrice != null;
+  const hasLeaseSignal =
+    leaseAmount != null ||
+    !!leaseFrequency ||
+    !!leasePerUnit ||
+    !!existingLeaseType ||
+    /\blease\b|\brent\b|\bfor rent\b|\bmonthly\b/.test(remarks);
+
+  if (hasSaleSignal && hasLeaseSignal) return "sale_or_lease";
+  if (hasLeaseSignal) return "lease";
+  if (hasSaleSignal) return "sale";
+  return explicitTransactionType;
+}
+
 function buildDefaultResidentialFilter(): string {
-  const residentialSubTypes = ["Single Family", "Multi-family"];
-  const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
-  const statusFilter = "StandardStatus eq 'Active'";
-  return `(${subTypeFilter}) and (${statusFilter})`;
+  // Keep this broad so we don't miss valid residential lease records with varying subtype labels.
+  return "StandardStatus eq 'Active'";
 }
