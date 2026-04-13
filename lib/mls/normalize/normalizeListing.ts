@@ -13,6 +13,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
   const normalized: NormalizedMLSListing = {
     listingId: `${raw.sourceSystem}:${raw.sourceListingKey}`,
     mlsNumber: raw.mlsNumber?.trim() || null,
+    listAgentNationalAssociationId: raw.listAgentNationalAssociationId?.trim() || null,
     sourceSystem: raw.sourceSystem,
     sourceListingKey: raw.sourceListingKey,
     propertyClass,

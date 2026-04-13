@@ -4,7 +4,7 @@ import {
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import { getSiteSettings } from "@/lib/settings/site-settings";
+import { DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS, getSiteSettings } from "@/lib/settings/site-settings";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
 export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
@@ -51,10 +51,23 @@ function sortByFeaturedIds(listings: Listing[], featuredListingIds: string[]): L
   return [...listings].sort((a, b) => {
     const aRank = featuredRank.get(a.id);
     const bRank = featuredRank.get(b.id);
+    const aDefaultFeatured = isDefaultAgentFeatured(a);
+    const bDefaultFeatured = isDefaultAgentFeatured(b);
 
     if (aRank != null && bRank != null) return aRank - bRank;
     if (aRank != null) return -1;
     if (bRank != null) return 1;
+    if (aDefaultFeatured && bDefaultFeatured) return b.price - a.price;
+    if (aDefaultFeatured) return -1;
+    if (bDefaultFeatured) return 1;
     return b.price - a.price;
   });
+}
+
+function isDefaultAgentFeatured(listing: Listing): boolean {
+  const value = listing.listAgentNationalAssociationId?.trim();
+  if (!value) return false;
+  return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
+    value as (typeof DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS)[number]
+  );
 }

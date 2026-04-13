@@ -3,6 +3,7 @@ import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 const SETTINGS_COLLECTION = "settings";
 const SITE_SETTINGS_DOCUMENT = "site";
 const DEFAULT_LEAD_SUBJECT = "Homescope GTA LEAD";
+export const DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS = ["9574633"] as const;
 
 export interface SiteSettings {
   leadRecipientEmail: string;

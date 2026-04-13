@@ -43,6 +43,7 @@ export interface RawMLSFeedListing {
   sourceSystem: string;
   sourceListingKey: string;
   mlsNumber?: string | null;
+  listAgentNationalAssociationId?: string | null;
   propertyClass?: string | null;
   transactionType?: string | null;
   permToAdvertise?: "Yes" | "No" | boolean | null;
@@ -81,6 +82,7 @@ export interface RawMLSFeedListing {
 export interface NormalizedMLSListing {
   listingId: string;
   mlsNumber: string | null;
+  listAgentNationalAssociationId: string | null;
   sourceSystem: string;
   sourceListingKey: string;
   propertyClass: MLSPropertyClass | null;

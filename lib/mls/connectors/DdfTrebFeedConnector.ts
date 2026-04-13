@@ -227,6 +227,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       sourceSystem: this.sourceSystem,
       sourceListingKey,
       mlsNumber: pickString(record, ["MlsNumber", "MLSNumber", "ListingNumber", "ListingId", "Id"]),
+      listAgentNationalAssociationId: pickString(record, ["ListAgentNationalAssociationId"]),
       propertyClass: pickString(record, [
         "PropertyClass",
         "PropertyClassName",

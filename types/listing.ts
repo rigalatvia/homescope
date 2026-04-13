@@ -6,6 +6,7 @@ export type PropertyType = string;
 export interface Listing {
   id: string;
   mlsNumber: string;
+  listAgentNationalAssociationId?: string;
   title: string;
   price: number;
   city: string;

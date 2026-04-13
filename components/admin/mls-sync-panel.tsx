@@ -49,6 +49,17 @@ interface SecretsCheckResponse {
   detail?: string;
 }
 
+interface ListingsStatsResponse {
+  success: boolean;
+  stats?: {
+    totalRows: number;
+    visibleRows: number;
+    hiddenRows: number;
+    checkedAt: string;
+  };
+  error?: string;
+}
+
 async function parseApiResponse<T>(response: Response): Promise<T | null> {
   const raw = await response.text();
   if (!raw.trim()) return null;
@@ -70,16 +81,24 @@ export function MlsSyncPanel() {
   const [lastCounts, setLastCounts] = useState<SyncCounts | null>(null);
   const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
   const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
+  const [isRunningFullAll, setIsRunningFullAll] = useState(false);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [listingsStats, setListingsStats] = useState<{
+    totalRows: number;
+    visibleRows: number;
+    hiddenRows: number;
+    checkedAt: string;
+  } | null>(null);
 
   function appendDiagnosticLog(lines: string[]): void {
     const payload = lines.join("\n");
     setDiagnosticLogs((prev) => (prev ? `${prev}\n${payload}` : payload));
   }
 
-  async function runSync(mode: SyncMode) {
+  async function runSync(mode: SyncMode): Promise<SyncResponse> {
     if (!adminToken.trim()) {
       setErrorMessage("Admin token is required.");
-      return;
+      throw new Error("Admin token is required.");
     }
 
     setIsSubmitting(true);
@@ -130,13 +149,66 @@ export function MlsSyncPanel() {
       if (json.result?.notes && json.result.notes.length > 0) {
         appendDiagnosticLog(json.result.notes.map((note) => `[sync-note] ${note}`));
       }
+      await loadListingsStats();
+      return json;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed.";
       setErrorMessage(message);
       appendDiagnosticLog([`[sync-error] ${new Date().toISOString()} mode=${mode} message=${message}`]);
+      throw error;
     } finally {
       setIsSubmitting(false);
       setActiveMode(null);
+    }
+  }
+
+  async function loadListingsStats() {
+    if (!adminToken.trim()) return;
+    setIsLoadingStats(true);
+    try {
+      const response = await fetch("/api/admin/listings-stats", {
+        method: "GET",
+        headers: {
+          "x-admin-sync-token": adminToken.trim()
+        }
+      });
+      const json = await parseApiResponse<ListingsStatsResponse>(response);
+      if (!json || !response.ok || !json.success || !json.stats) {
+        throw new Error(json?.error || `Listings stats failed with status ${response.status}.`);
+      }
+      setListingsStats(json.stats);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load listings stats.";
+      appendDiagnosticLog([`[stats-error] ${new Date().toISOString()} message=${message}`]);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }
+
+  async function runFullUntilEnd() {
+    if (isRunningFullAll) return;
+    setIsRunningFullAll(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const maxIterations = 80;
+
+    try {
+      for (let i = 0; i < maxIterations; i += 1) {
+        const json = await runSync("full");
+        const notes = json.result?.notes || [];
+        const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));
+        if (reachedEnd) {
+          setSuccessMessage("Full sync completed for all pages (cursor reached end of feed).");
+          return;
+        }
+      }
+
+      setSuccessMessage("Stopped after safety limit. Run again to continue from current cursor.");
+    } catch {
+      // runSync already logs and sets error state
+    } finally {
+      setIsRunningFullAll(false);
     }
   }
 
@@ -200,19 +272,27 @@ export function MlsSyncPanel() {
           />
         </label>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <button
             type="button"
             onClick={() => runSync("full")}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRunningFullAll}
             className="rounded-full bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isSubmitting && activeMode === "full" ? "Running..." : "Run Full Sync"}
           </button>
           <button
             type="button"
+            onClick={runFullUntilEnd}
+            disabled={isSubmitting || isRunningFullAll}
+            className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
+          >
+            {isRunningFullAll ? "Running All..." : "Run Full (All Pages)"}
+          </button>
+          <button
+            type="button"
             onClick={() => runSync("incremental")}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRunningFullAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >
             {isSubmitting && activeMode === "incremental" ? "Running..." : "Run Incremental"}
@@ -220,7 +300,7 @@ export function MlsSyncPanel() {
           <button
             type="button"
             onClick={() => runSync("cleanup")}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRunningFullAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >
             {isSubmitting && activeMode === "cleanup" ? "Running..." : "Run Cleanup"}
@@ -234,6 +314,15 @@ export function MlsSyncPanel() {
           className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
         >
           {isCheckingSecrets ? "Checking Secrets..." : "Check Secrets Access"}
+        </button>
+
+        <button
+          type="button"
+          onClick={loadListingsStats}
+          disabled={isLoadingStats}
+          className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
+        >
+          {isLoadingStats ? "Loading Stats..." : "Refresh Listings Stats"}
         </button>
       </div>
 
@@ -252,6 +341,18 @@ export function MlsSyncPanel() {
             <p>Updated: {lastCounts.updated}</p>
             <p>Archived: {lastCounts.archived}</p>
             <p>Failed: {lastCounts.failed}</p>
+          </div>
+        </div>
+      )}
+
+      {listingsStats && (
+        <div className="mt-5 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+          <p className="text-sm font-semibold text-brand-900">Listings Collection Stats</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-brand-800 sm:grid-cols-4">
+            <p>Total Rows: {listingsStats.totalRows}</p>
+            <p>Visible Rows: {listingsStats.visibleRows}</p>
+            <p>Hidden Rows: {listingsStats.hiddenRows}</p>
+            <p>Checked: {new Date(listingsStats.checkedAt).toLocaleString()}</p>
           </div>
         </div>
       )}

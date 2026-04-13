@@ -23,8 +23,8 @@ export const mlsSyncConfig = {
   connectorKind: (process.env.MLS_CONNECTOR_KIND || "ddf-treb") as MLSConnectorKind,
   sourceSystem: process.env.MLS_SOURCE_SYSTEM || "toronto-board-ddf",
   pageSize: 20,
-  // 0 means unlimited pages (entire feed in one full-sync run).
-  fullSyncMaxPagesPerRun: 0,
+  // Keep each run bounded to avoid platform request timeouts.
+  fullSyncMaxPagesPerRun: 5,
   featureFlags: {
     snapshotsEnabled: process.env.MLS_SNAPSHOTS_ENABLED !== "false",
     cleanupEnabled: process.env.MLS_CLEANUP_ENABLED !== "false",

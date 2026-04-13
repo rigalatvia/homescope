@@ -71,6 +71,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
   return {
     id: raw.listingId,
     mlsNumber: raw.mlsNumber || "N/A",
+    listAgentNationalAssociationId: raw.listAgentNationalAssociationId || undefined,
     title: buildListingTitle(raw),
     price: raw.price ?? 0,
     city: raw.municipality || "Unknown",

@@ -1,4 +1,5 @@
 import { SITE_CONFIG } from "@/config/site";
+import Link from "next/link";
 
 export function ServiceAreasSection() {
   return (
@@ -10,11 +11,14 @@ export function ServiceAreasSection() {
         </p>
         <ul className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {SITE_CONFIG.primaryMarkets.map((city) => (
-            <li
-              key={city}
-              className="rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 px-4 py-4 text-center font-semibold text-brand-900"
-            >
-              {city}
+            <li key={city}>
+              <Link
+                href={`/listings?city=${encodeURIComponent(city)}`}
+                className="block rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 px-4 py-4 text-center font-semibold text-brand-900 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+                aria-label={`Browse ${city} listings`}
+              >
+                {city}
+              </Link>
             </li>
           ))}
         </ul>
