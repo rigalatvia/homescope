@@ -4,16 +4,27 @@ import { useState } from "react";
 import Image from "next/image";
 
 export function ListingGallery({ images, address }: { images: string[]; address: string }) {
+  const photoImages = images.filter(isJpgUrl);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const current = images[currentIndex];
-  const hasMultipleImages = images.length > 1;
+  const current = photoImages[currentIndex];
+  const hasMultipleImages = photoImages.length > 1;
+
+  if (photoImages.length === 0) {
+    return (
+      <section className="space-y-3">
+        <div className="flex h-72 w-full items-center justify-center rounded-2xl border border-brand-100 bg-brand-50 text-sm text-brand-700 shadow-soft sm:h-[28rem]">
+          No photos available for this listing.
+        </div>
+      </section>
+    );
+  }
 
   const showPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => (prev - 1 + photoImages.length) % photoImages.length);
   };
 
   const showNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => (prev + 1) % photoImages.length);
   };
 
   return (
@@ -48,7 +59,7 @@ export function ListingGallery({ images, address }: { images: string[]; address:
         )}
       </div>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-        {images.map((image, index) => (
+        {photoImages.map((image, index) => (
           <button
             key={image}
             type="button"
@@ -70,4 +81,13 @@ export function ListingGallery({ images, address }: { images: string[]; address:
       </div>
     </section>
   );
+}
+
+function isJpgUrl(url: string): boolean {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return pathname.endsWith(".jpg") || pathname.endsWith(".jpeg");
+  } catch {
+    return false;
+  }
 }

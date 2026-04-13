@@ -374,6 +374,8 @@ function mapImages(record: JsonObject): RawMLSFeedListing["images"] {
       const row = entry as JsonObject;
       const url = pickString(row, ["MediaURL", "Url", "url"]);
       if (!url) return null;
+      const mediaCategory = pickString(row, ["MediaCategory", "Category", "MediaType"]) || "";
+      if (!isDisplayableImage(url, mediaCategory)) return null;
       return {
         url,
         type: "photo",
@@ -384,6 +386,20 @@ function mapImages(record: JsonObject): RawMLSFeedListing["images"] {
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
   return items;
+}
+
+function isDisplayableImage(url: string, mediaCategory: string): boolean {
+  const normalizedCategory = mediaCategory.trim().toLowerCase();
+  if (normalizedCategory !== "property photo") {
+    return false;
+  }
+
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return /\.(jpg|jpeg|png|webp|avif|gif)$/i.test(pathname);
+  } catch {
+    return false;
+  }
 }
 
 function extractListingsArray(payload: unknown): JsonObject[] {

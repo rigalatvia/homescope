@@ -73,6 +73,8 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     [raw.address.streetNumber, raw.address.streetName, raw.address.unit].filter(Boolean).join(" ").trim() ||
     "Address unavailable";
 
+  const images = filterPhotoUrls(raw.images);
+
   return {
     id: raw.listingId,
     mlsNumber: raw.mlsNumber || "N/A",
@@ -88,7 +90,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     propertyType: mapOwnershipType(raw),
     transactionType: parseTransactionType(raw),
     description: raw.publicRemarks || "Listing description will be available shortly.",
-    images: raw.images.length > 0 ? raw.images : [FALLBACK_IMAGE],
+    images: images.length > 0 ? images : [FALLBACK_IMAGE],
     isPubliclyAdvertisable: raw.isVisible === true,
     status: raw.status === "active" ? "active" : "pending",
     listingUrlSlug: raw.slug,
@@ -98,6 +100,17 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt
   };
+}
+
+function filterPhotoUrls(urls: string[]): string[] {
+  return urls.filter((url) => {
+    try {
+      const pathname = new URL(url).pathname.toLowerCase();
+      return /\.(jpg|jpeg|png|webp|avif|gif)$/i.test(pathname);
+    } catch {
+      return false;
+    }
+  });
 }
 
 function mapOwnershipType(raw: MLSListingFirestoreDocument): string {
