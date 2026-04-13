@@ -10,7 +10,7 @@ import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing
 export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
   const listings = await getPublicListingsFromFirestore(filters);
   const filtered = applyListingFilters(listings, filters);
-  const sorted = await sortListingsWithFeaturedPriority(filtered);
+  const sorted = sortListingsForBrowsing(filtered, filters.sort);
   return paginateListings(sorted, filters);
 }
 
@@ -71,4 +71,21 @@ function isDefaultAgentFeatured(listing: Listing): boolean {
   return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
     value as (typeof DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS)[number]
   );
+}
+
+function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort"] = "price_asc"): Listing[] {
+  if (sort === "price_desc") {
+    return [...listings].sort((a, b) => b.price - a.price);
+  }
+
+  if (sort === "newest") {
+    return [...listings].sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt));
+  }
+
+  return [...listings].sort((a, b) => a.price - b.price);
+}
+
+function toMillis(value: string): number {
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
 }

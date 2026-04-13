@@ -1,9 +1,10 @@
-import type { Listing, ListingFilters, PaginatedListings, PropertyType } from "@/types/listing";
+import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
 import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
 
 export function parseListingFilters(params: {
   city?: string;
   transactionType?: string;
+  sort?: string;
   minPrice?: string;
   maxPrice?: string;
   bedrooms?: string;
@@ -18,6 +19,7 @@ export function parseListingFilters(params: {
   return {
     city: params.city || undefined,
     transactionType: parseTransactionType(params.transactionType),
+    sort: parseSort(params.sort),
     minPrice: parseNumber(params.minPrice),
     maxPrice: parseNumber(params.maxPrice),
     bedrooms: bedrooms.value,
@@ -59,6 +61,14 @@ function parseTransactionType(value?: string): ListingFilters["transactionType"]
   const normalized = value.trim().toLowerCase();
   if (normalized === "sale" || normalized === "lease") return normalized;
   return undefined;
+}
+
+function parseSort(value?: string): ListingSort {
+  if (!value) return "price_asc";
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "price_desc") return "price_desc";
+  if (normalized === "newest") return "newest";
+  return "price_asc";
 }
 
 export function paginateListings(listings: Listing[], filters: ListingFilters): PaginatedListings {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SITE_CONFIG } from "@/config/site";
 import { formatPrice } from "@/lib/utils/format";
-import type { ListingFilters, PropertyType } from "@/types/listing";
+import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 
 const PROPERTY_TYPES: PropertyType[] = [
   "Single Family",
@@ -14,6 +14,11 @@ const PROPERTY_TYPES: PropertyType[] = [
   "Condo"
 ];
 const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
+const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "newest", label: "Newest First" }
+];
 
 interface ListingFiltersProps {
   filters: ListingFilters;
@@ -21,10 +26,20 @@ interface ListingFiltersProps {
 
 export function ListingFilters({ filters }: ListingFiltersProps) {
   const chips = buildFilterChips(filters);
+  const formResetKey = [
+    filters.city || "",
+    filters.transactionType || "",
+    filters.sort || "price_asc",
+    filters.minPrice ?? "",
+    filters.maxPrice ?? "",
+    filters.bedrooms ? formatCountSelection(filters.bedrooms, filters.bedroomsMatch) : "",
+    filters.bathrooms ? formatCountSelection(filters.bathrooms, filters.bathroomsMatch) : "",
+    filters.propertyType || ""
+  ].join("|");
 
   return (
     <div className="space-y-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-      <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-7">
+      <form key={formResetKey} className="grid gap-3 md:grid-cols-3 lg:grid-cols-8">
         <FilterLabel label="City">
           <select name="city" defaultValue={filters.city || ""} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
             <option value="">All Cities</option>
@@ -45,6 +60,16 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
             <option value="">Sale + Lease</option>
             <option value="sale">For Sale</option>
             <option value="lease">For Lease</option>
+          </select>
+        </FilterLabel>
+
+        <FilterLabel label="Sort">
+          <select name="sort" defaultValue={filters.sort || "price_asc"} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </FilterLabel>
 
@@ -156,6 +181,16 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
   if (filters.transactionType) chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
+  if (filters.sort && filters.sort !== "price_asc") {
+    chips.push({
+      label:
+        filters.sort === "price_desc"
+          ? "Sort: Price High to Low"
+          : filters.sort === "newest"
+            ? "Sort: Newest First"
+            : "Sort: Price Low to High"
+    });
+  }
   if (filters.minPrice) chips.push({ label: `Min: ${formatPrice(filters.minPrice)}` });
   if (filters.maxPrice) chips.push({ label: `Max: ${formatPrice(filters.maxPrice)}` });
   if (filters.bedrooms) {

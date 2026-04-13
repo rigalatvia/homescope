@@ -40,6 +40,7 @@ function buildUrl(page: number, filters: ListingFilters): string {
   const params = new URLSearchParams();
   if (filters.city) params.set("city", filters.city);
   if (filters.transactionType) params.set("transactionType", filters.transactionType);
+  if (filters.sort) params.set("sort", filters.sort);
   if (filters.minPrice) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice) params.set("maxPrice", String(filters.maxPrice));
   if (filters.bedrooms) {

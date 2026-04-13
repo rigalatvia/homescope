@@ -39,10 +39,15 @@ export async function getPublicListings(filters?: ListingFilters): Promise<Listi
     return mappedListings.filter((listing) => listing.transactionType === filters.transactionType);
   }
   if (filters?.propertyType) {
-    return mappedListings.filter((listing) => listing.propertyType === filters.propertyType);
+    const selectedType = normalizePropertyType(filters.propertyType);
+    return mappedListings.filter((listing) => normalizePropertyType(listing.propertyType) === selectedType);
   }
 
   return mappedListings;
+}
+
+function normalizePropertyType(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {

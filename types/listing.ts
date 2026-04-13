@@ -1,5 +1,6 @@
 export type ListingStatus = "active" | "sold" | "leased" | "pending";
 export type ListingTransactionType = "sale" | "lease";
+export type ListingSort = "price_asc" | "price_desc" | "newest";
 
 export type PropertyType = string;
 
@@ -32,6 +33,7 @@ export interface Listing {
 export interface ListingFilters {
   city?: string;
   transactionType?: ListingTransactionType;
+  sort?: ListingSort;
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
