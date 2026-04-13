@@ -85,7 +85,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     postalCode: raw.address.postalCode || undefined,
     bedrooms: raw.bedrooms ?? 0,
     bathrooms: raw.bathrooms ?? 0,
-    propertyType: raw.propertyType || "Residential",
+    propertyType: mapOwnershipType(raw),
     transactionType: parseTransactionType(raw),
     description: raw.publicRemarks || "Listing description will be available shortly.",
     images: raw.images.length > 0 ? raw.images : [FALLBACK_IMAGE],
@@ -98,6 +98,24 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt
   };
+}
+
+function mapOwnershipType(raw: MLSListingFirestoreDocument): string {
+  const commonInterest = (raw.commonInterest || "").trim().toLowerCase();
+  if (commonInterest.includes("condo") || commonInterest.includes("strata")) return "Condo";
+  if (commonInterest.includes("freehold")) return "Freehold";
+
+  const propertyClass = (raw.propertyClass || "").trim().toLowerCase();
+  if (propertyClass.includes("condo")) return "Condo";
+  if (propertyClass.includes("freehold")) return "Freehold";
+
+  const propertyType = (raw.propertyType || "").trim().toLowerCase();
+  if (propertyType.includes("condo")) return "Condo";
+  if (propertyType.includes("detached") || propertyType.includes("semi") || propertyType.includes("townhouse")) {
+    return "Freehold";
+  }
+
+  return "Freehold";
 }
 
 function buildListingTitle(raw: MLSListingFirestoreDocument): string {

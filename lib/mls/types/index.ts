@@ -71,6 +71,7 @@ export interface RawMLSFeedListing {
   bedrooms?: number | string | null;
   bathrooms?: number | string | null;
   propertyType?: string | null;
+  commonInterest?: string | null;
   style?: string | null;
   publicRemarks?: string | null;
   images?: MLSListingMedia[] | null;
@@ -105,6 +106,7 @@ export interface NormalizedMLSListing {
   bedrooms: number | null;
   bathrooms: number | null;
   propertyType: string | null;
+  commonInterest: string | null;
   style: string | null;
   publicRemarks: string | null;
   images: string[];

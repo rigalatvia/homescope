@@ -3,14 +3,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 
-const PROPERTY_TYPES: PropertyType[] = [
-  "Condo Apartment",
-  "Condo Townhouse",
-  "Detached",
-  "Semi-Detached",
-  "Townhouse",
-  "Condo"
-];
+const PROPERTY_TYPES: PropertyType[] = ["Condo", "Freehold"];
 const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
 const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
   { value: "price_asc", label: "Price: Low to High" },

@@ -5,7 +5,8 @@ import { createListingSlug } from "@/lib/mls/utils/slug";
 
 export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): NormalizedMLSListing {
   const transactionType = raw.transactionType?.trim() || null;
-  const propertyType = raw.propertyType?.trim() || null;
+  const propertyType = deriveOwnershipType(raw.commonInterest, raw.propertyClass, raw.propertyType);
+  const commonInterest = raw.commonInterest?.trim() || null;
   const style = raw.style?.trim() || null;
   const publicRemarks = raw.publicRemarks?.trim() || null;
   const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, style, publicRemarks);
@@ -32,6 +33,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     bedrooms: parseNullableNumber(raw.bedrooms),
     bathrooms: parseNullableNumber(raw.bathrooms),
     propertyType,
+    commonInterest,
     style,
     publicRemarks,
     images: mapImageUrls(raw),
@@ -161,6 +163,28 @@ function parseListingStatus(value: string | null | undefined): MLSListingStatus 
   if (normalized.includes("expire")) return "expired";
   if (normalized.includes("terminat")) return "terminated";
   return "draft";
+}
+
+function deriveOwnershipType(
+  commonInterest: string | null | undefined,
+  rawPropertyClass: string | null | undefined,
+  rawPropertyType: string | null | undefined
+): string | null {
+  const common = (commonInterest || "").trim().toLowerCase();
+  if (common.includes("condo") || common.includes("strata")) return "Condo";
+  if (common.includes("freehold")) return "Freehold";
+
+  const propertyClass = (rawPropertyClass || "").trim().toLowerCase();
+  if (propertyClass.includes("condo")) return "Condo";
+  if (propertyClass.includes("freehold")) return "Freehold";
+
+  const propertyType = (rawPropertyType || "").trim().toLowerCase();
+  if (propertyType.includes("condo")) return "Condo";
+  if (propertyType.includes("detached") || propertyType.includes("semi") || propertyType.includes("townhouse")) {
+    return "Freehold";
+  }
+
+  return null;
 }
 
 function mapImageUrls(raw: RawMLSFeedListing): string[] {

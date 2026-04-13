@@ -291,6 +291,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         "BuildingType",
         "BuildingTypeName"
       ]),
+      commonInterest: pickString(record, ["CommonInterest"]),
       style: pickString(record, ["ArchitecturalStyle", "Style"]),
       publicRemarks: pickString(record, ["PublicRemarks", "Remarks", "Description"]),
       images: mapImages(record),
