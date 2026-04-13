@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 import "./globals.css";
 import { SITE_CONFIG } from "@/config/site";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -68,7 +69,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             `}
           </Script>
         ) : null}
-        <PageViewTracker />
+        <Suspense fallback={null}>
+          <PageViewTracker />
+        </Suspense>
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
