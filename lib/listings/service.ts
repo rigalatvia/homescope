@@ -1,4 +1,4 @@
-import { paginateListings } from "@/lib/listings/filters";
+import { applyListingFilters, paginateListings } from "@/lib/listings/filters";
 import {
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
@@ -8,7 +8,8 @@ import { DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS, getSiteSettings } from
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
 export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
-  const filtered = await getPublicListingsFromFirestore(filters);
+  const listings = await getPublicListingsFromFirestore(filters);
+  const filtered = applyListingFilters(listings, filters);
   const sorted = await sortListingsWithFeaturedPriority(filtered);
   return paginateListings(sorted, filters);
 }

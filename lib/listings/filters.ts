@@ -12,13 +12,18 @@ export function parseListingFilters(params: {
   page?: string;
   pageSize?: string;
 }): ListingFilters {
+  const bedrooms = parseCountFilter(params.bedrooms);
+  const bathrooms = parseCountFilter(params.bathrooms);
+
   return {
     city: params.city || undefined,
     transactionType: parseTransactionType(params.transactionType),
     minPrice: parseNumber(params.minPrice),
     maxPrice: parseNumber(params.maxPrice),
-    bedrooms: parseNumber(params.bedrooms),
-    bathrooms: parseNumber(params.bathrooms),
+    bedrooms: bedrooms.value,
+    bedroomsMatch: bedrooms.match,
+    bathrooms: bathrooms.value,
+    bathroomsMatch: bathrooms.match,
     propertyType: (params.propertyType as PropertyType) || undefined,
     page: parseNumber(params.page) || 1,
     pageSize: parseNumber(params.pageSize) || DEFAULT_LISTINGS_PAGE_SIZE
@@ -31,9 +36,20 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
     if (filters.transactionType && listing.transactionType !== filters.transactionType) return false;
     if (filters.minPrice && listing.price < filters.minPrice) return false;
     if (filters.maxPrice && listing.price > filters.maxPrice) return false;
-    if (filters.bedrooms && listing.bedrooms < filters.bedrooms) return false;
-    if (filters.bathrooms && listing.bathrooms < filters.bathrooms) return false;
-    if (filters.propertyType && listing.propertyType !== filters.propertyType) return false;
+    if (filters.bedrooms) {
+      if (filters.bedroomsMatch === "exact" && listing.bedrooms !== filters.bedrooms) return false;
+      if (filters.bedroomsMatch !== "exact" && listing.bedrooms < filters.bedrooms) return false;
+    }
+    if (filters.bathrooms) {
+      if (filters.bathroomsMatch === "exact" && listing.bathrooms !== filters.bathrooms) return false;
+      if (filters.bathroomsMatch !== "exact" && listing.bathrooms < filters.bathrooms) return false;
+    }
+    if (
+      filters.propertyType &&
+      listing.propertyType.trim().toLowerCase() !== filters.propertyType.trim().toLowerCase()
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -67,4 +83,23 @@ function parseNumber(value?: string): number | undefined {
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseCountFilter(value?: string): {
+  value?: number;
+  match?: "exact" | "atLeast";
+} {
+  if (!value) return {};
+  const normalized = value.trim();
+  if (!normalized) return {};
+
+  const isAtLeast = normalized.endsWith("+");
+  const numeric = isAtLeast ? normalized.slice(0, -1) : normalized;
+  const parsed = Number(numeric);
+  if (!Number.isFinite(parsed) || parsed <= 0) return {};
+
+  return {
+    value: parsed,
+    match: isAtLeast ? "atLeast" : "exact"
+  };
 }

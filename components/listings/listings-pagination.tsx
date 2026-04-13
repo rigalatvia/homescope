@@ -42,8 +42,12 @@ function buildUrl(page: number, filters: ListingFilters): string {
   if (filters.transactionType) params.set("transactionType", filters.transactionType);
   if (filters.minPrice) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice) params.set("maxPrice", String(filters.maxPrice));
-  if (filters.bedrooms) params.set("bedrooms", String(filters.bedrooms));
-  if (filters.bathrooms) params.set("bathrooms", String(filters.bathrooms));
+  if (filters.bedrooms) {
+    params.set("bedrooms", filters.bedroomsMatch === "exact" ? String(filters.bedrooms) : `${filters.bedrooms}+`);
+  }
+  if (filters.bathrooms) {
+    params.set("bathrooms", filters.bathroomsMatch === "exact" ? String(filters.bathrooms) : `${filters.bathrooms}+`);
+  }
   if (filters.propertyType) params.set("propertyType", filters.propertyType);
   params.set("page", String(page));
   return `/listings?${params.toString()}`;

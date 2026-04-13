@@ -3,7 +3,17 @@ import { SITE_CONFIG } from "@/config/site";
 import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, PropertyType } from "@/types/listing";
 
-const PROPERTY_TYPES: PropertyType[] = ["Detached", "Semi-Detached", "Townhouse", "Condo", "Condo Townhouse"];
+const PROPERTY_TYPES: PropertyType[] = [
+  "Single Family",
+  "Multi-family",
+  "Condo Apartment",
+  "Condo Townhouse",
+  "Detached",
+  "Semi-Detached",
+  "Townhouse",
+  "Condo"
+];
+const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
 
 interface ListingFiltersProps {
   filters: ListingFilters;
@@ -59,25 +69,33 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
         </FilterLabel>
 
         <FilterLabel label="Bedrooms">
-          <input
-            type="number"
+          <select
             name="bedrooms"
-            min={1}
-            defaultValue={filters.bedrooms || ""}
-            placeholder="2"
+            defaultValue={formatCountSelection(filters.bedrooms, filters.bedroomsMatch)}
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-          />
+          >
+            <option value="">Any</option>
+            {COUNT_FILTER_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
         </FilterLabel>
 
         <FilterLabel label="Bathrooms">
-          <input
-            type="number"
+          <select
             name="bathrooms"
-            min={1}
-            defaultValue={filters.bathrooms || ""}
-            placeholder="2"
+            defaultValue={formatCountSelection(filters.bathrooms, filters.bathroomsMatch)}
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-          />
+          >
+            <option value="">Any</option>
+            {COUNT_FILTER_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
         </FilterLabel>
 
         <FilterLabel label="Property Type">
@@ -140,9 +158,22 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
   if (filters.transactionType) chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
   if (filters.minPrice) chips.push({ label: `Min: ${formatPrice(filters.minPrice)}` });
   if (filters.maxPrice) chips.push({ label: `Max: ${formatPrice(filters.maxPrice)}` });
-  if (filters.bedrooms) chips.push({ label: `${filters.bedrooms}+ Beds` });
-  if (filters.bathrooms) chips.push({ label: `${filters.bathrooms}+ Baths` });
+  if (filters.bedrooms) {
+    chips.push({
+      label: filters.bedroomsMatch === "exact" ? `${filters.bedrooms} Beds` : `${filters.bedrooms}+ Beds`
+    });
+  }
+  if (filters.bathrooms) {
+    chips.push({
+      label: filters.bathroomsMatch === "exact" ? `${filters.bathrooms} Baths` : `${filters.bathrooms}+ Baths`
+    });
+  }
   if (filters.propertyType) chips.push({ label: `Type: ${filters.propertyType}` });
 
   return chips;
+}
+
+function formatCountSelection(value?: number, mode?: "exact" | "atLeast"): string {
+  if (!value) return "";
+  return mode === "exact" ? String(value) : `${value}+`;
 }

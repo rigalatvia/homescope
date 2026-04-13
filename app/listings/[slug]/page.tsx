@@ -35,6 +35,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
   if (!listing) notFound();
 
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
+  const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
 
   return (
     <section className="site-container py-10">
@@ -45,9 +46,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             <p className="text-sm uppercase tracking-wide text-brand-600">{listing.city}</p>
             <h1 className="mt-2 font-heading text-4xl text-brand-900">{listing.title}</h1>
             <p className="mt-2 text-2xl font-semibold text-brand-900">{formatPrice(listing.price)}</p>
-            <p className="mt-1 text-brand-700">
-              {listing.address}, {listing.area}
-            </p>
+            <p className="mt-1 text-brand-700">{fullAddress}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5">
@@ -64,7 +63,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             listingId={listing.id}
             listingMlsNumber={listing.mlsNumber}
             listingTitle={listing.title}
-            listingAddress={listing.address}
+            listingAddress={fullAddress}
             listingCity={listing.city}
             listingUrl={listingUrl}
             listingTransactionType={listing.transactionType}
@@ -82,4 +81,9 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="mt-1 font-semibold text-brand-900">{value}</p>
     </div>
   );
+}
+
+function formatListingAddress(address: string, city: string, postalCode?: string): string {
+  const parts = [address, city, postalCode].filter((part): part is string => Boolean(part && part.trim()));
+  return parts.join(", ");
 }

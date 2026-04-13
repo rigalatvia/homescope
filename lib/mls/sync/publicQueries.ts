@@ -1,6 +1,7 @@
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { allowedMunicipalities } from "@/lib/mls/config";
 import type { MLSListingFirestoreDocument } from "@/lib/mls/types";
+import type { Query } from "firebase-admin/firestore";
 
 const LISTINGS_COLLECTION = "listings";
 
@@ -70,9 +71,8 @@ export async function getFilteredListings(filters: {
   maxPrice?: number;
   bedrooms?: number;
   bathrooms?: number;
-  limit?: number;
 }): Promise<MLSListingFirestoreDocument[]> {
-  let listings = await getPublicListings(filters.limit ?? 50);
+  let listings = await getAllPublicListings();
 
   if (filters.municipality) listings = listings.filter((item) => item.municipality === filters.municipality);
   if (filters.minPrice != null) listings = listings.filter((item) => (item.price ?? 0) >= filters.minPrice!);
@@ -81,4 +81,28 @@ export async function getFilteredListings(filters: {
   if (filters.bathrooms != null) listings = listings.filter((item) => (item.bathrooms ?? 0) >= filters.bathrooms!);
 
   return listings;
+}
+
+async function getAllPublicListings(batchSize = 500): Promise<MLSListingFirestoreDocument[]> {
+  const firestore = getFirebaseAdminFirestore();
+  const results: MLSListingFirestoreDocument[] = [];
+  let query: Query = firestore
+    .collection(LISTINGS_COLLECTION)
+    .where("isVisible", "==", true)
+    .where("municipality", "in", allowedMunicipalities)
+    .orderBy("price", "desc")
+    .limit(batchSize);
+
+  while (true) {
+    const snapshot = await query.get();
+    if (snapshot.empty) break;
+
+    results.push(...snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument)));
+
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    if (!lastDoc || snapshot.docs.length < batchSize) break;
+    query = query.startAfter(lastDoc);
+  }
+
+  return results;
 }

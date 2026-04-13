@@ -35,7 +35,9 @@ export interface ListingFilters {
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
+  bedroomsMatch?: "exact" | "atLeast";
   bathrooms?: number;
+  bathroomsMatch?: "exact" | "atLeast";
   propertyType?: string;
   page?: number;
   pageSize?: number;
