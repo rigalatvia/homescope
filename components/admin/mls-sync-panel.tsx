@@ -247,6 +247,14 @@ export function MlsSyncPanel() {
     }
   }
 
+  function confirmAndRunCleanup() {
+    const confirmed = window.confirm(
+      "Run Cleanup will remove existing listings data. Are you sure you want to continue?"
+    );
+    if (!confirmed) return;
+    void runSync("cleanup");
+  }
+
   return (
     <div className="rounded-3xl border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
       <div className="space-y-4">
@@ -299,7 +307,7 @@ export function MlsSyncPanel() {
           </button>
           <button
             type="button"
-            onClick={() => runSync("cleanup")}
+            onClick={confirmAndRunCleanup}
             disabled={isSubmitting || isRunningFullAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >

@@ -11,7 +11,6 @@ import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPos
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getDefaultFullSyncStartPage, getFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
-import { hideNotReturnedListings } from "@/lib/mls/sync/staleCleanup";
 import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
@@ -49,7 +48,6 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   });
 
   try {
-    const seenListingIds = new Set<string>();
     const startPage = await getFullSyncStartPage();
     let page = startPage;
     let reachedEnd = false;
@@ -112,10 +110,6 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       stats.unchanged += upsert.unchanged;
       stats.snapshotsWritten += upsert.snapshotsWritten;
 
-      for (const listing of normalized) {
-        seenListingIds.add(listing.listingId);
-      }
-
       if (hiddenListings.length > 0) {
         for (const listing of hiddenListings) {
           await deleteListingDocument(listing.listingId);
@@ -131,11 +125,9 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     }
 
     if (reachedEnd) {
-      const nowIso = new Date().toISOString();
-      stats.hidden = await hideNotReturnedListings(seenListingIds, nowIso);
-      stats.archived = stats.hidden;
       await setFullSyncStartPage(getDefaultFullSyncStartPage());
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
+      notes.push("Safety mode: end-of-feed stale deletion skipped to prevent accidental bulk removals.");
     } else {
       await setFullSyncStartPage(page);
       const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";

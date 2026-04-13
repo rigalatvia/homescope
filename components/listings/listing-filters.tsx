@@ -4,8 +4,6 @@ import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 
 const PROPERTY_TYPES: PropertyType[] = [
-  "Single Family",
-  "Multi-family",
   "Condo Apartment",
   "Condo Townhouse",
   "Detached",

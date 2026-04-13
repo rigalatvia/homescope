@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runFullSync } from "@/lib/mls/sync/runFullSync";
+import { runIncrementalSync } from "@/lib/mls/sync/runIncrementalSync";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 export async function POST(request: Request) {
@@ -15,11 +15,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await runFullSync("ddf-treb");
+    const result = await runIncrementalSync({ connectorKind: "ddf-treb" });
     return NextResponse.json(
       {
         success: true,
-        schedule: "every_3_hours",
+        schedule: "daily_3am",
         counts: {
           fetched: result.stats.fetched,
           filtered: result.stats.filtered,
