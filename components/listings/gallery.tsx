@@ -84,10 +84,6 @@ export function ListingGallery({ images, address }: { images: string[]; address:
 }
 
 function isJpgUrl(url: string): boolean {
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return pathname.endsWith(".jpg") || pathname.endsWith(".jpeg");
-  } catch {
-    return false;
-  }
+  const sanitized = url.trim().split("?")[0].split("#")[0].toLowerCase();
+  return sanitized.endsWith(".jpg") || sanitized.endsWith(".jpeg");
 }
