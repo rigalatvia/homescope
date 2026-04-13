@@ -1,0 +1,359 @@
+﻿{
+    "@odata.context":  "https://ddfapi.realtor.ca/odata/v1/$metadata#Property",
+    "value":  [
+                  {
+                      "ListingKey":  "29323339",
+                      "ListOfficeKey":  "50229",
+                      "AvailabilityDate":  null,
+                      "MapCoordinateVerifiedYN":  null,
+                      "PropertySubType":  "Vacant Land",
+                      "DocumentsAvailable":  [
+
+                                             ],
+                      "LeaseAmount":  null,
+                      "LeaseAmountFrequency":  null,
+                      "BusinessType":  [
+
+                                       ],
+                      "LeasePerUnit":  null,
+                      "PricePerUnit":  null,
+                      "WaterBodyName":  null,
+                      "View":  [
+
+                               ],
+                      "NumberOfBuildings":  null,
+                      "NumberOfUnitsTotal":  null,
+                      "LotFeatures":  [
+
+                                      ],
+                      "LotSizeArea":  null,
+                      "LotSizeDimensions":  "34.5 x 104 FT",
+                      "LotSizeUnits":  null,
+                      "PoolFeatures":  [
+
+                                       ],
+                      "RoadSurfaceType":  [
+
+                                          ],
+                      "CurrentUse":  [
+
+                                     ],
+                      "PossibleUse":  [
+
+                                      ],
+                      "AnchorsCoTenants":  null,
+                      "WaterfrontFeatures":  [
+
+                                             ],
+                      "CommunityFeatures":  [
+
+                                            ],
+                      "FrontageLengthNumeric":  34.6,
+                      "FrontageLengthNumericUnits":  "feet",
+                      "Fencing":  [
+
+                                  ],
+                      "Appliances":  [
+
+                                     ],
+                      "OtherEquipment":  [
+
+                                         ],
+                      "SecurityFeatures":  [
+
+                                           ],
+                      "TotalActualRent":  null,
+                      "ExistingLeaseType":  [
+
+                                            ],
+                      "AssociationFee":  null,
+                      "AssociationFeeFrequency":  null,
+                      "AssociationName":  "",
+                      "AssociationFeeIncludes":  [
+
+                                                 ],
+                      "OriginalEntryTimestamp":  "2026-02-04T17:13:06.12Z",
+                      "ModificationTimestamp":  "2026-02-05T15:26:03.63Z",
+                      "ListingId":  "W12757606",
+                      "ListAgentNationalAssociationId":  "1308091",
+                      "CoListAgentNationalAssociationId":  null,
+                      "CoListAgentNationalAssociationId2":  null,
+                      "CoListAgentNationalAssociationId3":  null,
+                      "InternetEntireListingDisplayYN":  true,
+                      "StandardStatus":  "Active",
+                      "StatusChangeTimestamp":  "2026-02-05T15:08:12.65Z",
+                      "PublicRemarks":  "Permit approved building lot in The Kingsway! Exceptional opportunity to build your new home in one of west Torontos most sought-after neighbourhoods. Builders plans include Triplex lay-out with 11\u0027 main floor ceilings and over 4200 sqft of living space with single car garage, 6 bedrooms, 6 bathrooms 3 kitchens with 3rd Floor serviced by elevator. Build to suit as a single family home, Live in and rent? or as a legacy income property for your portfolio. Ample room for low maintenance gardens and the location is just steps to Kingsway village, TTC, Subway, shopping restaurants and top rated schools! A special opportunity! (id:65552)",
+                      "ListPrice":  1798000,
+                      "Inclusions":  null,
+                      "CoListOfficeKey":  null,
+                      "CoListOfficeKey2":  null,
+                      "CoListOfficeKey3":  null,
+                      "ListOfficeNationalAssociationId":  "1003004",
+                      "CoListOfficeNationalAssociationId":  null,
+                      "CoListOfficeNationalAssociationId2":  null,
+                      "CoListOfficeNationalAssociationId3":  null,
+                      "CoListAgentKey":  null,
+                      "CoListAgentKey2":  null,
+                      "CoListAgentKey3":  null,
+                      "ListAgentKey":  "2030483",
+                      "InternetAddressDisplayYN":  true,
+                      "ListingURL":  "www.realtor.ca/real-estate/29323339/96-dunedin-drive-toronto-kingsway-south-kingsway-south",
+                      "OriginatingSystemName":  "Toronto Regional Real Estate Board",
+                      "PhotosCount":  11,
+                      "PhotosChangeTimestamp":  "2026-02-04T18:44:21.73Z",
+                      "CommonInterest":  null,
+                      "ListAOR":  "Toronto",
+                      "ListAORKey":  "82",
+                      "UnparsedAddress":  "96 DUNEDIN DRIVE",
+                      "PostalCode":  "M8X2K5",
+                      "SubdivisionName":  null,
+                      "StateOrProvince":  "Ontario",
+                      "StreetDirPrefix":  null,
+                      "StreetDirSuffix":  null,
+                      "StreetName":  "Dunedin",
+                      "StreetNumber":  "96",
+                      "StreetSuffix":  "Drive",
+                      "UnitNumber":  "",
+                      "Country":  "Canada",
+                      "City":  "Toronto (Kingsway South)",
+                      "Directions":  "Prince Edward \u0026 The Kingsway",
+                      "Latitude":  43.657891,
+                      "Longitude":  -79.511909,
+                      "CityRegion":  "Kingsway South",
+                      "GeocodeManualYN":  false,
+                      "ParkingTotal":  null,
+                      "YearBuilt":  null,
+                      "BathroomsPartial":  null,
+                      "BathroomsTotalInteger":  0,
+                      "BedroomsTotal":  null,
+                      "BuildingAreaTotal":  null,
+                      "BuildingAreaUnits":  null,
+                      "BuildingFeatures":  [
+
+                                           ],
+                      "AboveGradeFinishedArea":  null,
+                      "AboveGradeFinishedAreaUnits":  null,
+                      "AboveGradeFinishedAreaSource":  null,
+                      "AboveGradeFinishedAreaMinimum":  null,
+                      "AboveGradeFinishedAreaMaximum":  null,
+                      "BelowGradeFinishedArea":  null,
+                      "BelowGradeFinishedAreaUnits":  null,
+                      "BelowGradeFinishedAreaSource":  null,
+                      "BelowGradeFinishedAreaMinimum":  null,
+                      "BelowGradeFinishedAreaMaximum":  null,
+                      "LivingArea":  null,
+                      "LivingAreaUnits":  null,
+                      "LivingAreaSource":  null,
+                      "LivingAreaMinimum":  null,
+                      "LivingAreaMaximum":  null,
+                      "FireplacesTotal":  null,
+                      "FireplaceYN":  false,
+                      "FireplaceFeatures":  [
+
+                                            ],
+                      "ArchitecturalStyle":  [
+
+                                             ],
+                      "Heating":  [
+
+                                  ],
+                      "FoundationDetails":  [
+
+                                            ],
+                      "Basement":  [
+
+                                   ],
+                      "ExteriorFeatures":  [
+
+                                           ],
+                      "Flooring":  [
+
+                                   ],
+                      "ParkingFeatures":  [
+
+                                          ],
+                      "Cooling":  [
+
+                                  ],
+                      "PropertyCondition":  [
+
+                                            ],
+                      "Roof":  [
+
+                               ],
+                      "ConstructionMaterials":  [
+
+                                                ],
+                      "Stories":  null,
+                      "PropertyAttachedYN":  null,
+                      "AccessibilityFeatures":  [
+
+                                                ],
+                      "BedroomsAboveGrade":  null,
+                      "BedroomsBelowGrade":  null,
+                      "Zoning":  null,
+                      "ZoningDescription":  null,
+                      "TaxAnnualAmount":  7500,
+                      "TaxBlock":  null,
+                      "TaxLot":  null,
+                      "TaxYear":  null,
+                      "StructureType":  [
+
+                                        ],
+                      "ParcelNumber":  null,
+                      "Utilities":  [
+                                        "Sewer"
+                                    ],
+                      "IrrigationSource":  [
+
+                                           ],
+                      "WaterSource":  [
+
+                                      ],
+                      "Sewer":  [
+
+                                ],
+                      "Electric":  [
+
+                                   ],
+                      "Media":  [
+                                    {
+                                        "MediaKey":  "6441451260",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094298000000/reb82/highres/6/w12757606_1.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:43:49.8Z",
+                                        "Order":  1,
+                                        "PreferredPhotoYN":  true,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451267",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094117000000/reb82/highres/6/w12757606_2.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:43:31.7Z",
+                                        "Order":  2,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451271",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094288130000/reb82/highres/6/w12757606_3.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:43:48.81Z",
+                                        "Order":  3,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451277",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094451200000/reb82/highres/6/w12757606_4.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:05.12Z",
+                                        "Order":  4,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451288",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094617300000/reb82/highres/6/w12757606_5.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:21.73Z",
+                                        "Order":  5,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451306",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094117330000/reb82/highres/6/w12757606_6.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:43:31.73Z",
+                                        "Order":  6,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451314",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094284570000/reb82/highres/6/w12757606_7.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:43:48.46Z",
+                                        "Order":  7,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451334",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094444470000/reb82/highres/6/w12757606_8.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:04.45Z",
+                                        "Order":  8,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451348",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094603800000/reb82/highres/6/w12757606_9.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:20.38Z",
+                                        "Order":  9,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451371",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094433100000/reb82/highres/6/w12757606_10.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:03.31Z",
+                                        "Order":  10,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    },
+                                    {
+                                        "MediaKey":  "6441451391",
+                                        "ResourceRecordKey":  "29323339",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639058094584930000/reb82/highres/6/w12757606_11.jpg",
+                                        "ModificationTimestamp":  "2026-02-04T18:44:18.49Z",
+                                        "Order":  11,
+                                        "PreferredPhotoYN":  false,
+                                        "ResourceRecordId":  "W12757606",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    }
+                                ],
+                      "Rooms":  [
+
+                                ]
+                  }
+              ],
+    "@odata.nextLink":  "https://ddfapi.realtor.ca/odata/v1/Property?$top=1\u0026$skip=1\u0026$filter=ListingId+eq+%27W12757606%27"
+}

@@ -222,15 +222,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   private mapDdfRecordToRawListing(record: JsonObject, index: number): RawMLSFeedListing {
     const sourceListingKey =
       pickString(record, ["ListingKey", "listingKey", "Id", "id", "ListingId"]) || `${Date.now()}-${index}`;
-    const explicitTransactionType = pickString(record, [
-      "TransactionType",
-      "Transaction",
-      "ForSaleOrRent",
-      "LeaseType",
-      "ListingContractDateType",
-      "BusinessType"
-    ]);
     const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
+    const leasePrice = pickNumber(record, ["LeasePrice"]);
     const leaseAmountFrequency = pickString(record, ["LeaseAmountFrequency"]);
     const leasePerUnit = pickString(record, ["LeasePerUnit"]);
     const existingLeaseType = pickString(record, ["ExistingLeaseType", "LeaseType"]);
@@ -257,7 +250,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         "BuildingType",
         "BuildingTypeName"
       ]),
-      transactionType: inferTransactionType(record, explicitTransactionType),
+      transactionType: inferTransactionType(record),
       permToAdvertise: pickPermToAdvertise(record),
       permissionSignals: {
         permToAdvertise: readRawPermissionSignal(record, "PermToAdvertise"),
@@ -277,6 +270,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       },
       listPrice,
       leaseAmount,
+      leasePrice,
       leaseAmountFrequency,
       leasePerUnit,
       existingLeaseType,
@@ -434,35 +428,19 @@ function shouldRetryDdfError(error: unknown): boolean {
   return /429|5\d\d|timeout|network|fetch/i.test(message);
 }
 
-function inferTransactionType(record: JsonObject, explicitTransactionType: string | null): string | null {
-  const explicit = (explicitTransactionType || "").trim().toLowerCase();
-  if (explicit) {
-    if (/\blease\b|\brent\b|\bfor rent\b/.test(explicit)) return "lease";
-    if (/\bsale\b|\bfor sale\b/.test(explicit)) return "sale";
-  }
-
-  const listPrice = pickNumber(record, ["ListPrice", "Price"]);
+function inferTransactionType(record: JsonObject): string {
   const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
-  const leaseFrequency = pickString(record, ["LeaseAmountFrequency"]);
-  const leasePerUnit = pickString(record, ["LeasePerUnit"]);
-  const existingLeaseType = pickString(record, ["ExistingLeaseType", "LeaseType"]);
-  const remarks = pickString(record, ["PublicRemarks", "Remarks", "Description"])?.toLowerCase() || "";
-
-  const hasSaleSignal = listPrice != null;
-  // LeaseAmount is the strongest lease signal for this feed. Frequency alone is noisy.
-  const hasLeaseSignal =
-    leaseAmount != null ||
-    (!!existingLeaseType && /\blease\b|\brent\b/.test(existingLeaseType.toLowerCase())) ||
-    (!!leasePerUnit && /\blease\b|\brent\b/.test(leasePerUnit.toLowerCase())) ||
-    (!hasSaleSignal && !!leaseFrequency) ||
-    (!hasSaleSignal && /\blease\b|\brent\b|\bfor rent\b/.test(remarks));
-
-  if (hasLeaseSignal) return "lease";
-  if (hasSaleSignal) return "sale";
-  return explicitTransactionType;
+  const leasePrice = pickNumber(record, ["LeasePrice"]);
+  // Strict business rule from product requirement:
+  // - Lease if either LeaseAmount or LeasePrice is present
+  // - Otherwise Sale
+  if (leaseAmount != null || leasePrice != null) return "lease";
+  return "sale";
 }
 
 function buildDefaultResidentialFilter(): string {
-  // Keep this broad so we don't miss valid residential lease records with varying subtype labels.
-  return "StandardStatus eq 'Active'";
+  const residentialSubTypes = ["Single Family", "Multi-family"];
+  const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
+  const statusFilter = "StandardStatus eq 'Active'";
+  return `(${subTypeFilter}) and (${statusFilter})`;
 }
