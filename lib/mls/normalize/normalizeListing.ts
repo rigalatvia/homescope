@@ -29,7 +29,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
       fullAddress: raw.address?.fullAddress?.trim() || null,
       postalCode: normalizePostalCode(raw.address?.postalCode)
     },
-    price: parseNullableNumber(raw.listPrice),
+    price: parseDisplayPrice(raw, transactionType),
     bedrooms: parseNullableNumber(raw.bedrooms),
     bathrooms: parseNullableNumber(raw.bathrooms),
     propertyType,
@@ -152,6 +152,27 @@ function parseNullableNumber(value: number | string | null | undefined): number 
   if (value == null) return null;
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseDisplayPrice(raw: RawMLSFeedListing, transactionType: string | null): number | null {
+  const listPrice = parseNullableNumber(raw.listPrice);
+  const totalActualRent = parseNullableNumber(raw.totalActualRent);
+
+  if (transactionType === "lease") {
+    if (totalActualRent != null) return totalActualRent;
+    if (listPrice != null) return listPrice;
+    return null;
+  }
+
+  if (transactionType === "sale") {
+    if (listPrice != null) return listPrice;
+    if (totalActualRent != null) return totalActualRent;
+    return null;
+  }
+
+  if (listPrice != null) return listPrice;
+  if (totalActualRent != null) return totalActualRent;
+  return null;
 }
 
 function parseListingStatus(value: string | null | undefined): MLSListingStatus {

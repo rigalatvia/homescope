@@ -224,10 +224,11 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       pickString(record, ["ListingKey", "listingKey", "Id", "id", "ListingId"]) || `${Date.now()}-${index}`;
     const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
     const leasePrice = pickNumber(record, ["LeasePrice"]);
+    const totalActualRent = pickNumber(record, ["TotalActualRent"]);
     const leaseAmountFrequency = pickString(record, ["LeaseAmountFrequency"]);
     const leasePerUnit = pickString(record, ["LeasePerUnit"]);
     const existingLeaseType = pickString(record, ["ExistingLeaseType", "LeaseType"]);
-    const listPrice = pickNumber(record, ["ListPrice", "Price"]) ?? leaseAmount;
+    const listPrice = pickNumber(record, ["ListPrice", "Price"]);
 
     return {
       sourceSystem: this.sourceSystem,
@@ -271,6 +272,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       listPrice,
       leaseAmount,
       leasePrice,
+      totalActualRent,
       leaseAmountFrequency,
       leasePerUnit,
       existingLeaseType,
@@ -429,12 +431,17 @@ function shouldRetryDdfError(error: unknown): boolean {
 }
 
 function inferTransactionType(record: JsonObject): string {
-  const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
-  const leasePrice = pickNumber(record, ["LeasePrice"]);
+  const listPrice = pickNumber(record, ["ListPrice", "Price"]);
+  const totalActualRent = pickNumber(record, ["TotalActualRent"]);
+
   // Strict business rule from product requirement:
-  // - Lease if either LeaseAmount or LeasePrice is present
-  // - Otherwise Sale
-  if (leaseAmount != null || leasePrice != null) return "lease";
+  // Lease:  ListPrice null + TotalActualRent not null
+  // Sale:   ListPrice not null + TotalActualRent null
+  if (listPrice == null && totalActualRent != null) return "lease";
+  if (listPrice != null && totalActualRent == null) return "sale";
+
+  // Fallbacks for rare inconsistent records:
+  if (totalActualRent != null) return "lease";
   return "sale";
 }
 

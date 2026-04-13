@@ -66,6 +66,7 @@ export interface RawMLSFeedListing {
   listPrice?: number | string | null;
   leaseAmount?: number | string | null;
   leasePrice?: number | string | null;
+  totalActualRent?: number | string | null;
   leaseAmountFrequency?: string | null;
   leasePerUnit?: string | null;
   existingLeaseType?: string | null;
