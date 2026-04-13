@@ -437,9 +437,6 @@ function shouldRetryDdfError(error: unknown): boolean {
 function inferTransactionType(record: JsonObject, explicitTransactionType: string | null): string | null {
   const explicit = (explicitTransactionType || "").trim().toLowerCase();
   if (explicit) {
-    if (/\bsale\b|\bfor sale\b/.test(explicit) && /\blease\b|\brent\b|\bfor rent\b/.test(explicit)) {
-      return "sale_or_lease";
-    }
     if (/\blease\b|\brent\b|\bfor rent\b/.test(explicit)) return "lease";
     if (/\bsale\b|\bfor sale\b/.test(explicit)) return "sale";
   }
@@ -452,14 +449,14 @@ function inferTransactionType(record: JsonObject, explicitTransactionType: strin
   const remarks = pickString(record, ["PublicRemarks", "Remarks", "Description"])?.toLowerCase() || "";
 
   const hasSaleSignal = listPrice != null;
+  // LeaseAmount is the strongest lease signal for this feed. Frequency alone is noisy.
   const hasLeaseSignal =
     leaseAmount != null ||
-    !!leaseFrequency ||
-    !!leasePerUnit ||
-    !!existingLeaseType ||
-    /\blease\b|\brent\b|\bfor rent\b|\bmonthly\b/.test(remarks);
+    (!!existingLeaseType && /\blease\b|\brent\b/.test(existingLeaseType.toLowerCase())) ||
+    (!!leasePerUnit && /\blease\b|\brent\b/.test(leasePerUnit.toLowerCase())) ||
+    (!hasSaleSignal && !!leaseFrequency) ||
+    (!hasSaleSignal && /\blease\b|\brent\b|\bfor rent\b/.test(remarks));
 
-  if (hasSaleSignal && hasLeaseSignal) return "sale_or_lease";
   if (hasLeaseSignal) return "lease";
   if (hasSaleSignal) return "sale";
   return explicitTransactionType;
