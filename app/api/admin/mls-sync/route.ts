@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import type { MLSConnectorKind, MLSSyncMode } from "@/lib/mls/types";
 import { runMLSSync } from "@/lib/mls/sync/runSync";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
+import { getDefaultFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
 
 interface ManualSyncBody {
   mode?: MLSSyncMode;
   connectorKind?: MLSConnectorKind;
   sinceIso?: string;
+  resetCursorToFirstPage?: boolean;
 }
 
 export async function POST(request: Request) {
@@ -24,6 +26,9 @@ export async function POST(request: Request) {
   try {
     const body = ((await request.json()) as ManualSyncBody) || {};
     const mode: MLSSyncMode = body.mode || "full";
+    if (mode === "full" && body.resetCursorToFirstPage === true) {
+      await setFullSyncStartPage(getDefaultFullSyncStartPage());
+    }
     const result = await runMLSSync(mode, {
       connectorKind: body.connectorKind,
       sinceIso: body.sinceIso

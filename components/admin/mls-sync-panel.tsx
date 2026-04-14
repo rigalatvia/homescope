@@ -95,7 +95,7 @@ export function MlsSyncPanel() {
     setDiagnosticLogs((prev) => (prev ? `${prev}\n${payload}` : payload));
   }
 
-  async function runSync(mode: SyncMode): Promise<SyncResponse> {
+  async function runSync(mode: SyncMode, options?: { resetCursorToFirstPage?: boolean }): Promise<SyncResponse> {
     if (!adminToken.trim()) {
       setErrorMessage("Admin token is required.");
       throw new Error("Admin token is required.");
@@ -107,9 +107,12 @@ export function MlsSyncPanel() {
     setSuccessMessage("");
 
     try {
-      const body: Record<string, string> = { mode, connectorKind: "ddf-treb" };
+      const body: Record<string, string | boolean> = { mode, connectorKind: "ddf-treb" };
       if (mode === "incremental" && sinceIso.trim()) {
         body.sinceIso = sinceIso.trim();
+      }
+      if (mode === "full" && options?.resetCursorToFirstPage) {
+        body.resetCursorToFirstPage = true;
       }
 
       const response = await fetch("/api/admin/mls-sync", {
@@ -195,7 +198,7 @@ export function MlsSyncPanel() {
 
     try {
       for (let i = 0; i < maxIterations; i += 1) {
-        const json = await runSync("full");
+        const json = await runSync("full", { resetCursorToFirstPage: i === 0 });
         const notes = json.result?.notes || [];
         const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));
         if (reachedEnd) {

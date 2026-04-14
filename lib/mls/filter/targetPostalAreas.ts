@@ -34,6 +34,7 @@ export function filterRawListingsByTargetPostalAreas(rawListings: RawMLSFeedList
   included: RawMLSFeedListing[];
   excludedCount: number;
 } {
-  const included = rawListings.filter((listing) => isTargetPostalCode(listing.address?.postalCode));
-  return { included, excludedCount: rawListings.length - included.length };
+  // Keep raw feed intake broad and apply inclusion rules during normalized visibility checks.
+  // This avoids excluding valid listings when FSA coverage evolves within allowed municipalities.
+  return { included: rawListings, excludedCount: 0 };
 }
