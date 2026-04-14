@@ -14,7 +14,9 @@ export async function storeLeadSubmission(input: LeadSubmissionInput): Promise<L
       ...input,
       id: docRef.id,
       source: "website",
-      createdAt
+      createdAt,
+      emailStatus: "pending",
+      emailSentAt: null
     };
 
     await docRef.set({

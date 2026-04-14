@@ -41,6 +41,8 @@ function buildUrl(page: number, filters: ListingFilters): string {
   if (filters.city) params.set("city", filters.city);
   if (filters.transactionType) params.set("transactionType", filters.transactionType);
   if (filters.sort) params.set("sort", filters.sort);
+  if (filters.addressContains) params.set("addressContains", filters.addressContains);
+  if (filters.mlsNumber) params.set("mlsNumber", filters.mlsNumber);
   if (filters.minPrice) params.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice) params.set("maxPrice", String(filters.maxPrice));
   if (filters.bedrooms) {
@@ -50,6 +52,10 @@ function buildUrl(page: number, filters: ListingFilters): string {
     params.set("bathrooms", filters.bathroomsMatch === "exact" ? String(filters.bathrooms) : `${filters.bathrooms}+`);
   }
   if (filters.propertyType) params.set("propertyType", filters.propertyType);
+  if (filters.minLatitude != null) params.set("minLatitude", String(filters.minLatitude));
+  if (filters.maxLatitude != null) params.set("maxLatitude", String(filters.maxLatitude));
+  if (filters.minLongitude != null) params.set("minLongitude", String(filters.minLongitude));
+  if (filters.maxLongitude != null) params.set("maxLongitude", String(filters.maxLongitude));
   params.set("page", String(page));
   return `/listings?${params.toString()}`;
 }

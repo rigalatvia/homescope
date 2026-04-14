@@ -34,6 +34,8 @@ export interface ListingFilters {
   city?: string;
   transactionType?: ListingTransactionType;
   sort?: ListingSort;
+  addressContains?: string;
+  mlsNumber?: string;
   minPrice?: number;
   maxPrice?: number;
   bedrooms?: number;
@@ -41,12 +43,17 @@ export interface ListingFilters {
   bathrooms?: number;
   bathroomsMatch?: "exact" | "atLeast";
   propertyType?: string;
+  minLatitude?: number;
+  maxLatitude?: number;
+  minLongitude?: number;
+  maxLongitude?: number;
   page?: number;
   pageSize?: number;
 }
 
 export interface PaginatedListings {
   items: Listing[];
+  allItems?: Listing[];
   total: number;
   page: number;
   pageSize: number;

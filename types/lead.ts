@@ -24,6 +24,8 @@ export interface LeadSubmissionRecord extends LeadSubmissionInput {
   id: string;
   createdAt: string;
   source: "website";
+  emailStatus?: "pending" | "sent" | "failed";
+  emailSentAt?: string | null;
   emailDeliveryStatus?: "sent" | "failed" | "mock";
   emailRecipientUsed?: string;
   subjectUsed?: string;

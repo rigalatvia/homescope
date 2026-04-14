@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import { sendLeadNotification } from "@/lib/email";
 import { upsertContactFromLead } from "@/lib/leads/contacts-store";
-import { storeLeadSubmission, updateLeadEmailDeliveryStatus } from "@/lib/leads/store";
+import { storeLeadSubmission } from "@/lib/leads/store";
 import { validateLeadInput } from "@/lib/leads/validation";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
-import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
 import type { LeadSubmissionInput } from "@/types/lead";
 
 export async function POST(request: Request) {
   await ensureServerSecretsLoaded();
-
-  const defaultSettings = getDefaultSiteSettings();
 
   try {
     const payload = (await request.json()) as LeadSubmissionInput;
@@ -31,56 +27,18 @@ export async function POST(request: Request) {
       });
     }
 
-    try {
-      const emailResult = await sendLeadNotification(record);
-      const emailDeliveryStatus = emailResult.mode === "live" ? "sent" : "mock";
+    console.info("[leads] Submission saved. Email will be handled by Firestore trigger.", {
+      leadId: record.id
+    });
 
-      await updateLeadEmailDeliveryStatus(record.id, {
-        emailDeliveryStatus,
-        emailRecipientUsed: emailResult.recipientUsed,
-        subjectUsed: emailResult.subjectUsed,
-        emailProviderUsed: emailResult.provider,
-        emailMode: emailResult.mode
-      });
-
-      const message =
-        emailResult.mode === "live"
-          ? "Thank you! Your request has been sent successfully."
-          : "Your request was received successfully.";
-
-      console.info("[leads] Submission processed", {
-        leadId: record.id,
-        emailMode: emailResult.mode,
-        provider: emailResult.provider,
-        emailDeliveryStatus
-      });
-
-      return NextResponse.json({ success: true, id: record.id, message, emailMode: emailResult.mode }, { status: 201 });
-    } catch (emailError) {
-      await updateLeadEmailDeliveryStatus(record.id, {
-        emailDeliveryStatus: "failed",
-        emailRecipientUsed: "",
-        subjectUsed: defaultSettings.leadEmailSubject,
-        emailProviderUsed: "unknown",
-        emailMode: "live",
-        emailError: emailError instanceof Error ? emailError.message : "Unknown email error"
-      });
-
-      console.error("[leads] Submission saved but email send failed", {
-        leadId: record.id,
-        error: emailError
-      });
-
-      return NextResponse.json(
-        {
-          success: true,
-          id: record.id,
-          message: "Your request was received successfully.",
-          emailMode: "failed"
-        },
-        { status: 201 }
-      );
-    }
+    return NextResponse.json(
+      {
+        success: true,
+        id: record.id,
+        message: "Your request was received successfully."
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("[leads] Submission failed", error);
     return NextResponse.json(

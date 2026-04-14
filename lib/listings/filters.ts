@@ -5,11 +5,17 @@ export function parseListingFilters(params: {
   city?: string;
   transactionType?: string;
   sort?: string;
+  addressContains?: string;
+  mlsNumber?: string;
   minPrice?: string;
   maxPrice?: string;
   bedrooms?: string;
   bathrooms?: string;
   propertyType?: string;
+  minLatitude?: string;
+  maxLatitude?: string;
+  minLongitude?: string;
+  maxLongitude?: string;
   page?: string;
   pageSize?: string;
 }): ListingFilters {
@@ -20,6 +26,8 @@ export function parseListingFilters(params: {
     city: params.city || undefined,
     transactionType: parseTransactionType(params.transactionType),
     sort: parseSort(params.sort),
+    addressContains: parseQuery(params.addressContains),
+    mlsNumber: parseQuery(params.mlsNumber),
     minPrice: parseNumber(params.minPrice),
     maxPrice: parseNumber(params.maxPrice),
     bedrooms: bedrooms.value,
@@ -27,6 +35,10 @@ export function parseListingFilters(params: {
     bathrooms: bathrooms.value,
     bathroomsMatch: bathrooms.match,
     propertyType: (params.propertyType as PropertyType) || undefined,
+    minLatitude: parseNumber(params.minLatitude),
+    maxLatitude: parseNumber(params.maxLatitude),
+    minLongitude: parseNumber(params.minLongitude),
+    maxLongitude: parseNumber(params.maxLongitude),
     page: parseNumber(params.page) || 1,
     pageSize: parseNumber(params.pageSize) || DEFAULT_LISTINGS_PAGE_SIZE
   };
@@ -36,6 +48,16 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
   return listings.filter((listing) => {
     if (filters.city && listing.city !== filters.city) return false;
     if (filters.transactionType && listing.transactionType !== filters.transactionType) return false;
+    if (filters.addressContains) {
+      const query = filters.addressContains.trim().toLowerCase();
+      const haystack = `${listing.address} ${listing.city} ${listing.postalCode || ""}`.toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    if (filters.mlsNumber) {
+      const query = normalizeMls(filters.mlsNumber);
+      const listingMls = normalizeMls(listing.mlsNumber);
+      if (!listingMls.includes(query)) return false;
+    }
     if (filters.minPrice && listing.price < filters.minPrice) return false;
     if (filters.maxPrice && listing.price > filters.maxPrice) return false;
     if (filters.bedrooms) {
@@ -51,6 +73,13 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
       listing.propertyType.trim().toLowerCase() !== filters.propertyType.trim().toLowerCase()
     ) {
       return false;
+    }
+    if (hasMapBounds(filters)) {
+      if (listing.latitude == null || listing.longitude == null) return false;
+      if (filters.minLatitude != null && listing.latitude < filters.minLatitude) return false;
+      if (filters.maxLatitude != null && listing.latitude > filters.maxLatitude) return false;
+      if (filters.minLongitude != null && listing.longitude < filters.minLongitude) return false;
+      if (filters.maxLongitude != null && listing.longitude > filters.maxLongitude) return false;
     }
     return true;
   });
@@ -82,6 +111,7 @@ export function paginateListings(listings: Listing[], filters: ListingFilters): 
 
   return {
     items,
+    allItems: listings,
     total,
     page: safePage,
     pageSize,
@@ -93,6 +123,25 @@ function parseNumber(value?: string): number | undefined {
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseQuery(value?: string): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function normalizeMls(value: string): string {
+  return value.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function hasMapBounds(filters: ListingFilters): boolean {
+  return (
+    filters.minLatitude != null ||
+    filters.maxLatitude != null ||
+    filters.minLongitude != null ||
+    filters.maxLongitude != null
+  );
 }
 
 function parseCountFilter(value?: string): {

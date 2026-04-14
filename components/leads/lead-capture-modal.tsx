@@ -138,16 +138,16 @@ export function LeadCaptureModal({
 
       {isOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/60 p-3">
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-soft">
+          <div className="max-h-[95vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:max-h-none md:overflow-visible md:p-6">
             <div className="flex items-start justify-between gap-4">
-              <h3 className="font-heading text-3xl text-brand-900">{heading}</h3>
+              <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">{heading}</h3>
               <button type="button" onClick={close} className="rounded-full border border-brand-200 px-3 py-1 text-sm text-brand-700">
                 Close
               </button>
             </div>
-            <p className="mt-1 text-sm text-brand-700">We&apos;ll contact you shortly to confirm your visit.</p>
+            <p className="mt-1 text-xs text-brand-700 md:text-sm">We&apos;ll contact you shortly to confirm your visit.</p>
 
-            <p className="mt-2 text-sm text-brand-700">
+            <p className="mt-1 text-xs text-brand-700 md:text-sm">
               Listing: {listingAddress}, {listingCity}
             </p>
 
@@ -156,7 +156,8 @@ export function LeadCaptureModal({
                 {successMessage}
               </div>
             ) : (
-              <form onSubmit={onSubmit} className="mt-6 space-y-4">
+              <form onSubmit={onSubmit} className="mt-4 space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
                 <FormField label="Full Name" htmlFor="fullName" required>
                   <input
                     id="fullName"
@@ -199,13 +200,14 @@ export function LeadCaptureModal({
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
                 </FormField>
+                </div>
                 <FormField label="Message" htmlFor="message" required>
                   <textarea
                     id="message"
                     name="message"
                     value={form.message}
                     onChange={onChange}
-                    rows={4}
+                    rows={3}
                     required
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
@@ -226,6 +228,9 @@ export function LeadCaptureModal({
                     <p className="font-semibold text-brand-900">Before scheduling a showing</p>
                     <p className="mt-2 text-sm text-brand-700">
                       Most landlords require the following documents before approving a showing:
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-brand-900">
+                      Showing requests are reviewed only after these documents are submitted.
                     </p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-brand-700">
                       <li>Proof of income</li>
@@ -249,7 +254,7 @@ export function LeadCaptureModal({
                         className="mt-0.5 h-4 w-4 rounded border-brand-300"
                         required
                       />
-                      <span>I understand and I am ready to provide these documents</span>
+                      <span>I understand that my showing will be scheduled only after I submit these documents</span>
                     </label>
                   </div>
                 ) : (
@@ -288,13 +293,15 @@ export function LeadCaptureModal({
               </form>
             )}
 
-            <div className="mt-5 rounded-xl border border-brand-100 bg-brand-50/70 p-4 text-sm text-brand-700">
+            <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-xs text-brand-700 md:text-sm">
               <p className="font-semibold text-brand-900">Why connect with us</p>
-              <ul className="mt-2 space-y-1">
-                <li>Local GTA market coverage</li>
-                <li>Quick response time</li>
-                <li>No obligation</li>
-              </ul>
+              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span>Local GTA market coverage</span>
+                <span className="hidden text-brand-300 md:inline">|</span>
+                <span>Quick response time</span>
+                <span className="hidden text-brand-300 md:inline">|</span>
+                <span>No obligation</span>
+              </div>
             </div>
           </div>
         </div>

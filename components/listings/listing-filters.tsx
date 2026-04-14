@@ -21,16 +21,22 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     filters.city || "",
     filters.transactionType || "",
     filters.sort || "price_asc",
+    filters.addressContains || "",
+    filters.mlsNumber || "",
     filters.minPrice ?? "",
     filters.maxPrice ?? "",
     filters.bedrooms ? formatCountSelection(filters.bedrooms, filters.bedroomsMatch) : "",
     filters.bathrooms ? formatCountSelection(filters.bathrooms, filters.bathroomsMatch) : "",
-    filters.propertyType || ""
+    filters.propertyType || "",
+    filters.minLatitude ?? "",
+    filters.maxLatitude ?? "",
+    filters.minLongitude ?? "",
+    filters.maxLongitude ?? ""
   ].join("|");
 
   return (
     <div className="space-y-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-      <form key={formResetKey} className="grid gap-3 md:grid-cols-3 lg:grid-cols-8">
+      <form key={formResetKey} className="grid gap-3 md:grid-cols-3 lg:grid-cols-10">
         <FilterLabel label="City">
           <select name="city" defaultValue={filters.city || ""} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
             <option value="">All Cities</option>
@@ -62,6 +68,26 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
               </option>
             ))}
           </select>
+        </FilterLabel>
+
+        <FilterLabel label="Address contains">
+          <input
+            type="text"
+            name="addressContains"
+            defaultValue={filters.addressContains || ""}
+            placeholder="e.g. Baby Point"
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          />
+        </FilterLabel>
+
+        <FilterLabel label="MLS #">
+          <input
+            type="text"
+            name="mlsNumber"
+            defaultValue={filters.mlsNumber || ""}
+            placeholder="e.g. N12709208"
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          />
         </FilterLabel>
 
         <FilterLabel label="Min Price">
@@ -129,7 +155,12 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           </select>
         </FilterLabel>
 
-        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-7">
+        <input type="hidden" name="minLatitude" defaultValue={filters.minLatitude ?? ""} />
+        <input type="hidden" name="maxLatitude" defaultValue={filters.maxLatitude ?? ""} />
+        <input type="hidden" name="minLongitude" defaultValue={filters.minLongitude ?? ""} />
+        <input type="hidden" name="maxLongitude" defaultValue={filters.maxLongitude ?? ""} />
+
+        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-10">
           <button
             type="submit"
             className="rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
@@ -172,6 +203,8 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
   if (filters.transactionType) chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
+  if (filters.addressContains) chips.push({ label: `Address: ${filters.addressContains}` });
+  if (filters.mlsNumber) chips.push({ label: `MLS: ${filters.mlsNumber}` });
   if (filters.sort && filters.sort !== "price_asc") {
     chips.push({
       label:
@@ -195,6 +228,7 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
     });
   }
   if (filters.propertyType) chips.push({ label: `Type: ${filters.propertyType}` });
+  if (hasMapBounds(filters)) chips.push({ label: "Map Area Applied" });
 
   return chips;
 }
@@ -202,4 +236,13 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
 function formatCountSelection(value?: number, mode?: "exact" | "atLeast"): string {
   if (!value) return "";
   return mode === "exact" ? String(value) : `${value}+`;
+}
+
+function hasMapBounds(filters: ListingFilters): boolean {
+  return (
+    filters.minLatitude != null ||
+    filters.maxLatitude != null ||
+    filters.minLongitude != null ||
+    filters.maxLongitude != null
+  );
 }
