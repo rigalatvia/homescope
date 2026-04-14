@@ -260,7 +260,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         internetEntireListingDisplayYN: readRawPermissionSignal(record, "InternetEntireListingDisplayYN"),
         internetAddressDisplayYN: readRawPermissionSignal(record, "InternetAddressDisplayYN")
       },
-      municipality: pickString(record, ["Municipality", "City", "CommunityName"]),
+      municipality: pickString(record, ["City", "Municipality", "CommunityName"]),
       area: pickString(record, ["Area", "Community", "Neighbourhood"]),
       address: {
         streetNumber: pickString(record, ["StreetNumber", "StreetNum"]),
