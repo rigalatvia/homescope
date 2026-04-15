@@ -57,7 +57,7 @@ function buildTextBody(leadId: string, lead: LeadPayload, submittedAt: string): 
   return rows.join("\n");
 }
 
-export const sendLeadEmailOnCreate = onDocumentCreated(
+export const sendLeadEmailOnLeadCreated = onDocumentCreated(
   {
     document: `${LEADS_COLLECTION}/{leadId}`,
     region: "northamerica-northeast2",

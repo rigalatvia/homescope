@@ -1,6 +1,10 @@
 import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
 import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
 
+export const DEFAULT_TRANSACTION_TYPE: NonNullable<ListingFilters["transactionType"]> = "sale";
+export const DEFAULT_MIN_PRICE = 500000;
+export const DEFAULT_MAX_PRICE = 2000000;
+
 export function parseListingFilters(params: {
   city?: string;
   transactionType?: string;
@@ -24,12 +28,12 @@ export function parseListingFilters(params: {
 
   return {
     city: params.city || undefined,
-    transactionType: parseTransactionType(params.transactionType),
+    transactionType: parseTransactionType(params.transactionType) ?? DEFAULT_TRANSACTION_TYPE,
     sort: parseSort(params.sort),
     addressContains: parseQuery(params.addressContains),
     mlsNumber: parseQuery(params.mlsNumber),
-    minPrice: parseNumber(params.minPrice),
-    maxPrice: parseNumber(params.maxPrice),
+    minPrice: parseNumber(params.minPrice) ?? DEFAULT_MIN_PRICE,
+    maxPrice: parseNumber(params.maxPrice) ?? DEFAULT_MAX_PRICE,
     bedrooms: bedrooms.value,
     bedroomsMatch: bedrooms.match,
     bathrooms: bathrooms.value,

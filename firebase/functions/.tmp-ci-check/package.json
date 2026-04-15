@@ -1,0 +1,26 @@
+{
+  "name": "homescope-firebase-functions",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Firebase Functions for HomeScope GTA",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "deploy": "firebase deploy --only functions --project homescope-ee781",
+    "lint": "echo \"No lint configured for firebase/functions\"",
+    "serve": "firebase emulators:start --only functions,firestore"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^5.1.1",
+    "nodemailer": "^6.9.15",
+    "yan-ginzburg-real-estate-mvp": "file:../.."
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.16",
+    "typescript": "^5.5.3"
+  }
+}

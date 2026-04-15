@@ -1,0 +1,10 @@
+# Ensure deterministic installs in Cloud Build.
+# Keep lockfiles available for npm ci.
+node_modules/
+.git/
+.gitignore
+npm-debug.log
+firebase-debug.log
+
+!package-lock.json
+!npm-shrinkwrap.json

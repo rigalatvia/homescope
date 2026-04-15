@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
+import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
 import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 
@@ -16,6 +21,8 @@ interface ListingFiltersProps {
 }
 
 export function ListingFilters({ filters }: ListingFiltersProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const chips = buildFilterChips(filters);
   const formResetKey = [
     filters.city || "",
@@ -33,10 +40,72 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     filters.minLongitude ?? "",
     filters.maxLongitude ?? ""
   ].join("|");
+  const clearFiltersUrl = `/listings?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const params = new URLSearchParams();
+
+    const city = readFormValue(formData, "city");
+    const transactionType = readFormValue(formData, "transactionType") || DEFAULT_TRANSACTION_TYPE;
+    const sort = readFormValue(formData, "sort") || "price_asc";
+    const addressContains = readFormValue(formData, "addressContains");
+    const mlsNumber = readFormValue(formData, "mlsNumber");
+    const minPrice = readFormValue(formData, "minPrice") || String(DEFAULT_MIN_PRICE);
+    const maxPrice = readFormValue(formData, "maxPrice") || String(DEFAULT_MAX_PRICE);
+    const bedrooms = readFormValue(formData, "bedrooms");
+    const bathrooms = readFormValue(formData, "bathrooms");
+    const propertyType = readFormValue(formData, "propertyType");
+    const minLatitude = readFormValue(formData, "minLatitude");
+    const maxLatitude = readFormValue(formData, "maxLatitude");
+    const minLongitude = readFormValue(formData, "minLongitude");
+    const maxLongitude = readFormValue(formData, "maxLongitude");
+
+    if (city) params.set("city", city);
+    if (transactionType) params.set("transactionType", transactionType);
+    if (sort && sort !== "price_asc") params.set("sort", sort);
+    if (addressContains) params.set("addressContains", addressContains);
+    if (mlsNumber) params.set("mlsNumber", mlsNumber);
+    if (minPrice) params.set("minPrice", minPrice);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (bedrooms) params.set("bedrooms", bedrooms);
+    if (bathrooms) params.set("bathrooms", bathrooms);
+    if (propertyType) params.set("propertyType", propertyType);
+    if (minLatitude) params.set("minLatitude", minLatitude);
+    if (maxLatitude) params.set("maxLatitude", maxLatitude);
+    if (minLongitude) params.set("minLongitude", minLongitude);
+    if (maxLongitude) params.set("maxLongitude", maxLongitude);
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-      <form key={formResetKey} className="grid gap-3 md:grid-cols-3 lg:grid-cols-10">
+      <form key={formResetKey} onSubmit={onSubmit} className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <FilterLabel label="Address contains">
+            <input
+              type="text"
+              name="addressContains"
+              defaultValue={filters.addressContains || ""}
+              placeholder="e.g. Baby Point"
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            />
+          </FilterLabel>
+
+          <FilterLabel label="MLS #">
+            <input
+              type="text"
+              name="mlsNumber"
+              defaultValue={filters.mlsNumber || ""}
+              placeholder="e.g. N12709208"
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            />
+          </FilterLabel>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <FilterLabel label="City">
           <select name="city" defaultValue={filters.city || ""} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
             <option value="">All Cities</option>
@@ -51,7 +120,7 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
         <FilterLabel label="Listing Type">
           <select
             name="transactionType"
-            defaultValue={filters.transactionType || ""}
+            defaultValue={filters.transactionType || DEFAULT_TRANSACTION_TYPE}
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           >
             <option value="">Sale + Lease</option>
@@ -70,31 +139,11 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           </select>
         </FilterLabel>
 
-        <FilterLabel label="Address contains">
-          <input
-            type="text"
-            name="addressContains"
-            defaultValue={filters.addressContains || ""}
-            placeholder="e.g. Baby Point"
-            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-          />
-        </FilterLabel>
-
-        <FilterLabel label="MLS #">
-          <input
-            type="text"
-            name="mlsNumber"
-            defaultValue={filters.mlsNumber || ""}
-            placeholder="e.g. N12709208"
-            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-          />
-        </FilterLabel>
-
         <FilterLabel label="Min Price">
           <input
             type="number"
             name="minPrice"
-            defaultValue={filters.minPrice || ""}
+            defaultValue={filters.minPrice || DEFAULT_MIN_PRICE}
             placeholder="500000"
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           />
@@ -104,7 +153,7 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           <input
             type="number"
             name="maxPrice"
-            defaultValue={filters.maxPrice || ""}
+            defaultValue={filters.maxPrice || DEFAULT_MAX_PRICE}
             placeholder="2000000"
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           />
@@ -154,13 +203,14 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
             ))}
           </select>
         </FilterLabel>
+        </div>
 
         <input type="hidden" name="minLatitude" defaultValue={filters.minLatitude ?? ""} />
         <input type="hidden" name="maxLatitude" defaultValue={filters.maxLatitude ?? ""} />
         <input type="hidden" name="minLongitude" defaultValue={filters.minLongitude ?? ""} />
         <input type="hidden" name="maxLongitude" defaultValue={filters.maxLongitude ?? ""} />
 
-        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-10">
+        <div className="flex flex-wrap items-end gap-2 border-t border-brand-100 pt-3">
           <button
             type="submit"
             className="rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
@@ -168,7 +218,7 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
             Apply Filters
           </button>
           <Link
-            href="/listings"
+            href={clearFiltersUrl}
             className="rounded-full border border-brand-200 px-5 py-2 text-sm font-semibold text-brand-800 transition hover:border-brand-400"
           >
             Clear filters
@@ -202,7 +252,9 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
   const chips: { label: string }[] = [];
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
-  if (filters.transactionType) chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
+  if (filters.transactionType && filters.transactionType !== DEFAULT_TRANSACTION_TYPE) {
+    chips.push({ label: filters.transactionType === "sale" ? "For Sale" : "For Lease" });
+  }
   if (filters.addressContains) chips.push({ label: `Address: ${filters.addressContains}` });
   if (filters.mlsNumber) chips.push({ label: `MLS: ${filters.mlsNumber}` });
   if (filters.sort && filters.sort !== "price_asc") {
@@ -215,8 +267,8 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
             : "Sort: Price Low to High"
     });
   }
-  if (filters.minPrice) chips.push({ label: `Min: ${formatPrice(filters.minPrice)}` });
-  if (filters.maxPrice) chips.push({ label: `Max: ${formatPrice(filters.maxPrice)}` });
+  if (filters.minPrice && filters.minPrice !== DEFAULT_MIN_PRICE) chips.push({ label: `Min: ${formatPrice(filters.minPrice)}` });
+  if (filters.maxPrice && filters.maxPrice !== DEFAULT_MAX_PRICE) chips.push({ label: `Max: ${formatPrice(filters.maxPrice)}` });
   if (filters.bedrooms) {
     chips.push({
       label: filters.bedroomsMatch === "exact" ? `${filters.bedrooms} Beds` : `${filters.bedrooms}+ Beds`
@@ -245,4 +297,10 @@ function hasMapBounds(filters: ListingFilters): boolean {
     filters.minLongitude != null ||
     filters.maxLongitude != null
   );
+}
+
+function readFormValue(formData: FormData, key: string): string {
+  const raw = formData.get(key);
+  if (typeof raw !== "string") return "";
+  return raw.trim();
 }

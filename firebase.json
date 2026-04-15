@@ -1,6 +1,14 @@
 {
   "functions": {
     "source": "firebase/functions",
+    "ignore": [
+      ".git",
+      "node_modules",
+      "**/node_modules/**",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      ".runtimeconfig.json"
+    ],
     "predeploy": [
       "npm --prefix firebase/functions install",
       "node firebase/functions/node_modules/typescript/bin/tsc -p firebase/functions/tsconfig.json"
