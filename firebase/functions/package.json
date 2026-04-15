@@ -16,7 +16,8 @@
   "dependencies": {
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^5.1.1",
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^6.9.15",
+    "yan-ginzburg-real-estate-mvp": "file:../.."
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.16",

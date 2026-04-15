@@ -1,5 +1,7 @@
 # dependencies
 /node_modules
+**/node_modules/
+firebase/functions/lib/
 
 # next
 /.next
@@ -10,6 +12,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 firebase-debug.log
+*.tsbuildinfo
 
 # env files
 .env
