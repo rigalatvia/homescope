@@ -6,7 +6,6 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { formatPrice } from "@/lib/utils/format";
@@ -31,9 +30,6 @@ const MAP_PIN_ICON = L.divIcon({
 });
 
 export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearchProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [draftBounds, setDraftBounds] = useState(initialBounds || {});
   const [mapEnabled, setMapEnabled] = useState(false);
 
@@ -63,26 +59,6 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
     lng: average(mappableListings.map((listing) => listing.longitude))
   };
   const mapViewCount = mappableListings.filter((listing) => withinBounds(listing, draftBounds)).length;
-
-  const applyMapArea = () => {
-    const next = new URLSearchParams(searchParams.toString());
-    setOrDelete(next, "minLatitude", draftBounds.minLatitude);
-    setOrDelete(next, "maxLatitude", draftBounds.maxLatitude);
-    setOrDelete(next, "minLongitude", draftBounds.minLongitude);
-    setOrDelete(next, "maxLongitude", draftBounds.maxLongitude);
-    next.delete("page");
-    router.push(`${pathname}?${next.toString()}`);
-  };
-
-  const clearMapArea = () => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete("minLatitude");
-    next.delete("maxLatitude");
-    next.delete("minLongitude");
-    next.delete("maxLongitude");
-    next.delete("page");
-    router.push(`${pathname}?${next.toString()}`);
-  };
 
   return (
     <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
@@ -125,22 +101,6 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
           </MapContainer>
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={applyMapArea}
-          className="rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white"
-        >
-          Search this map area
-        </button>
-        <button
-          type="button"
-          onClick={clearMapArea}
-          className="rounded-full border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-800"
-        >
-          Clear map area
-        </button>
-      </div>
       <style jsx global>{`
         .homescope-map-pin-wrapper {
           background: transparent;
@@ -186,14 +146,6 @@ function MapBoundsTracker({
   }
 
   return null;
-}
-
-function setOrDelete(params: URLSearchParams, key: string, value?: number): void {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    params.delete(key);
-    return;
-  }
-  params.set(key, String(value));
 }
 
 function average(values: number[]): number {
