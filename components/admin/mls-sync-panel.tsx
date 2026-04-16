@@ -207,7 +207,7 @@ export function MlsSyncPanel() {
 
     try {
       for (let i = 0; i < maxIterations; i += 1) {
-        const json = await runSync("full");
+        const json = await runSync("full", { resetCursorToFirstPage: i === 0 });
         setFullAllRunsCompleted(i + 1);
         const notes = json.result?.notes || [];
         const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));

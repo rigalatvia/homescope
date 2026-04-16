@@ -44,9 +44,6 @@ export function computeVisibility(listing: NormalizedMLSListing): {
   if (isCommercialListing(listing)) {
     return { isVisible: false, hiddenReason: "unsupported_property_class" };
   }
-  if (!isPermittedToAdvertise(listing.permToAdvertise)) {
-    return { isVisible: false, hiddenReason: "perm_to_advertise_false" };
-  }
   if (!isAllowedPropertyClass(listing.propertyClass)) {
     return { isVisible: false, hiddenReason: "unsupported_property_class" };
   }
