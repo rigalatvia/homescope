@@ -1,7 +1,8 @@
-import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
+﻿import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
+import { getIncrementalSyncSince, setIncrementalSyncSince } from "@/lib/mls/sync/incrementalSyncCursor";
 import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
@@ -12,7 +13,13 @@ export async function runIncrementalSync(params?: {
 }): Promise<MLSSyncResult> {
   const startedAt = new Date().toISOString();
   const connector = createMLSConnector(params?.connectorKind);
-  const since = params?.since ?? new Date(Date.now() - 15 * 60 * 1000);
+  const notes: string[] = [];
+
+  const since =
+    params?.since && !Number.isNaN(params.since.getTime())
+      ? params.since
+      : await getIncrementalSyncSince();
+
   const stats: MLSSyncStats = {
     fetched: 0,
     filtered: 0,
@@ -33,7 +40,8 @@ export async function runIncrementalSync(params?: {
 
   logSyncInfo("Incremental sync started", {
     connector: connector.connectorName,
-    since: since.toISOString()
+    since: since.toISOString(),
+    sinceSource: params?.since ? "request" : "cursor"
   });
 
   try {
@@ -77,6 +85,9 @@ export async function runIncrementalSync(params?: {
     }
 
     const finishedAt = new Date().toISOString();
+    await setIncrementalSyncSince(finishedAt);
+    notes.push(`incrementalCursor advanced_to=${finishedAt}`);
+
     logSyncInfo("Incremental sync summary", {
       totalFetched: stats.fetched,
       totalFiltered: stats.filtered,
@@ -86,7 +97,8 @@ export async function runIncrementalSync(params?: {
       totalVisible: stats.included,
       totalHidden: stats.excluded,
       totalArchived: stats.archived,
-      hiddenByReason: stats.hiddenByReason
+      hiddenByReason: stats.hiddenByReason,
+      nextSince: finishedAt
     });
     logSyncInfo("Incremental sync completed", { stats });
 
@@ -96,7 +108,8 @@ export async function runIncrementalSync(params?: {
       sourceSystem: connector.sourceSystem,
       startedAt,
       finishedAt,
-      stats
+      stats,
+      notes
     };
   } catch (error) {
     stats.failed += 1;
