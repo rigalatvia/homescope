@@ -13,22 +13,20 @@ export const metadata: Metadata = {
 
 export default function AdminSyncPage() {
   return (
-    <section className="site-container py-14 sm:py-16">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-6 text-center">
-          <h1 className="font-heading text-4xl text-brand-900">MLS Sync Admin</h1>
-          <p className="mt-3 text-brand-700">
-            Trigger full, incremental, or cleanup sync runs using your protected admin token.
-          </p>
-          <p className="mt-2 text-sm text-brand-700">
-            Need to pin listings first?{" "}
-            <Link href="/admin/featured" className="font-semibold text-brand-900 underline underline-offset-2">
-              Manage Featured Listings
-            </Link>
-          </p>
-        </div>
-        <MlsSyncPanel />
+    <div className="mx-auto max-w-3xl rounded-2xl border border-brand-100 bg-white p-6 shadow-soft">
+      <div className="mb-6 text-center">
+        <h1 className="font-heading text-4xl text-brand-900">MLS Sync Admin</h1>
+        <p className="mt-3 text-brand-700">
+          Trigger full, incremental, or cleanup sync runs using your protected admin token.
+        </p>
+        <p className="mt-2 text-sm text-brand-700">
+          Need to pin listings first?{" "}
+          <Link href="/admin/featured" className="font-semibold text-brand-900 underline underline-offset-2">
+            Manage Featured Listings
+          </Link>
+        </p>
       </div>
-    </section>
+      <MlsSyncPanel />
+    </div>
   );
 }
