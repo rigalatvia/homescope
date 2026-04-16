@@ -54,8 +54,19 @@ interface ListingsStatsResponse {
   stats?: {
     totalRows: number;
     visibleRows: number;
-    hiddenRows: number;
     checkedAt: string;
+    fullSyncNextPage: number;
+    fullSyncCursorUpdatedAt: string | null;
+    incrementalSinceIso: string | null;
+    incrementalCursorUpdatedAt: string | null;
+    schedulerLastRunAt: string | null;
+    schedulerLastRunMode: string | null;
+    schedulerLastRunStatus: string | null;
+    schedulerLastRunUpdated: number;
+    schedulerLastRunCreated: number;
+    schedulerLastRunFetched: number;
+    schedulerLastRunFiltered: number;
+    schedulerLastError: string | null;
   };
   error?: string;
 }
@@ -82,13 +93,9 @@ export function MlsSyncPanel() {
   const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
   const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
   const [isRunningFullAll, setIsRunningFullAll] = useState(false);
+  const [fullAllRunsCompleted, setFullAllRunsCompleted] = useState(0);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
-  const [listingsStats, setListingsStats] = useState<{
-    totalRows: number;
-    visibleRows: number;
-    hiddenRows: number;
-    checkedAt: string;
-  } | null>(null);
+  const [listingsStats, setListingsStats] = useState<ListingsStatsResponse["stats"] | null>(null);
 
   function appendDiagnosticLog(lines: string[]): void {
     const payload = lines.join("\n");
@@ -191,23 +198,28 @@ export function MlsSyncPanel() {
   async function runFullUntilEnd() {
     if (isRunningFullAll) return;
     setIsRunningFullAll(true);
+    setFullAllRunsCompleted(0);
     setErrorMessage("");
     setSuccessMessage("");
 
-    const maxIterations = 80;
+    // Safety guard only. In practice this should never be reached.
+    const maxIterations = 5000;
 
     try {
       for (let i = 0; i < maxIterations; i += 1) {
         const json = await runSync("full");
+        setFullAllRunsCompleted(i + 1);
         const notes = json.result?.notes || [];
         const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));
         if (reachedEnd) {
-          setSuccessMessage("Full sync completed for all pages (cursor reached end of feed).");
+          setSuccessMessage(`Full sync completed for all pages (cursor reached end of feed). Runs completed: ${i + 1}.`);
           return;
         }
       }
 
-      setSuccessMessage("Stopped after safety limit. Run again to continue from current cursor.");
+      setSuccessMessage(
+        "Stopped after safety limit. This is unexpected. Re-run Full (All Pages) to continue from current cursor."
+      );
     } catch {
       // runSync already logs and sets error state
     } finally {
@@ -318,6 +330,12 @@ export function MlsSyncPanel() {
           </button>
         </div>
 
+        {isRunningFullAll ? (
+          <p className="text-xs text-brand-700">
+            Full all-pages run is active. Completed runs in this session: {fullAllRunsCompleted}
+          </p>
+        ) : null}
+
         <button
           type="button"
           onClick={checkSecretsAccess}
@@ -357,15 +375,47 @@ export function MlsSyncPanel() {
       )}
 
       {listingsStats && (
-        <div className="mt-5 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
-          <p className="text-sm font-semibold text-brand-900">Listings Collection Stats</p>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-brand-800 sm:grid-cols-4">
-            <p>Total Rows: {listingsStats.totalRows}</p>
-            <p>Visible Rows: {listingsStats.visibleRows}</p>
-            <p>Hidden Rows: {listingsStats.hiddenRows}</p>
-            <p>Checked: {new Date(listingsStats.checkedAt).toLocaleString()}</p>
+        <>
+          <div className="mt-5 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+            <p className="text-sm font-semibold text-brand-900">Listings Collection Stats</p>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-brand-800 sm:grid-cols-3">
+              <p>Total Rows: {listingsStats.totalRows}</p>
+              <p>Visible Rows: {listingsStats.visibleRows}</p>
+              <p>Checked: {new Date(listingsStats.checkedAt).toLocaleString()}</p>
+            </div>
           </div>
-        </div>
+
+          <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+            <p className="text-sm font-semibold text-brand-900">Sync Progress</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-brand-800 sm:grid-cols-2">
+              <p>Full Sync Next Page: {listingsStats.fullSyncNextPage}</p>
+              <p>
+                Full Cursor Updated: {listingsStats.fullSyncCursorUpdatedAt ? new Date(listingsStats.fullSyncCursorUpdatedAt).toLocaleString() : "-"}
+              </p>
+              <p>
+                Incremental Since: {listingsStats.incrementalSinceIso ? new Date(listingsStats.incrementalSinceIso).toLocaleString() : "-"}
+              </p>
+              <p>
+                Incremental Cursor Updated: {listingsStats.incrementalCursorUpdatedAt ? new Date(listingsStats.incrementalCursorUpdatedAt).toLocaleString() : "-"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+            <p className="text-sm font-semibold text-brand-900">Nightly Incremental Status</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-brand-800 sm:grid-cols-2">
+              <p>Last Run At: {listingsStats.schedulerLastRunAt ? new Date(listingsStats.schedulerLastRunAt).toLocaleString() : "No run recorded yet"}</p>
+              <p>Status: {listingsStats.schedulerLastRunStatus ?? "-"}</p>
+              <p>Mode: {listingsStats.schedulerLastRunMode ?? "-"}</p>
+              <p>Updated Records: {listingsStats.schedulerLastRunUpdated}</p>
+              <p>Created Records: {listingsStats.schedulerLastRunCreated}</p>
+              <p>
+                Fetched/Filtered: {listingsStats.schedulerLastRunFetched}/{listingsStats.schedulerLastRunFiltered}
+              </p>
+              {listingsStats.schedulerLastError ? <p className="text-red-700 sm:col-span-2">Last Error: {listingsStats.schedulerLastError}</p> : null}
+            </div>
+          </div>
+        </>
       )}
 
       <div className="mt-5">
@@ -381,4 +431,3 @@ export function MlsSyncPanel() {
     </div>
   );
 }
-

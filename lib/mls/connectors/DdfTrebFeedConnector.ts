@@ -19,6 +19,7 @@ interface DdfConfig {
   topParam: string;
   sinceFilterField: string;
   baseFilter: string | null;
+  orderBy: string;
 }
 
 export class DdfTrebFeedConnector implements MLSFeedConnector {
@@ -41,7 +42,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       maxRetries: Number(process.env.DDF_MAX_RETRIES || 3),
       topParam: process.env.DDF_TOP_PARAM || "$top",
       sinceFilterField: process.env.DDF_SINCE_FILTER_FIELD || "ModificationTimestamp",
-      baseFilter: process.env.DDF_BASE_FILTER || buildDefaultResidentialFilter()
+      baseFilter: process.env.DDF_BASE_FILTER || buildDefaultResidentialFilter(),
+      orderBy: process.env.DDF_ORDER_BY || "ListingId"
     };
     this.sourceSystem = this.config.sourceSystem;
   }
@@ -118,6 +120,9 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     const skip = Math.max(0, page - 1) * pageSize;
     if (skip > 0) {
       url.searchParams.set("$skip", String(skip));
+    }
+    if (this.config.orderBy) {
+      url.searchParams.set("$orderby", this.config.orderBy);
     }
     const filters: string[] = [];
     if (this.config.baseFilter) {
