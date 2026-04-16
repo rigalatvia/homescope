@@ -9,7 +9,6 @@ interface DdfConfig {
   sourceSystem: string;
   tokenUrl: string;
   listingsUrl: string;
-  replicationUrl: string;
   clientId: string;
   clientSecret: string;
   scope: string;
@@ -33,7 +32,6 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       sourceSystem: process.env.MLS_SOURCE_SYSTEM || "toronto-board-ddf",
       tokenUrl: requiredEnv("DDF_TOKEN_URL"),
       listingsUrl: requiredEnv("DDF_LISTINGS_URL"),
-      replicationUrl: process.env.DDF_REPLICATION_URL || `${requiredEnv("DDF_LISTINGS_URL").replace(/\/$/, "")}/PropertyReplication()`,
       clientId: requiredEnv("DDF_CLIENT_ID"),
       clientSecret: requiredEnv("DDF_CLIENT_SECRET"),
       scope: process.env.DDF_SCOPE || "DDFApi_Read",
@@ -114,7 +112,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 
   private buildListingsUrl(pageSize: number, since?: Date, isFirstPage = true, page = 1): string {
-    const baseUrl = since ? this.config.replicationUrl : this.config.listingsUrl;
+    const baseUrl = this.config.listingsUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
     const skip = Math.max(0, page - 1) * pageSize;

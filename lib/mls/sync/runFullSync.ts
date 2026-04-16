@@ -41,6 +41,7 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   const rawPermToAdvertiseCounts = new Map<string, number>();
   const mappedPropertyClassCounts = new Map<string, number>();
   const permissionAuditRows: string[] = [];
+  const exclusionAuditRows: string[] = [];
 
   logSyncInfo("Full sync started", {
     connector: connector.connectorName,
@@ -91,6 +92,7 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       collectRawPermToAdvertiseStats(filteredRaw.included, rawPermToAdvertiseCounts);
       collectMappedPropertyClassStats(normalized, mappedPropertyClassCounts);
       collectPermissionAuditRows(filteredRaw.included, normalized, permissionAuditRows, 25);
+      collectExclusionAuditRows(filteredRaw.included, normalized, exclusionAuditRows, 50);
       stats.normalized += normalized.length;
       const includedCount = normalized.filter((l) => l.isVisible).length;
       stats.included += includedCount;
@@ -149,6 +151,7 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     notes.push(`rawPermToAdvertiseSummary top=${rawPermTop || "none"}`);
     notes.push(`mappedPropertyClassSummary top=${mappedClassTop || "none"}`);
     notes.push(...buildPermissionAuditNotesForRun(permissionAuditRows));
+    notes.push(...buildExclusionAuditNotesForRun(exclusionAuditRows));
 
     const finishedAt = new Date().toISOString();
     logSyncInfo("Full sync summary", {
@@ -188,6 +191,18 @@ function buildPermissionAuditNotesForRun(rows: string[]): string[] {
   const lines = rows.slice(0, 12).map((row, idx) => `permissionAudit[${idx + 1}] ${row}`);
   if (rows.length > 12) {
     lines.push(`permissionAudit more=${rows.length - 12}`);
+  }
+  return lines;
+}
+
+function buildExclusionAuditNotesForRun(rows: string[]): string[] {
+  if (rows.length === 0) {
+    return ["exclusionAudit no excluded rows captured in this batch"];
+  }
+
+  const lines = rows.slice(0, 20).map((row, idx) => `exclusionAudit[${idx + 1}] ${row}`);
+  if (rows.length > 20) {
+    lines.push(`exclusionAudit more=${rows.length - 20}`);
   }
   return lines;
 }
@@ -263,6 +278,37 @@ function collectPermissionAuditRows(
         `normalizedPerm=${normalized.permToAdvertise}`,
         `isVisible=${normalized.isVisible}`,
         `hiddenReason=${normalized.hiddenReason || "none"}`
+      ].join(" | ")
+    );
+  }
+}
+
+function collectExclusionAuditRows(
+  rawListings: RawMLSFeedListing[],
+  normalizedListings: NormalizedMLSListing[],
+  target: string[],
+  maxRows: number
+): void {
+  if (target.length >= maxRows) return;
+
+  for (let i = 0; i < rawListings.length; i += 1) {
+    if (target.length >= maxRows) break;
+    const raw = rawListings[i];
+    const normalized = normalizedListings[i];
+    if (!raw || !normalized) continue;
+    if (normalized.isVisible === true || !normalized.hiddenReason) continue;
+
+    target.push(
+      [
+        `mls=${normalized.mlsNumber || raw.mlsNumber || "unknown"}`,
+        `listingId=${normalized.listingId}`,
+        `municipality=${normalized.municipality || raw.municipality || "null"}`,
+        `propertyClass=${normalized.propertyClass || raw.propertyClass || "null"}`,
+        `propertyType=${normalized.propertyType || raw.propertyType || "null"}`,
+        `status=${normalized.status}`,
+        `rawStatus=${raw.status || "null"}`,
+        `hiddenReason=${normalized.hiddenReason}`,
+        `address=${normalized.address.fullAddress || raw.address?.fullAddress || "null"}`
       ].join(" | ")
     );
   }
