@@ -1,13 +1,36 @@
 import { applyListingFilters, paginateListings } from "@/lib/listings/filters";
 import {
+  getPublicListingsPage as getPublicListingsPageFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import { DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS, getSiteSettings } from "@/lib/settings/site-settings";
+import {
+  DEFAULT_FEATURED_AGENT_KEYS,
+  DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS,
+  getSiteSettings
+} from "@/lib/settings/site-settings";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
 export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
+  if (canUseIndexedSearch(filters)) {
+    const paged = await getPublicListingsPageFromFirestore(filters);
+    let items = paged.items;
+
+    if (filters.propertyType) {
+      const selectedType = normalizePropertyType(filters.propertyType);
+      items = items.filter((listing) => normalizePropertyType(listing.propertyType) === selectedType);
+    }
+
+    return {
+      items,
+      total: paged.total,
+      page: paged.page,
+      pageSize: paged.pageSize,
+      totalPages: paged.totalPages
+    };
+  }
+
   const listings = await getPublicListingsFromFirestore(filters);
   const filtered = applyListingFilters(listings, filters);
   const sorted = sortListingsForBrowsing(filtered, filters.sort);
@@ -66,6 +89,14 @@ function sortByFeaturedIds(listings: Listing[], featuredListingIds: string[]): L
 }
 
 function isDefaultAgentFeatured(listing: Listing): boolean {
+  const agentKey = listing.listAgentKey?.trim();
+  if (
+    agentKey &&
+    DEFAULT_FEATURED_AGENT_KEYS.includes(agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number])
+  ) {
+    return true;
+  }
+
   const value = listing.listAgentNationalAssociationId?.trim();
   if (!value) return false;
   return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
@@ -88,4 +119,21 @@ function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort
 function toMillis(value: string): number {
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizePropertyType(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function canUseIndexedSearch(filters: ListingFilters): boolean {
+  if (filters.addressContains) return false;
+  if (filters.propertyType) return false;
+  if (filters.bedrooms != null) return false;
+  if (filters.bathrooms != null) return false;
+  if (filters.minLatitude != null) return false;
+  if (filters.maxLatitude != null) return false;
+  if (filters.minLongitude != null) return false;
+  if (filters.maxLongitude != null) return false;
+  if ((filters.minPrice != null || filters.maxPrice != null) && filters.sort === "newest") return false;
+  return true;
 }

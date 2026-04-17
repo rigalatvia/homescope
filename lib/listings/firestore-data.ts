@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import type { Listing, ListingFilters } from "@/types/listing";
 import type { MLSListingFirestoreDocument } from "@/lib/mls/types";
 import {
+  getFilteredListingsPage as getFilteredMLSListingsPage,
   getFeaturedListings as getFeaturedMLSListings,
   getFilteredListings as getFilteredMLSListings,
   getListingsByMunicipality as getMLSListingsByMunicipality,
@@ -46,6 +47,33 @@ export async function getPublicListings(filters?: ListingFilters): Promise<Listi
   return mappedListings;
 }
 
+export async function getPublicListingsPage(filters: ListingFilters): Promise<{
+  items: Listing[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const result = await getFilteredMLSListingsPage({
+    municipality: filters.city,
+    transactionType: filters.transactionType,
+    mlsNumber: filters.mlsNumber?.trim().toUpperCase(),
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    sort: filters.sort,
+    page: filters.page,
+    pageSize: filters.pageSize
+  });
+
+  return {
+    items: result.items.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable),
+    total: result.total,
+    page: result.page,
+    pageSize: result.pageSize,
+    totalPages: result.totalPages
+  };
+}
+
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -79,6 +107,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     id: raw.listingId,
     mlsNumber: raw.mlsNumber || "N/A",
     listAgentNationalAssociationId: raw.listAgentNationalAssociationId || undefined,
+    listAgentKey: raw.listAgentKey || undefined,
     title: buildListingTitle(raw),
     price: raw.price ?? 0,
     city: raw.municipality || "Unknown",

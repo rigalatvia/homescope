@@ -8,6 +8,7 @@ export interface Listing {
   id: string;
   mlsNumber: string;
   listAgentNationalAssociationId?: string;
+  listAgentKey?: string;
   title: string;
   price: number;
   city: string;

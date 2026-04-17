@@ -15,6 +15,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     listingId: `${raw.sourceSystem}:${raw.sourceListingKey}`,
     mlsNumber: raw.mlsNumber?.trim() || null,
     listAgentNationalAssociationId: raw.listAgentNationalAssociationId?.trim() || null,
+    listAgentKey: raw.listAgentKey?.trim() || null,
     sourceSystem: raw.sourceSystem,
     sourceListingKey: raw.sourceListingKey,
     propertyClass,
@@ -54,8 +55,13 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
       mlsNumber: raw.mlsNumber
     }),
     badges: [],
+    searchText: "",
+    searchTokens: [],
     rawSourceHash: computeRawListingHash(raw)
   };
+
+  normalized.searchText = buildSearchText(normalized);
+  normalized.searchTokens = buildSearchTokens(normalized.searchText);
 
   const visibility = computeVisibility(normalized);
   normalized.isVisible = visibility.isVisible;
@@ -228,4 +234,26 @@ function computeBadges(listing: NormalizedMLSListing): string[] {
   if (listing.price != null && listing.price >= 1500000) badges.push("Premium");
   if (listing.images.length >= 5) badges.push("Photo Rich");
   return badges;
+}
+
+function buildSearchText(listing: NormalizedMLSListing): string {
+  return [
+    listing.address.fullAddress,
+    listing.address.streetNumber,
+    listing.address.streetName,
+    listing.address.unit,
+    listing.address.postalCode,
+    listing.municipality,
+    listing.area,
+    listing.mlsNumber
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim()
+    .toLowerCase();
+}
+
+function buildSearchTokens(value: string): string[] {
+  const matches = value.match(/[a-z0-9]+/gi) ?? [];
+  return Array.from(new Set(matches.filter((token) => token.length >= 2))).slice(0, 40);
 }

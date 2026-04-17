@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { FormEvent } from "react";
+import { useTransition, type FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
 import { formatPrice } from "@/lib/utils/format";
@@ -23,6 +23,7 @@ interface ListingFiltersProps {
 export function ListingFilters({ filters }: ListingFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
   const chips = buildFilterChips(filters);
   const formResetKey = [
     filters.city || "",
@@ -77,7 +78,9 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     if (minLongitude) params.set("minLongitude", minLongitude);
     if (maxLongitude) params.set("maxLongitude", maxLongitude);
 
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   return (
@@ -213,9 +216,17 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
         <div className="flex flex-wrap items-end gap-2 border-t border-brand-100 pt-3">
           <button
             type="submit"
-            className="rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+            disabled={isPending}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-wait disabled:opacity-80"
           >
-            Apply Filters
+            {isPending ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Searching...
+              </>
+            ) : (
+              "Apply Filters"
+            )}
           </button>
           <Link
             href={clearFiltersUrl}

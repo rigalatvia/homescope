@@ -5,6 +5,25 @@ import type { Query } from "firebase-admin/firestore";
 
 const LISTINGS_COLLECTION = "listings";
 
+export interface PublicListingsPageQuery {
+  municipality?: string;
+  transactionType?: "sale" | "lease";
+  mlsNumber?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: "price_asc" | "price_desc" | "newest";
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PublicListingsPageResult {
+  items: MLSListingFirestoreDocument[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 function sanitizePublicListing(doc: MLSListingFirestoreDocument): MLSListingFirestoreDocument {
   return {
     ...doc,
@@ -81,6 +100,65 @@ export async function getFilteredListings(filters: {
   if (filters.bathrooms != null) listings = listings.filter((item) => (item.bathrooms ?? 0) >= filters.bathrooms!);
 
   return listings;
+}
+
+export async function getFilteredListingsPage(
+  filters: PublicListingsPageQuery
+): Promise<PublicListingsPageResult> {
+  const firestore = getFirebaseAdminFirestore();
+  const pageSize = Math.max(1, filters.pageSize ?? 24);
+  const page = Math.max(1, filters.page ?? 1);
+  const sort = filters.sort ?? "price_asc";
+
+  let query: Query = firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true);
+
+  if (filters.municipality) {
+    if (!allowedMunicipalities.includes(filters.municipality as (typeof allowedMunicipalities)[number])) {
+      return { items: [], total: 0, page: 1, pageSize, totalPages: 1 };
+    }
+    query = query.where("municipality", "==", filters.municipality);
+  } else {
+    query = query.where("municipality", "in", allowedMunicipalities);
+  }
+
+  if (filters.transactionType) {
+    query = query.where("transactionType", "==", filters.transactionType);
+  }
+
+  if (filters.mlsNumber) {
+    query = query.where("mlsNumber", "==", filters.mlsNumber);
+  }
+
+  if (filters.minPrice != null) {
+    query = query.where("price", ">=", filters.minPrice);
+  }
+
+  if (filters.maxPrice != null) {
+    query = query.where("price", "<=", filters.maxPrice);
+  }
+
+  if (sort === "newest") {
+    query = query.orderBy("updatedAt", "desc");
+  } else {
+    query = query.orderBy("price", sort === "price_desc" ? "desc" : "asc");
+  }
+
+  const countSnapshot = await query.count().get();
+  const total = countSnapshot.data().count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const offset = (safePage - 1) * pageSize;
+
+  const snapshot = await query.offset(offset).limit(pageSize).get();
+  const items = snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument));
+
+  return {
+    items,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages
+  };
 }
 
 async function getAllPublicListings(batchSize = 500): Promise<MLSListingFirestoreDocument[]> {
