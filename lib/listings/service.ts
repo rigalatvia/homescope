@@ -115,13 +115,13 @@ function sortByFeaturedIds(listings: Listing[], featuredListingIds: string[]): L
 
 function isDefaultAgentFeatured(listing: Listing): boolean {
   const agentKey = listing.listAgentKey?.trim();
-  if (
-    agentKey &&
-    DEFAULT_FEATURED_AGENT_KEYS.includes(agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number])
-  ) {
-    return true;
-  }
 
+  return !!(
+    agentKey &&
+    DEFAULT_FEATURED_AGENT_KEYS.includes(
+      agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number]
+    )
+  );
 }
 
 function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort"] = "price_asc"): Listing[] {
