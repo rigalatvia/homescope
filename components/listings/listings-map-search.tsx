@@ -5,8 +5,8 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { formatPrice } from "@/lib/utils/format";
 import type { Listing } from "@/types/listing";
@@ -45,6 +45,7 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
     () => mappableListings.slice(0, MAX_RENDERED_MARKERS),
     [mappableListings]
   );
+  const missingCoordinatesCount = listings.length - mappableListings.length;
 
   if (mappableListings.length === 0) {
     return (
@@ -65,8 +66,9 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-brand-900">Map Search</p>
         <p className="text-xs text-brand-600">
-          {mapViewCount} listing(s) in current map view
-          {mappableListings.length > MAX_RENDERED_MARKERS ? ` • rendering first ${MAX_RENDERED_MARKERS}` : ""}
+          {mappableListings.length} mapped of {listings.length} result(s) | {mapViewCount} in current map view
+          {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
+          {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
         </p>
       </div>
       {!mapEnabled ? (
@@ -81,6 +83,7 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
         <div className="h-[24rem] overflow-hidden rounded-xl border border-brand-100">
           <MapContainer center={[center.lat, center.lng]} zoom={11} scrollWheelZoom={false} className="h-full w-full">
             <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapViewportController listings={renderedListings} initialBounds={initialBounds} onBoundsChange={setDraftBounds} />
             <MapBoundsTracker onBoundsChange={setDraftBounds} />
             <MarkerClusterGroup chunkedLoading maxClusterRadius={50} disableClusteringAtZoom={16}>
               {renderedListings.map((listing) => (
@@ -120,6 +123,66 @@ export function ListingsMapSearch({ listings, initialBounds }: ListingsMapSearch
   );
 }
 
+function MapViewportController({
+  listings,
+  initialBounds,
+  onBoundsChange
+}: {
+  listings: Array<Listing & { latitude: number; longitude: number }>;
+  initialBounds?: {
+    minLatitude?: number;
+    maxLatitude?: number;
+    minLongitude?: number;
+    maxLongitude?: number;
+  };
+  onBoundsChange: (bounds: {
+    minLatitude: number;
+    maxLatitude: number;
+    minLongitude: number;
+    maxLongitude: number;
+  }) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (listings.length === 0) return;
+
+    if (
+      initialBounds?.minLatitude != null &&
+      initialBounds?.maxLatitude != null &&
+      initialBounds?.minLongitude != null &&
+      initialBounds?.maxLongitude != null
+    ) {
+      map.fitBounds(
+        [
+          [initialBounds.minLatitude, initialBounds.minLongitude],
+          [initialBounds.maxLatitude, initialBounds.maxLongitude]
+        ],
+        { padding: [20, 20] }
+      );
+      onBoundsChange({
+        minLatitude: initialBounds.minLatitude,
+        maxLatitude: initialBounds.maxLatitude,
+        minLongitude: initialBounds.minLongitude,
+        maxLongitude: initialBounds.maxLongitude
+      });
+      return;
+    }
+
+    const bounds = L.latLngBounds(listings.map((listing) => [listing.latitude, listing.longitude]));
+    map.fitBounds(bounds, { padding: [20, 20] });
+    const fittedBounds = map.getBounds();
+    onBoundsChange({
+      minLatitude: fittedBounds.getSouth(),
+      maxLatitude: fittedBounds.getNorth(),
+      minLongitude: fittedBounds.getWest(),
+      maxLongitude: fittedBounds.getEast()
+    });
+  }, [initialBounds, listings, map, onBoundsChange]);
+
+  return null;
+}
+
 function MapBoundsTracker({
   onBoundsChange
 }: {
@@ -134,6 +197,10 @@ function MapBoundsTracker({
     moveend: updateBounds,
     zoomend: updateBounds
   });
+
+  useEffect(() => {
+    updateBounds();
+  }, []);
 
   function updateBounds(): void {
     const bounds = map.getBounds();

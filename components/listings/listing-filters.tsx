@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
 import { formatPrice } from "@/lib/utils/format";
@@ -10,6 +10,8 @@ import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing"
 
 const PROPERTY_TYPES: PropertyType[] = ["Condo", "Freehold"];
 const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
+const LEASE_MIN_PRICE = 500;
+const LEASE_MAX_PRICE = 4000;
 const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
@@ -24,6 +26,9 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [transactionType, setTransactionType] = useState<string>(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
+  const [minPrice, setMinPrice] = useState(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
+  const [maxPrice, setMaxPrice] = useState(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
   const chips = buildFilterChips(filters);
   const formResetKey = [
     filters.city || "",
@@ -42,6 +47,12 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     filters.maxLongitude ?? ""
   ].join("|");
   const clearFiltersUrl = `/listings?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
+
+  useEffect(() => {
+    setTransactionType(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
+    setMinPrice(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
+    setMaxPrice(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
+  }, [filters.maxPrice, filters.minPrice, filters.transactionType]);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -81,6 +92,24 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
+  };
+
+  const handleTransactionTypeChange = (value: string) => {
+    setTransactionType(value);
+
+    if (value === "lease") {
+      setMinPrice(String(LEASE_MIN_PRICE));
+      setMaxPrice(String(LEASE_MAX_PRICE));
+      return;
+    }
+
+    if (
+      value === "sale" &&
+      (minPrice === String(LEASE_MIN_PRICE) || maxPrice === String(LEASE_MAX_PRICE))
+    ) {
+      setMinPrice(String(DEFAULT_MIN_PRICE));
+      setMaxPrice(String(DEFAULT_MAX_PRICE));
+    }
   };
 
   return (
@@ -123,7 +152,8 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
         <FilterLabel label="Listing Type">
           <select
             name="transactionType"
-            defaultValue={filters.transactionType || DEFAULT_TRANSACTION_TYPE}
+            value={transactionType}
+            onChange={(event) => handleTransactionTypeChange(event.target.value)}
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           >
             <option value="">Sale + Lease</option>
@@ -146,7 +176,8 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           <input
             type="number"
             name="minPrice"
-            defaultValue={filters.minPrice || DEFAULT_MIN_PRICE}
+            value={minPrice}
+            onChange={(event) => setMinPrice(event.target.value)}
             placeholder="500000"
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           />
@@ -156,7 +187,8 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
           <input
             type="number"
             name="maxPrice"
-            defaultValue={filters.maxPrice || DEFAULT_MAX_PRICE}
+            value={maxPrice}
+            onChange={(event) => setMaxPrice(event.target.value)}
             placeholder="2000000"
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
           />

@@ -14,8 +14,12 @@ import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing
 
 export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
   if (canUseIndexedSearch(filters)) {
-    const paged = await getPublicListingsPageFromFirestore(filters);
+    const [paged, allCandidates] = await Promise.all([
+      getPublicListingsPageFromFirestore(filters),
+      getPublicListingsFromFirestore(filters)
+    ]);
     let items = paged.items;
+    const allItems = sortListingsForBrowsing(applyListingFilters(allCandidates, filters), filters.sort);
 
     if (filters.propertyType) {
       const selectedType = normalizePropertyType(filters.propertyType);
@@ -27,7 +31,8 @@ export async function getPublicListings(filters: ListingFilters): Promise<Pagina
       total: paged.total,
       page: paged.page,
       pageSize: paged.pageSize,
-      totalPages: paged.totalPages
+      totalPages: paged.totalPages,
+      allItems
     };
   }
 
