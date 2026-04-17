@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SyncMode = "full" | "incremental" | "cleanup";
 
@@ -93,9 +93,12 @@ export function MlsSyncPanel() {
   const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
   const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
   const [isRunningFullAll, setIsRunningFullAll] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [fullAllRunsCompleted, setFullAllRunsCompleted] = useState(0);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [listingsStats, setListingsStats] = useState<ListingsStatsResponse["stats"] | null>(null);
+  const stopRequestedRef = useRef(false);
+  const autoLoadedStatsForTokenRef = useRef<string | null>(null);
 
   function appendDiagnosticLog(lines: string[]): void {
     const payload = lines.join("\n");
@@ -169,6 +172,10 @@ export function MlsSyncPanel() {
     } finally {
       setIsSubmitting(false);
       setActiveMode(null);
+      if (!isRunningFullAll) {
+        setIsStopping(false);
+        stopRequestedRef.current = false;
+      }
     }
   }
 
@@ -195,9 +202,34 @@ export function MlsSyncPanel() {
     }
   }
 
+  useEffect(() => {
+    const token = adminToken.trim();
+    if (!token) {
+      autoLoadedStatsForTokenRef.current = null;
+      setListingsStats(null);
+      return;
+    }
+
+    if (autoLoadedStatsForTokenRef.current === token) return;
+    autoLoadedStatsForTokenRef.current = token;
+    void loadListingsStats();
+  }, [adminToken]);
+
+  useEffect(() => {
+    const token = adminToken.trim();
+    if (!token) return;
+
+    const interval = window.setInterval(() => {
+      void loadListingsStats();
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [adminToken]);
+
   async function runFullUntilEnd() {
     if (isRunningFullAll) return;
     setIsRunningFullAll(true);
+    stopRequestedRef.current = false;
     setFullAllRunsCompleted(0);
     setErrorMessage("");
     setSuccessMessage("");
@@ -207,8 +239,16 @@ export function MlsSyncPanel() {
 
     try {
       for (let i = 0; i < maxIterations; i += 1) {
+        if (stopRequestedRef.current) {
+          setSuccessMessage(`Stop requested. Full sync paused after ${i} completed run(s).`);
+          return;
+        }
         const json = await runSync("full", { resetCursorToFirstPage: i === 0 });
         setFullAllRunsCompleted(i + 1);
+        if (stopRequestedRef.current) {
+          setSuccessMessage(`Stop requested. Full sync paused after ${i + 1} completed run(s).`);
+          return;
+        }
         const notes = json.result?.notes || [];
         const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));
         if (reachedEnd) {
@@ -224,6 +264,8 @@ export function MlsSyncPanel() {
       // runSync already logs and sets error state
     } finally {
       setIsRunningFullAll(false);
+      setIsStopping(false);
+      stopRequestedRef.current = false;
     }
   }
 
@@ -259,6 +301,37 @@ export function MlsSyncPanel() {
       setErrorMessage(error instanceof Error ? error.message : "Secrets diagnostics failed.");
     } finally {
       setIsCheckingSecrets(false);
+    }
+  }
+
+  async function requestStopRun() {
+    if (!adminToken.trim()) {
+      setErrorMessage("Admin token is required.");
+      return;
+    }
+
+    setIsStopping(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/admin/mls-sync", {
+        method: "DELETE",
+        headers: {
+          "x-admin-sync-token": adminToken.trim()
+        }
+      });
+
+      const json = await parseApiResponse<{ success?: boolean; error?: string }>(response);
+      if (!response.ok || !json?.success) {
+        throw new Error(json?.error || `Stop request failed with status ${response.status}.`);
+      }
+
+      stopRequestedRef.current = true;
+      setSuccessMessage("Stop requested. The current sync will pause after the current batch/page boundary.");
+      appendDiagnosticLog([`[sync-stop] ${new Date().toISOString()} stop requested by admin`]);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Stop request failed.");
+      setIsStopping(false);
     }
   }
 
@@ -329,6 +402,15 @@ export function MlsSyncPanel() {
             {isSubmitting && activeMode === "cleanup" ? "Running..." : "Run Cleanup"}
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={requestStopRun}
+          disabled={(!isSubmitting && !isRunningFullAll) || isStopping}
+          className="rounded-full border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 disabled:opacity-60"
+        >
+          {isStopping ? "Stopping..." : "Stop Run"}
+        </button>
 
         {isRunningFullAll ? (
           <p className="text-xs text-brand-700">

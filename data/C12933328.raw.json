@@ -1,0 +1,248 @@
+{
+    "@odata.context":  "https://ddfapi.realtor.ca/odata/v1/$metadata#Property",
+    "value":  [
+                  {
+                      "ListingKey":  "29530457",
+                      "ListOfficeKey":  "70066",
+                      "AvailabilityDate":  null,
+                      "MapCoordinateVerifiedYN":  null,
+                      "PropertySubType":  "Single Family",
+                      "DocumentsAvailable":  [
+
+                                             ],
+                      "LeaseAmount":  null,
+                      "LeaseAmountFrequency":  null,
+                      "BusinessType":  [
+
+                                       ],
+                      "LeasePerUnit":  null,
+                      "PricePerUnit":  null,
+                      "WaterBodyName":  null,
+                      "View":  [
+
+                               ],
+                      "NumberOfBuildings":  null,
+                      "NumberOfUnitsTotal":  null,
+                      "LotFeatures":  [
+                                          "In-Law Suite",
+                                          "Sauna"
+                                      ],
+                      "LotSizeArea":  null,
+                      "LotSizeDimensions":  "264 x 330 FT",
+                      "LotSizeUnits":  null,
+                      "PoolFeatures":  [
+                                           "Indoor pool"
+                                       ],
+                      "RoadSurfaceType":  [
+
+                                          ],
+                      "CurrentUse":  [
+
+                                     ],
+                      "PossibleUse":  [
+
+                                      ],
+                      "AnchorsCoTenants":  null,
+                      "WaterfrontFeatures":  [
+
+                                             ],
+                      "CommunityFeatures":  [
+
+                                            ],
+                      "FrontageLengthNumeric":  264.0,
+                      "FrontageLengthNumericUnits":  "feet",
+                      "Fencing":  [
+
+                                  ],
+                      "Appliances":  [
+                                         "Oven - Built-In"
+                                     ],
+                      "OtherEquipment":  [
+
+                                         ],
+                      "SecurityFeatures":  [
+
+                                           ],
+                      "TotalActualRent":  null,
+                      "ExistingLeaseType":  [
+
+                                            ],
+                      "AssociationFee":  null,
+                      "AssociationFeeFrequency":  null,
+                      "AssociationName":  "",
+                      "AssociationFeeIncludes":  [
+
+                                                 ],
+                      "OriginalEntryTimestamp":  "2026-03-29T19:32:07.97Z",
+                      "ModificationTimestamp":  "2026-03-29T19:40:08.02Z",
+                      "ListingId":  "C12933328",
+                      "ListAgentNationalAssociationId":  "1379850",
+                      "CoListAgentNationalAssociationId":  null,
+                      "CoListAgentNationalAssociationId2":  null,
+                      "CoListAgentNationalAssociationId3":  null,
+                      "InternetEntireListingDisplayYN":  true,
+                      "StandardStatus":  "Active",
+                      "StatusChangeTimestamp":  "2026-03-29T19:32:08Z",
+                      "PublicRemarks":  "An exceptional estate in the prestigious Bridle Path, one of Canada\u0027s most exclusive enclaves, known for its grand homes, privacy, and notable residents of celebrities and high profile figures in politic and business.Set on a beautifully landscaped lot, the home offers elegant living spaces filled with natural light, designed for both everyday comfort and upscale entertaining. The main kitchen features built-in appliances and is complemented by a hidden catering kitchen, nanny\u0027s suite kitchen, and a lower-level entertaining kitchen, along with a wet bar with fridge and dishwasher.Additional highlights include custom drapery, designer light fixtures, built-in speakers, a fully equipped home theatre, steam room system, smart home automation, security cameras, central vacuum, heated driveway, full home generator, and complete pool equipment.Blending luxury, functionality, and a coveted address, this residence presents a rare opportunity in the Bridle Path. (id:65552)",
+                      "ListPrice":  28650000,
+                      "Inclusions":  null,
+                      "CoListOfficeKey":  null,
+                      "CoListOfficeKey2":  null,
+                      "CoListOfficeKey3":  null,
+                      "ListOfficeNationalAssociationId":  "1132867",
+                      "CoListOfficeNationalAssociationId":  null,
+                      "CoListOfficeNationalAssociationId2":  null,
+                      "CoListOfficeNationalAssociationId3":  null,
+                      "CoListAgentKey":  null,
+                      "CoListAgentKey2":  null,
+                      "CoListAgentKey3":  null,
+                      "ListAgentKey":  "2126429",
+                      "InternetAddressDisplayYN":  true,
+                      "ListingURL":  "www.realtor.ca/real-estate/29530457/8-high-point-road-toronto-bridle-path-sunnybrook-york-mills-bridle-path-sunnybrook-york-mills",
+                      "OriginatingSystemName":  "Toronto Regional Real Estate Board",
+                      "PhotosCount":  1,
+                      "PhotosChangeTimestamp":  "2026-03-29T19:32:08.02Z",
+                      "CommonInterest":  "Freehold",
+                      "ListAOR":  "Toronto",
+                      "ListAORKey":  "82",
+                      "UnparsedAddress":  "8 HIGH POINT ROAD",
+                      "PostalCode":  "M3B2A4",
+                      "SubdivisionName":  null,
+                      "StateOrProvince":  "Ontario",
+                      "StreetDirPrefix":  null,
+                      "StreetDirSuffix":  null,
+                      "StreetName":  "High Point",
+                      "StreetNumber":  "8",
+                      "StreetSuffix":  "Road",
+                      "UnitNumber":  "",
+                      "Country":  "Canada",
+                      "City":  "Toronto (Bridle Path-Sunnybrook-York Mills)",
+                      "Directions":  "Cross Streets: Bayview/ Post Rd. ** Directions: EAST.",
+                      "Latitude":  43.7356435,
+                      "Longitude":  -79.3739518,
+                      "CityRegion":  "Bridle Path-Sunnybrook-York Mills",
+                      "GeocodeManualYN":  false,
+                      "ParkingTotal":  31,
+                      "YearBuilt":  null,
+                      "BathroomsPartial":  null,
+                      "BathroomsTotalInteger":  16,
+                      "BedroomsTotal":  9,
+                      "BuildingAreaTotal":  null,
+                      "BuildingAreaUnits":  null,
+                      "BuildingFeatures":  [
+
+                                           ],
+                      "AboveGradeFinishedArea":  null,
+                      "AboveGradeFinishedAreaUnits":  null,
+                      "AboveGradeFinishedAreaSource":  null,
+                      "AboveGradeFinishedAreaMinimum":  null,
+                      "AboveGradeFinishedAreaMaximum":  null,
+                      "BelowGradeFinishedArea":  null,
+                      "BelowGradeFinishedAreaUnits":  null,
+                      "BelowGradeFinishedAreaSource":  null,
+                      "BelowGradeFinishedAreaMinimum":  null,
+                      "BelowGradeFinishedAreaMaximum":  null,
+                      "LivingArea":  null,
+                      "LivingAreaUnits":  "square feet",
+                      "LivingAreaSource":  null,
+                      "LivingAreaMinimum":  5000,
+                      "LivingAreaMaximum":  100000,
+                      "FireplacesTotal":  null,
+                      "FireplaceYN":  true,
+                      "FireplaceFeatures":  [
+
+                                            ],
+                      "ArchitecturalStyle":  [
+
+                                             ],
+                      "Heating":  [
+                                      "Forced air",
+                                      "Natural gas"
+                                  ],
+                      "FoundationDetails":  [
+                                                "Concrete"
+                                            ],
+                      "Basement":  [
+                                       "Finished",
+                                       "Separate entrance",
+                                       "Walk out",
+                                       "Walk-up",
+                                       "N/A",
+                                       "N/A",
+                                       "N/A"
+                                   ],
+                      "ExteriorFeatures":  [
+                                               "Stone"
+                                           ],
+                      "Flooring":  [
+
+                                   ],
+                      "ParkingFeatures":  [
+                                              "Attached Garage",
+                                              "Garage"
+                                          ],
+                      "Cooling":  [
+                                      "Central air conditioning"
+                                  ],
+                      "PropertyCondition":  [
+
+                                            ],
+                      "Roof":  [
+
+                               ],
+                      "ConstructionMaterials":  [
+
+                                                ],
+                      "Stories":  2.0000,
+                      "PropertyAttachedYN":  false,
+                      "AccessibilityFeatures":  [
+
+                                                ],
+                      "BedroomsAboveGrade":  9,
+                      "BedroomsBelowGrade":  null,
+                      "Zoning":  null,
+                      "ZoningDescription":  null,
+                      "TaxAnnualAmount":  118500,
+                      "TaxBlock":  null,
+                      "TaxLot":  null,
+                      "TaxYear":  null,
+                      "StructureType":  [
+                                            "House"
+                                        ],
+                      "ParcelNumber":  null,
+                      "Utilities":  [
+
+                                    ],
+                      "IrrigationSource":  [
+
+                                           ],
+                      "WaterSource":  [
+                                          "Municipal water"
+                                      ],
+                      "Sewer":  [
+                                    "Sanitary sewer"
+                                ],
+                      "Electric":  [
+
+                                   ],
+                      "Media":  [
+                                    {
+                                        "MediaKey":  "6551665143",
+                                        "ResourceRecordKey":  "29530457",
+                                        "LongDescription":  null,
+                                        "MediaURL":  "https://ddfcdn.realtor.ca/listing/TS639103951279800000/reb82/highres/8/c12933328_1.jpg",
+                                        "ModificationTimestamp":  "2026-03-29T19:32:07.98Z",
+                                        "Order":  1,
+                                        "PreferredPhotoYN":  true,
+                                        "ResourceRecordId":  "C12933328",
+                                        "ResourceName":  "Property",
+                                        "MediaCategory":  "Property Photo"
+                                    }
+                                ],
+                      "Rooms":  [
+
+                                ]
+                  }
+              ],
+    "@odata.nextLink":  "https://ddfapi.realtor.ca/odata/v1/Property?$top=1\u0026$skip=1\u0026$filter=ListingId+eq+%27C12933328%27"
+}

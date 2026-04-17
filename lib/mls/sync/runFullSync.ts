@@ -11,6 +11,7 @@ import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPos
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getDefaultFullSyncStartPage, getFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
+import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
 import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
@@ -63,6 +64,14 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     });
 
     while (page <= stopPage) {
+      if (await isMLSSyncStopRequested()) {
+        await setFullSyncStartPage(page);
+        await clearMLSSyncStop();
+        notes.push(`Full sync stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
+        logSyncInfo("Full sync stop requested", { nextPage: page });
+        break;
+      }
+
       const rawPage = await connector.fetchAllListings({
         page,
         pageSize: mlsSyncConfig.pageSize
@@ -126,11 +135,13 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       page += 1;
     }
 
+    const stopRequested = notes.some((note) => note.includes("stop requested"));
+
     if (reachedEnd) {
       await setFullSyncStartPage(getDefaultFullSyncStartPage());
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
       notes.push("Safety mode: end-of-feed stale deletion skipped to prevent accidental bulk removals.");
-    } else {
+    } else if (!stopRequested) {
       await setFullSyncStartPage(page);
       const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";
       const note = `Full sync processed a batch (${pageLabel} pages) from page ${startPage}. Continue from page ${page} on next run.`;

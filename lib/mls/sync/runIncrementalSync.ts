@@ -3,6 +3,7 @@ import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPos
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getIncrementalSyncSince, setIncrementalSyncSince } from "@/lib/mls/sync/incrementalSyncCursor";
+import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
 import { deleteListingDocument } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
@@ -48,6 +49,22 @@ export async function runIncrementalSync(params?: {
     const rawListings = await connector.fetchUpdatedListings(since);
     stats.fetched = rawListings.length;
     logSyncInfo("Incremental sync fetched listings", { count: stats.fetched });
+
+    if (await isMLSSyncStopRequested()) {
+      await clearMLSSyncStop();
+      notes.push("Incremental sync stop requested. Sync paused before processing fetched listings.");
+      const finishedAt = new Date().toISOString();
+      return {
+        mode: "incremental",
+        connector: connector.connectorName as MLSConnectorKind,
+        sourceSystem: connector.sourceSystem,
+        startedAt,
+        finishedAt,
+        stats,
+        notes
+      };
+    }
+
     const filteredRaw = filterRawListingsByTargetPostalAreas(rawListings);
     stats.filtered = filteredRaw.included.length;
     if (filteredRaw.excludedCount > 0) {
