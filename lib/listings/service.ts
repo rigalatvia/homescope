@@ -5,11 +5,7 @@ import {
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import {
-  DEFAULT_FEATURED_AGENT_KEYS,
-  DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS,
-  getSiteSettings
-} from "@/lib/settings/site-settings";
+import { getSiteSettings } from "@/lib/settings/site-settings";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
 export async function getPublicListings(
@@ -69,12 +65,7 @@ export async function getAllPublicListings(): Promise<Listing[]> {
 
 export async function getFeaturedListings(): Promise<Listing[]> {
   const listings = await getPublicListingsFromFirestore();
-  const defaultAgentFeatured = listings.filter(isDefaultAgentFeatured).sort((a, b) => b.price - a.price);
-  const remaining = listings
-    .filter((listing) => !isDefaultAgentFeatured(listing))
-    .sort((a, b) => b.price - a.price);
-
-  return [...defaultAgentFeatured, ...remaining].slice(0, 6);
+  return [...listings].sort(compareHomepageFeatured).slice(0, 6);
 }
 
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
@@ -100,28 +91,12 @@ function sortByFeaturedIds(listings: Listing[], featuredListingIds: string[]): L
   return [...listings].sort((a, b) => {
     const aRank = featuredRank.get(a.id);
     const bRank = featuredRank.get(b.id);
-    const aDefaultFeatured = isDefaultAgentFeatured(a);
-    const bDefaultFeatured = isDefaultAgentFeatured(b);
 
     if (aRank != null && bRank != null) return aRank - bRank;
     if (aRank != null) return -1;
     if (bRank != null) return 1;
-    if (aDefaultFeatured && bDefaultFeatured) return b.price - a.price;
-    if (aDefaultFeatured) return -1;
-    if (bDefaultFeatured) return 1;
     return b.price - a.price;
   });
-}
-
-function isDefaultAgentFeatured(listing: Listing): boolean {
-  const agentKey = listing.listAgentKey?.trim();
-
-  return !!(
-    agentKey &&
-    DEFAULT_FEATURED_AGENT_KEYS.includes(
-      agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number]
-    )
-  );
 }
 
 function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort"] = "price_asc"): Listing[] {
@@ -143,6 +118,15 @@ function toMillis(value: string): number {
 
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function compareHomepageFeatured(a: Listing, b: Listing): number {
+  const aPremium = a.badge === "Hot";
+  const bPremium = b.badge === "Hot";
+
+  if (aPremium && !bPremium) return -1;
+  if (!aPremium && bPremium) return 1;
+  return b.price - a.price;
 }
 
 function canUseIndexedSearch(filters: ListingFilters): boolean {

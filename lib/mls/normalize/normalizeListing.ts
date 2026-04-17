@@ -1,4 +1,8 @@
 import { computeVisibility } from "@/lib/mls/filter/visibility";
+import {
+  DEFAULT_FEATURED_AGENT_KEYS,
+  DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS
+} from "@/lib/settings/site-settings";
 import type { MLSListingStatus, NormalizedMLSListing, RawMLSFeedListing } from "@/lib/mls/types";
 import { computeRawListingHash } from "@/lib/mls/utils/hash";
 import { createListingSlug } from "@/lib/mls/utils/slug";
@@ -235,9 +239,25 @@ function mapImageUrls(raw: RawMLSFeedListing): string[] {
 
 function computeBadges(listing: NormalizedMLSListing): string[] {
   const badges: string[] = [];
-  if (listing.price != null && listing.price >= 1500000) badges.push("Premium");
+  if (isYanListing(listing)) badges.push("Premium");
   if (listing.images.length >= 5) badges.push("Photo Rich");
   return badges;
+}
+
+function isYanListing(listing: Pick<NormalizedMLSListing, "listAgentKey" | "listAgentNationalAssociationId">): boolean {
+  const agentKey = listing.listAgentKey?.trim();
+  if (
+    agentKey &&
+    DEFAULT_FEATURED_AGENT_KEYS.includes(agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number])
+  ) {
+    return true;
+  }
+
+  const nationalAssociationId = listing.listAgentNationalAssociationId?.trim();
+  if (!nationalAssociationId) return false;
+  return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
+    nationalAssociationId as (typeof DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS)[number]
+  );
 }
 
 function buildSearchText(listing: NormalizedMLSListing): string {
