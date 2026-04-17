@@ -68,9 +68,13 @@ export async function getAllPublicListings(): Promise<Listing[]> {
 }
 
 export async function getFeaturedListings(): Promise<Listing[]> {
-  const [listings, settings] = await Promise.all([getPublicListingsFromFirestore(), getSiteSettings()]);
-  const sorted = sortByFeaturedIds(listings, settings.featuredListingIds);
-  return sorted.slice(0, 6);
+  const listings = await getPublicListingsFromFirestore();
+  const defaultAgentFeatured = listings.filter(isDefaultAgentFeatured).sort((a, b) => b.price - a.price);
+  const remaining = listings
+    .filter((listing) => !isDefaultAgentFeatured(listing))
+    .sort((a, b) => b.price - a.price);
+
+  return [...defaultAgentFeatured, ...remaining].slice(0, 6);
 }
 
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {

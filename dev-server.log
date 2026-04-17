@@ -10,3 +10,96 @@
  ✓ Ready in 2.7s
  ○ Compiling /listings ...
  ✓ Compiled /listings in 5.2s (836 modules)
+ GET /listings 200 in 6388ms
+ ○ Compiling / ...
+ ✓ Compiled / in 792ms (801 modules)
+revalidating cache with key: async ()=>(0,_lib_mls_sync_publicQueries__WEBPACK_IMPORTED_MODULE_1__.getPublicListings)(500)-public-mls-listings-[] Error: Failed to set Next.js data cache, items over 2MB can not be cached (3271517 bytes)
+    at IncrementalCache.set (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\incremental-cache\index.js:388:23)
+    at cacheNewResult (webpack-internal:///(rsc)/./node_modules/next/dist/server/web/spec-extension/unstable-cache.js:16:28)
+    at eval (webpack-internal:///(rsc)/./node_modules/next/dist/server/web/spec-extension/unstable-cache.js:142:40)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 1)
+    at async Object.close (C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:388673)
+ GET / 200 in 2846ms
+ GET /listings 200 in 220ms
+ ✓ Compiled /favicon.ico in 426ms (487 modules)
+ GET /favicon.ico 200 in 550ms
+ ✓ Compiled /listings/[slug] in 424ms (838 modules)
+ ✓ Compiled in 698ms (852 modules)
+ GET /listings/20-inn-on-the-park-toronto-banbury-don-mills-c12856384 200 in 333ms
+revalidating cache with key: async ()=>(0,_lib_mls_sync_publicQueries__WEBPACK_IMPORTED_MODULE_1__.getPublicListings)(500)-public-mls-listings-[] Error: Failed to set Next.js data cache, items over 2MB can not be cached (3278231 bytes)
+    at IncrementalCache.set (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\incremental-cache\index.js:388:23)
+    at cacheNewResult (webpack-internal:///(rsc)/./node_modules/next/dist/server/web/spec-extension/unstable-cache.js:16:28)
+    at eval (webpack-internal:///(rsc)/./node_modules/next/dist/server/web/spec-extension/unstable-cache.js:142:40)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+ ✓ Compiled in 1021ms (820 modules)
+ ✓ Compiled /_not-found in 327ms (807 modules)
+ ⨯ Failed to generate static paths for /listings/[slug]:
+Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ GET /_next/static/css/app/layout.css?v=1776450913372 404 in 520ms
+ GET /_next/static/css/app/layout.css?v=1776450913432 404 in 269ms
+ ✓ Compiled in 608ms (821 modules)
+ GET /_next/static/css/app/layout.css?v=1776450918901 404 in 110ms
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/listings/2500-rutherford-vaughan-maple-n12832664'
+}
+ ○ Compiling /_error ...

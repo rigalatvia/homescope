@@ -4,7 +4,7 @@ import { FeaturedListingsPreview } from "@/components/home/featured-listings-pre
 import { HeroSection } from "@/components/home/hero";
 import { ServiceAreasSection } from "@/components/home/service-areas";
 import { ValuePointsSection } from "@/components/home/value-points";
-import { getAllPublicListings } from "@/lib/listings/service";
+import { getFeaturedListings } from "@/lib/listings/service";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const featuredListings = (await getAllPublicListings()).slice(0, 3);
+  const featuredListings = (await getFeaturedListings()).slice(0, 3);
 
   return (
     <>
