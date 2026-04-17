@@ -1,0 +1,12 @@
+
+> yan-ginzburg-real-estate-mvp@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.7s
+ ○ Compiling /listings ...
+ ✓ Compiled /listings in 5.2s (836 modules)

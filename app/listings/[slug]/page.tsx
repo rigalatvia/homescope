@@ -39,7 +39,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
   return (
     <section className="site-container py-10">
-      <div className="grid gap-10 lg:grid-cols-[1.15fr,0.85fr]">
+      <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr]">
         <ListingGallery images={listing.images} address={listing.address} />
         <div className="space-y-6">
           <div>
@@ -47,10 +47,10 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             <h1 className="mt-2 font-heading text-4xl text-brand-900">{listing.title}</h1>
             <p className="mt-2 text-2xl font-semibold text-brand-900">{formatPrice(listing.price)}</p>
             <p className="mt-1 text-brand-700">{fullAddress}</p>
-            <p className="mt-1 text-sm text-brand-600">MLS {listing.mlsNumber}</p>
+            <p className="mt-1 text-sm text-brand-600">MLS Number: {listing.mlsNumber}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5 lg:gap-2 xl:gap-3">
             <Stat label="Beds" value={listing.bedrooms} />
             <Stat label="Baths" value={listing.bathrooms} />
             <Stat label="Square Feet" value={listing.squareFootage || "N/A"} />
@@ -77,9 +77,9 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl bg-brand-50 p-3 text-center">
-      <p className="text-xs uppercase tracking-wide text-brand-600">{label}</p>
-      <p className="mt-1 font-semibold text-brand-900">{value}</p>
+    <div className="rounded-xl bg-brand-50 px-2 py-3 text-center sm:px-3">
+      <p className="whitespace-nowrap text-[11px] uppercase tracking-wide text-brand-600">{label}</p>
+      <p className="mt-1 font-semibold text-brand-900 whitespace-nowrap">{value}</p>
     </div>
   );
 }

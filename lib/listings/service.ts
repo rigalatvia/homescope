@@ -12,18 +12,25 @@ import {
 } from "@/lib/settings/site-settings";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
-export async function getPublicListings(filters: ListingFilters): Promise<PaginatedListings> {
+export async function getPublicListings(
+  filters: ListingFilters,
+  options?: { includeAllItems?: boolean }
+): Promise<PaginatedListings> {
+  const includeAllItems = options?.includeAllItems === true;
+
   if (canUseIndexedSearch(filters)) {
-    const [paged, allCandidates] = await Promise.all([
-      getPublicListingsPageFromFirestore(filters),
-      getPublicListingsFromFirestore(filters)
-    ]);
+    const paged = await getPublicListingsPageFromFirestore(filters);
     let items = paged.items;
-    const allItems = sortListingsForBrowsing(applyListingFilters(allCandidates, filters), filters.sort);
+    let allItems: Listing[] | undefined;
 
     if (filters.propertyType) {
       const selectedType = normalizePropertyType(filters.propertyType);
       items = items.filter((listing) => normalizePropertyType(listing.propertyType) === selectedType);
+    }
+
+    if (includeAllItems) {
+      const allCandidates = await getPublicListingsFromFirestore(filters);
+      allItems = sortListingsForBrowsing(applyListingFilters(allCandidates, filters), filters.sort);
     }
 
     return {
@@ -39,7 +46,16 @@ export async function getPublicListings(filters: ListingFilters): Promise<Pagina
   const listings = await getPublicListingsFromFirestore(filters);
   const filtered = applyListingFilters(listings, filters);
   const sorted = sortListingsForBrowsing(filtered, filters.sort);
-  return paginateListings(sorted, filters);
+  const paginated = paginateListings(sorted, filters);
+
+  if (!includeAllItems) {
+    return {
+      ...paginated,
+      allItems: undefined
+    };
+  }
+
+  return paginated;
 }
 
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {

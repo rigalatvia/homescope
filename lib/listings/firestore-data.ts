@@ -168,35 +168,27 @@ function buildListingTitle(raw: MLSListingFirestoreDocument): string {
 }
 
 function formatSquareFootage(raw: MLSListingFirestoreDocument): string | undefined {
-  const units = normalizeAreaUnits(raw.livingAreaUnits);
   const exact = raw.livingArea;
   const minimum = raw.livingAreaMinimum;
   const maximum = raw.livingAreaMaximum;
 
   if (exact != null && exact > 0) {
-    return `${formatWholeNumber(exact)} ${units}`;
+    return formatWholeNumber(exact);
   }
 
   if (minimum != null && maximum != null && minimum > 0 && maximum > 0) {
-    return `${formatWholeNumber(minimum)} - ${formatWholeNumber(maximum)} ${units}`;
+    return `${formatWholeNumber(minimum)} - ${formatWholeNumber(maximum)}`;
   }
 
   if (minimum != null && minimum > 0) {
-    return `${formatWholeNumber(minimum)}+ ${units}`;
+    return `${formatWholeNumber(minimum)}+`;
   }
 
   if (maximum != null && maximum > 0) {
-    return `Up to ${formatWholeNumber(maximum)} ${units}`;
+    return `Up to ${formatWholeNumber(maximum)}`;
   }
 
   return undefined;
-}
-
-function normalizeAreaUnits(value: string | null | undefined): string {
-  const normalized = (value || "").trim().toLowerCase();
-  if (normalized === "square feet") return 'sq"f';
-  if (normalized === "square foot") return 'sq"f';
-  return normalized ? value!.trim() : 'sq"f';
 }
 
 function formatWholeNumber(value: number): string {
