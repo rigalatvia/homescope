@@ -122,11 +122,6 @@ function isDefaultAgentFeatured(listing: Listing): boolean {
     return true;
   }
 
-  const value = listing.listAgentNationalAssociationId?.trim();
-  if (!value) return false;
-  return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
-    value as (typeof DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS)[number]
-  );
 }
 
 function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort"] = "price_asc"): Listing[] {

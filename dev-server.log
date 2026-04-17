@@ -103,3 +103,309 @@ Require stack:
   page: '/listings/2500-rutherford-vaughan-maple-n12832664'
 }
  ○ Compiling /_error ...
+ ✓ Compiled /_error in 2s (1033 modules)
+ GET /_next/static/css/app/layout.css?v=1776450921952 404 in 155ms
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/listings/2500-rutherford-vaughan-maple-n12832664'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/listings/2500-rutherford-vaughan-maple-n12832664'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/listings/2500-rutherford-vaughan-maple-n12832664'
+}
+ GET /listings/2500-rutherford-vaughan-maple-n12832664 500 in 515ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\projects\HomeScopeGTA\.next\server\_rsc_components_listings_listings-map-search_tsx.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './_rsc_components_listings_listings-map-search_tsx' in C:\projects\HomeScopeGTA\.next\server for build dependencies doesn't lead to expected result 'C:\projects\HomeScopeGTA\.next\server\_rsc_components_listings_listings-map-search_tsx.js', but to 'Error: Can't resolve './_rsc_components_listings_listings-map-search_tsx' in 'C:\projects\HomeScopeGTA\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./_rsc_components_listings_listings-map-search_tsx (expected C:\projects\HomeScopeGTA\.next\server\_rsc_components_listings_listings-map-search_tsx.js)
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\projects\HomeScopeGTA\.next\server for build dependencies doesn't lead to expected result 'C:\projects\HomeScopeGTA\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\projects\HomeScopeGTA\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\projects\HomeScopeGTA\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in C:\projects\HomeScopeGTA\.next\server for build dependencies doesn't lead to expected result 'C:\projects\HomeScopeGTA\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'C:\projects\HomeScopeGTA\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@swc (expected C:\projects\HomeScopeGTA\.next\server\vendor-chunks\@swc.js)
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\projects\HomeScopeGTA\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+ ✓ Compiled in 738ms (1046 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled /_not-found in 217ms (510 modules)
+ ⨯ Error: Cannot find module './948.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-server.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:267:28)
+    at C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:180:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:179:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:231:22)
+    at C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js:18:2954
+    at Object.<anonymous> (C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js:18:2999)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14)
+    at Object..js (node:internal/modules/cjs/loader:1820:10)
+    at Module.load (node:internal/modules/cjs/loader:1423:32)
+    at Function._load (node:internal/modules/cjs/loader:1246:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js:109:84)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\projects\HomeScopeGTA\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\projects\HomeScopeGTA\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\_not-found\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './vendor-chunks/next.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\listings\[slug]\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\listings\\[slug]\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/listings/2500-rutherford-vaughan-maple-n12832664'
+}
+ ⨯ Error: Cannot find module './682.js'
+Require stack:
+- C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js
+- C:\projects\HomeScopeGTA\.next\server\app\_not-found\page.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\build\utils.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\router-server.js
+- C:\projects\HomeScopeGTA\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1365:15)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:267:28)
+    at C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:180:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:179:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\projects\HomeScopeGTA\.next\server\webpack-runtime.js:231:22)
+    at C:\projects\HomeScopeGTA\.next\server\pages\_document.js:1:340
+    at Object.<anonymous> (C:\projects\HomeScopeGTA\.next\server\pages\_document.js:1:382)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14)
+    at Object..js (node:internal/modules/cjs/loader:1820:10)
+    at Module.load (node:internal/modules/cjs/loader:1423:32)
+    at Function._load (node:internal/modules/cjs/loader:1246:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1445:12)
+    at mod.require (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\projects\HomeScopeGTA\node_modules\next\dist\server\require.js:109:84)
+    at C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\projects\HomeScopeGTA\node_modules\next\dist\server\next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\webpack-runtime.js',
+    'C:\\projects\\HomeScopeGTA\\.next\\server\\app\\_not-found\\page.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\projects\\HomeScopeGTA\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
