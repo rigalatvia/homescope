@@ -47,14 +47,15 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             <h1 className="mt-2 font-heading text-4xl text-brand-900">{listing.title}</h1>
             <p className="mt-2 text-2xl font-semibold text-brand-900">{formatPrice(listing.price)}</p>
             <p className="mt-1 text-brand-700">{fullAddress}</p>
+            <p className="mt-1 text-sm text-brand-600">MLS {listing.mlsNumber}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5">
             <Stat label="Beds" value={listing.bedrooms} />
             <Stat label="Baths" value={listing.bathrooms} />
+            <Stat label="Square Feet" value={listing.squareFootage || "N/A"} />
             <Stat label="Type" value={listing.propertyType} />
             <Stat label="Listing" value={listing.transactionType === "lease" ? "For Lease" : "For Sale"} />
-            <Stat label="MLS" value={listing.mlsNumber} />
           </div>
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>

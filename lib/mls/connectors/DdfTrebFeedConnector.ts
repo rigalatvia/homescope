@@ -282,6 +282,10 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
       existingLeaseType,
       bedrooms: pickNumber(record, ["BedroomsTotal", "Bedrooms", "Beds"]),
       bathrooms: pickNumber(record, ["BathroomsTotalInteger", "Bathrooms", "Baths"]),
+      livingArea: pickNumber(record, ["LivingArea"]),
+      livingAreaUnits: pickString(record, ["LivingAreaUnits"]),
+      livingAreaMinimum: pickNumber(record, ["LivingAreaMinimum"]),
+      livingAreaMaximum: pickNumber(record, ["LivingAreaMaximum"]),
       propertyType: pickString(record, [
         "PropertyType",
         "PropertySubType",

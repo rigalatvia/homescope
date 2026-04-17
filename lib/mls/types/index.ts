@@ -73,6 +73,10 @@ export interface RawMLSFeedListing {
   existingLeaseType?: string | null;
   bedrooms?: number | string | null;
   bathrooms?: number | string | null;
+  livingArea?: number | string | null;
+  livingAreaUnits?: string | null;
+  livingAreaMinimum?: number | string | null;
+  livingAreaMaximum?: number | string | null;
   propertyType?: string | null;
   commonInterest?: string | null;
   style?: string | null;
@@ -109,6 +113,10 @@ export interface NormalizedMLSListing {
   price: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
+  livingArea: number | null;
+  livingAreaUnits: string | null;
+  livingAreaMinimum: number | null;
+  livingAreaMaximum: number | null;
   propertyType: string | null;
   commonInterest: string | null;
   style: string | null;

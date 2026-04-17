@@ -45,9 +45,14 @@ export function ListingCard({ listing }: ListingCardProps) {
           <span>{listing.bedrooms} Beds</span>
           <span className="mx-2 text-brand-300">|</span>
           <span>{listing.bathrooms} Baths</span>
-          <span className="mx-2 text-brand-300">|</span>
-          <span>{listing.propertyType}</span>
+          {listing.squareFootage ? (
+            <>
+              <span className="mx-2 text-brand-300">|</span>
+              <span>{listing.squareFootage}</span>
+            </>
+          ) : null}
         </div>
+        <p className="text-sm text-brand-700">{listing.propertyType}</p>
         <p className="text-sm text-brand-700">{truncate(listing.description, 120)}</p>
         <Link
           href={`/listings/${listing.listingUrlSlug}`}

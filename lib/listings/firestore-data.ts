@@ -116,6 +116,7 @@ function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
     postalCode: raw.address.postalCode || undefined,
     bedrooms: raw.bedrooms ?? 0,
     bathrooms: raw.bathrooms ?? 0,
+    squareFootage: formatSquareFootage(raw),
     propertyType: mapOwnershipType(raw),
     transactionType: parseTransactionType(raw),
     description: raw.publicRemarks || "Listing description will be available shortly.",
@@ -164,6 +165,42 @@ function buildListingTitle(raw: MLSListingFirestoreDocument): string {
   const bits = [raw.propertyType, raw.area, raw.municipality].filter(Boolean);
   if (bits.length === 0) return "Featured Home";
   return bits.join(" in ");
+}
+
+function formatSquareFootage(raw: MLSListingFirestoreDocument): string | undefined {
+  const units = normalizeAreaUnits(raw.livingAreaUnits);
+  const exact = raw.livingArea;
+  const minimum = raw.livingAreaMinimum;
+  const maximum = raw.livingAreaMaximum;
+
+  if (exact != null && exact > 0) {
+    return `${formatWholeNumber(exact)} ${units}`;
+  }
+
+  if (minimum != null && maximum != null && minimum > 0 && maximum > 0) {
+    return `${formatWholeNumber(minimum)} - ${formatWholeNumber(maximum)} ${units}`;
+  }
+
+  if (minimum != null && minimum > 0) {
+    return `${formatWholeNumber(minimum)}+ ${units}`;
+  }
+
+  if (maximum != null && maximum > 0) {
+    return `Up to ${formatWholeNumber(maximum)} ${units}`;
+  }
+
+  return undefined;
+}
+
+function normalizeAreaUnits(value: string | null | undefined): string {
+  const normalized = (value || "").trim().toLowerCase();
+  if (normalized === "square feet") return 'sq"f';
+  if (normalized === "square foot") return 'sq"f';
+  return normalized ? value!.trim() : 'sq"f';
+}
+
+function formatWholeNumber(value: number): string {
+  return new Intl.NumberFormat("en-CA", { maximumFractionDigits: 0 }).format(value);
 }
 
 function parseTransactionType(raw: Pick<MLSListingFirestoreDocument, "transactionType" | "propertyClass" | "status">): Listing["transactionType"] {

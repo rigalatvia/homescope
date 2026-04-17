@@ -17,6 +17,7 @@ export interface Listing {
   postalCode?: string;
   bedrooms: number;
   bathrooms: number;
+  squareFootage?: string;
   propertyType: PropertyType;
   transactionType: ListingTransactionType;
   description: string;
