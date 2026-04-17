@@ -41,9 +41,6 @@ export function computeVisibility(listing: NormalizedMLSListing): {
   isVisible: boolean;
   hiddenReason: MLSHiddenReason | null;
 } {
-  if (isCommercialListing(listing)) {
-    return { isVisible: false, hiddenReason: "unsupported_property_class" };
-  }
   if (!isAllowedPropertyClass(listing.propertyClass)) {
     return { isVisible: false, hiddenReason: "unsupported_property_class" };
   }
@@ -57,25 +54,4 @@ export function computeVisibility(listing: NormalizedMLSListing): {
     return { isVisible: false, hiddenReason: "missing_required_public_fields" };
   }
   return { isVisible: true, hiddenReason: null };
-}
-
-function isCommercialListing(
-  listing: Pick<NormalizedMLSListing, "propertyType" | "propertyClass" | "publicRemarks">
-): boolean {
-  const combined = [listing.propertyType, listing.propertyClass, listing.publicRemarks].filter(Boolean).join(" ").toLowerCase();
-  if (!combined) return false;
-
-  const commercialKeywords = [
-    "commercial",
-    "retail",
-    "industrial",
-    "office",
-    "land",
-    "storefront",
-    "warehouse",
-    "business",
-    "plaza"
-  ];
-
-  return commercialKeywords.some((keyword) => combined.includes(keyword));
 }
