@@ -109,7 +109,21 @@ export async function getFilteredListings(filters: {
   bedrooms?: number;
   bathrooms?: number;
 }): Promise<MLSListingFirestoreDocument[]> {
-  let listings = await getAllPublicListings();
+  let listings: MLSListingFirestoreDocument[];
+
+  if (filters.municipality) {
+    listings = await getPublicListingsForMunicipality(filters.municipality, {
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice
+    });
+  } else if (filters.minPrice != null || filters.maxPrice != null) {
+    listings = await getAllPublicListings(500, {
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice
+    });
+  } else {
+    listings = await getAllPublicListings();
+  }
 
   if (filters.municipality) listings = listings.filter((item) => item.municipality === filters.municipality);
   if (filters.minPrice != null) listings = listings.filter((item) => (item.price ?? 0) >= filters.minPrice!);
@@ -179,15 +193,19 @@ export async function getFilteredListingsPage(
   };
 }
 
-async function getAllPublicListings(batchSize = 500): Promise<MLSListingFirestoreDocument[]> {
+async function getAllPublicListings(
+  batchSize = 500,
+  filters?: {
+    minPrice?: number;
+    maxPrice?: number;
+  }
+): Promise<MLSListingFirestoreDocument[]> {
   const firestore = getFirebaseAdminFirestore();
   const results: MLSListingFirestoreDocument[] = [];
-  let query: Query = firestore
-    .collection(LISTINGS_COLLECTION)
-    .where("isVisible", "==", true)
-    .where("municipality", "in", allowedMunicipalities)
-    .orderBy("price", "desc")
-    .limit(batchSize);
+  let query = buildPublicListingsQuery(
+    firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true).where("municipality", "in", allowedMunicipalities),
+    filters
+  ).limit(batchSize);
 
   while (true) {
     const snapshot = await query.get();
@@ -201,4 +219,55 @@ async function getAllPublicListings(batchSize = 500): Promise<MLSListingFirestor
   }
 
   return results;
+}
+
+async function getPublicListingsForMunicipality(
+  municipality: string,
+  filters?: {
+    minPrice?: number;
+    maxPrice?: number;
+  },
+  batchSize = 500
+): Promise<MLSListingFirestoreDocument[]> {
+  if (!allowedMunicipalities.includes(municipality as (typeof allowedMunicipalities)[number])) return [];
+
+  const firestore = getFirebaseAdminFirestore();
+  const results: MLSListingFirestoreDocument[] = [];
+  let query = buildPublicListingsQuery(
+    firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true).where("municipality", "==", municipality),
+    filters
+  ).limit(batchSize);
+
+  while (true) {
+    const snapshot = await query.get();
+    if (snapshot.empty) break;
+
+    results.push(...snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument)));
+
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    if (!lastDoc || snapshot.docs.length < batchSize) break;
+    query = query.startAfter(lastDoc);
+  }
+
+  return results;
+}
+
+function buildPublicListingsQuery(
+  query: Query,
+  filters?: {
+    minPrice?: number;
+    maxPrice?: number;
+  }
+): Query {
+  let nextQuery = query;
+
+  if (filters?.minPrice != null) {
+    nextQuery = nextQuery.where("price", ">=", filters.minPrice);
+  }
+
+  if (filters?.maxPrice != null) {
+    nextQuery = nextQuery.where("price", "<=", filters.maxPrice);
+  }
+
+  return nextQuery.orderBy("price", "desc");
 }
