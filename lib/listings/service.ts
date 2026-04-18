@@ -1,11 +1,13 @@
 import { applyListingFilters, paginateListings } from "@/lib/listings/filters";
 import {
+  getFeaturedListings as getFeaturedListingsFromFirestore,
+  getListingsByAgentKey as getListingsByAgentKeyFromFirestore,
   getPublicListingsPage as getPublicListingsPageFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import { getSiteSettings } from "@/lib/settings/site-settings";
+import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings } from "@/lib/settings/site-settings";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
 
 export async function getPublicListings(
@@ -64,8 +66,23 @@ export async function getAllPublicListings(): Promise<Listing[]> {
 }
 
 export async function getFeaturedListings(): Promise<Listing[]> {
-  const listings = await getPublicListingsFromFirestore();
-  return [...listings].sort(compareHomepageFeatured).slice(0, 6);
+  const yanAgentKey = DEFAULT_FEATURED_AGENT_KEYS[0];
+  const [yanListings, fallbackListings] = await Promise.all([
+    getListingsByAgentKeyFromFirestore(yanAgentKey, 6),
+    getFeaturedListingsFromFirestore()
+  ]);
+
+  const seen = new Set<string>();
+  const ordered: Listing[] = [];
+
+  for (const listing of [...yanListings, ...fallbackListings]) {
+    if (seen.has(listing.id)) continue;
+    seen.add(listing.id);
+    ordered.push(listing);
+    if (ordered.length >= 6) break;
+  }
+
+  return ordered;
 }
 
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
@@ -118,15 +135,6 @@ function toMillis(value: string): number {
 
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function compareHomepageFeatured(a: Listing, b: Listing): number {
-  const aPremium = a.badge === "Hot";
-  const bPremium = b.badge === "Hot";
-
-  if (aPremium && !bPremium) return -1;
-  if (!aPremium && bPremium) return 1;
-  return b.price - a.price;
 }
 
 function canUseIndexedSearch(filters: ListingFilters): boolean {

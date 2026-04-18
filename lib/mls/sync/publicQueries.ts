@@ -67,6 +67,23 @@ export async function getFeaturedListings(limit = 6): Promise<MLSListingFirestor
     .slice(0, limit);
 }
 
+export async function getListingsByAgentKey(agentKey: string, limit = 24): Promise<MLSListingFirestoreDocument[]> {
+  const normalizedAgentKey = agentKey.trim();
+  if (!normalizedAgentKey) return [];
+
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore
+    .collection(LISTINGS_COLLECTION)
+    .where("isVisible", "==", true)
+    .where("listAgentKey", "==", normalizedAgentKey)
+    .where("municipality", "in", allowedMunicipalities)
+    .orderBy("price", "desc")
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument));
+}
+
 export async function getListingsByMunicipality(
   municipality: string,
   limit = 24

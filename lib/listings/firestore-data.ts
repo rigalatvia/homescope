@@ -5,6 +5,7 @@ import {
   getFilteredListingsPage as getFilteredMLSListingsPage,
   getFeaturedListings as getFeaturedMLSListings,
   getFilteredListings as getFilteredMLSListings,
+  getListingsByAgentKey as getMLSListingsByAgentKey,
   getListingsByMunicipality as getMLSListingsByMunicipality,
   getPublicListingBySlug as getMLSListingBySlug,
   getPublicListings as getPublicMLSListings
@@ -92,6 +93,11 @@ export async function getListingsByMunicipality(city: string): Promise<Listing[]
 
 export async function getFeaturedListings(): Promise<Listing[]> {
   const listings = await getCachedFeaturedMLSListings();
+  return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
+}
+
+export async function getListingsByAgentKey(agentKey: string, limit = 24): Promise<Listing[]> {
+  const listings = await getMLSListingsByAgentKey(agentKey, limit);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
 }
 

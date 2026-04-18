@@ -1,8 +1,5 @@
 import { computeVisibility } from "@/lib/mls/filter/visibility";
-import {
-  DEFAULT_FEATURED_AGENT_KEYS,
-  DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS
-} from "@/lib/settings/site-settings";
+import { DEFAULT_FEATURED_AGENT_KEYS } from "@/lib/settings/site-settings";
 import type { MLSListingStatus, NormalizedMLSListing, RawMLSFeedListing } from "@/lib/mls/types";
 import { computeRawListingHash } from "@/lib/mls/utils/hash";
 import { createListingSlug } from "@/lib/mls/utils/slug";
@@ -244,19 +241,11 @@ function computeBadges(listing: NormalizedMLSListing): string[] {
   return badges;
 }
 
-function isYanListing(listing: Pick<NormalizedMLSListing, "listAgentKey" | "listAgentNationalAssociationId">): boolean {
+function isYanListing(listing: Pick<NormalizedMLSListing, "listAgentKey">): boolean {
   const agentKey = listing.listAgentKey?.trim();
-  if (
+  return !!(
     agentKey &&
     DEFAULT_FEATURED_AGENT_KEYS.includes(agentKey as (typeof DEFAULT_FEATURED_AGENT_KEYS)[number])
-  ) {
-    return true;
-  }
-
-  const nationalAssociationId = listing.listAgentNationalAssociationId?.trim();
-  if (!nationalAssociationId) return false;
-  return DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS.includes(
-    nationalAssociationId as (typeof DEFAULT_FEATURED_AGENT_NATIONAL_ASSOCIATION_IDS)[number]
   );
 }
 
