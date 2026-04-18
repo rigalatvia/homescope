@@ -44,7 +44,6 @@ export default async function ListingsPage({
   });
 
   const results = await getPublicListings(filters);
-  const mapQueryString = buildMapQueryString(searchParams);
 
   return (
     <section className="site-container py-12">
@@ -58,9 +57,7 @@ export default async function ListingsPage({
       </div>
       <div className="mt-4">
         <ListingsMapSearch
-          mapQueryString={mapQueryString}
           initialListings={results.items}
-          hasMoreListings={results.total > results.items.length}
           initialBounds={{
             minLatitude: filters.minLatitude,
             maxLatitude: filters.maxLatitude,
@@ -93,17 +90,4 @@ export default async function ListingsPage({
 function toString(value: string | string[] | undefined): string | undefined {
   if (typeof value === "string") return value;
   return undefined;
-}
-
-function buildMapQueryString(searchParams: { [key: string]: string | string[] | undefined }): string {
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "page" || key === "pageSize") continue;
-    if (typeof value === "string" && value.trim()) {
-      params.set(key, value);
-    }
-  }
-
-  return params.toString();
 }

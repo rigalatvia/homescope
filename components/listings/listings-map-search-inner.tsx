@@ -12,9 +12,7 @@ import { formatPrice } from "@/lib/utils/format";
 import type { Listing } from "@/types/listing";
 
 interface ListingsMapSearchInnerProps {
-  mapQueryString: string;
   initialListings?: Listing[];
-  hasMoreListings?: boolean;
   initialBounds?: {
     minLatitude?: number;
     maxLatitude?: number;
@@ -32,66 +30,15 @@ const MAP_PIN_ICON = L.divIcon({
 });
 
 export function ListingsMapSearchInner({
-  mapQueryString,
   initialListings,
-  hasMoreListings,
   initialBounds
 }: ListingsMapSearchInnerProps) {
   const [draftBounds, setDraftBounds] = useState(initialBounds || {});
-  const [listings, setListings] = useState<Listing[] | null>(initialListings ?? null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasLoadedFullResults, setHasLoadedFullResults] = useState(false);
-  const loadedListings = useMemo(() => listings ?? [], [listings]);
+  const loadedListings = useMemo(() => initialListings ?? [], [initialListings]);
 
   useEffect(() => {
-    setListings(initialListings ?? null);
     setDraftBounds(initialBounds || {});
-    setIsLoading(false);
-    setError(null);
-    setHasLoadedFullResults(false);
-  }, [initialBounds, initialListings, mapQueryString]);
-
-  useEffect(() => {
-    if (!hasMoreListings || hasLoadedFullResults || isLoading) return;
-
-    let cancelled = false;
-
-    async function loadListings() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/listings/map${mapQueryString ? `?${mapQueryString}` : ""}`, {
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error("Unable to load map listings.");
-        }
-
-        const data = (await response.json()) as { listings?: Listing[] };
-        if (!cancelled) {
-          setListings(Array.isArray(data.listings) ? data.listings : []);
-          setHasLoadedFullResults(true);
-        }
-      } catch (caughtError) {
-        if (!cancelled) {
-          setError(caughtError instanceof Error ? caughtError.message : "Unable to load map listings.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadListings();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasLoadedFullResults, hasMoreListings, isLoading, mapQueryString]);
+  }, [initialBounds]);
 
   const mappableListings = useMemo(
     () =>
@@ -104,37 +51,16 @@ export function ListingsMapSearchInner({
   const renderedListings = useMemo(() => mappableListings.slice(0, MAX_RENDERED_MARKERS), [mappableListings]);
   const missingCoordinatesCount = loadedListings.length - mappableListings.length;
 
-  if (listings == null) {
+  if (loadedListings.length === 0) {
     return (
       <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold text-brand-900">Map Search</p>
-          <p className="text-xs text-brand-600">Loading matching listing locations...</p>
+          <p className="text-xs text-brand-600">No listings on this page to map yet.</p>
         </div>
         <div className="rounded-xl border border-brand-100 bg-brand-50/40 px-4 py-5 text-sm text-brand-700">
-          Preparing the map for your current filters.
+          Adjust your filters or paging to bring listings onto the current page.
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-brand-900">Map Search</p>
-          <p className="text-xs text-brand-600">{error}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setListings(null);
-            setError(null);
-          }}
-          className="rounded-full border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-800 hover:border-brand-400"
-        >
-          Try again
-        </button>
       </div>
     );
   }
@@ -158,10 +84,9 @@ export function ListingsMapSearchInner({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold text-brand-900">Map Search</p>
         <p className="text-xs text-brand-600">
-          {mappableListings.length} mapped of {loadedListings.length} result(s) | {mapViewCount} in current map view
+          {mappableListings.length} mapped of {loadedListings.length} listings on this page | {mapViewCount} in current map view
           {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
           {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
-          {isLoading ? " | refreshing full map results..." : ""}
         </p>
       </div>
       <div className="h-[24rem] overflow-hidden rounded-xl border border-brand-100">
