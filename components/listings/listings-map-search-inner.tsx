@@ -14,6 +14,7 @@ import type { Listing } from "@/types/listing";
 interface ListingsMapSearchInnerProps {
   mapQueryString: string;
   initialListings?: Listing[];
+  hasMoreListings?: boolean;
   initialBounds?: {
     minLatitude?: number;
     maxLatitude?: number;
@@ -30,24 +31,29 @@ const MAP_PIN_ICON = L.divIcon({
   iconAnchor: [7, 7]
 });
 
-export function ListingsMapSearchInner({ mapQueryString, initialListings, initialBounds }: ListingsMapSearchInnerProps) {
+export function ListingsMapSearchInner({
+  mapQueryString,
+  initialListings,
+  hasMoreListings,
+  initialBounds
+}: ListingsMapSearchInnerProps) {
   const [draftBounds, setDraftBounds] = useState(initialBounds || {});
-  const [mapEnabled, setMapEnabled] = useState(false);
   const [listings, setListings] = useState<Listing[] | null>(initialListings ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoadedFullResults, setHasLoadedFullResults] = useState(false);
   const loadedListings = useMemo(() => listings ?? [], [listings]);
 
   useEffect(() => {
     setListings(initialListings ?? null);
     setDraftBounds(initialBounds || {});
-    setMapEnabled(false);
     setIsLoading(false);
     setError(null);
+    setHasLoadedFullResults(false);
   }, [initialBounds, initialListings, mapQueryString]);
 
   useEffect(() => {
-    if (!mapEnabled || listings != null || isLoading) return;
+    if (!hasMoreListings || hasLoadedFullResults || isLoading) return;
 
     let cancelled = false;
 
@@ -67,6 +73,7 @@ export function ListingsMapSearchInner({ mapQueryString, initialListings, initia
         const data = (await response.json()) as { listings?: Listing[] };
         if (!cancelled) {
           setListings(Array.isArray(data.listings) ? data.listings : []);
+          setHasLoadedFullResults(true);
         }
       } catch (caughtError) {
         if (!cancelled) {
@@ -84,7 +91,7 @@ export function ListingsMapSearchInner({ mapQueryString, initialListings, initia
     return () => {
       cancelled = true;
     };
-  }, [isLoading, listings, mapEnabled, mapQueryString]);
+  }, [hasLoadedFullResults, hasMoreListings, isLoading, mapQueryString]);
 
   const mappableListings = useMemo(
     () =>
@@ -97,25 +104,7 @@ export function ListingsMapSearchInner({ mapQueryString, initialListings, initia
   const renderedListings = useMemo(() => mappableListings.slice(0, MAX_RENDERED_MARKERS), [mappableListings]);
   const missingCoordinatesCount = loadedListings.length - mappableListings.length;
 
-  if (!mapEnabled) {
-    return (
-      <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-brand-900">Map Search</p>
-          <p className="text-xs text-brand-600">Load the map only when you want to explore listing locations.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setMapEnabled(true)}
-          className="rounded-full border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-800 hover:border-brand-400"
-        >
-          Load map
-        </button>
-      </div>
-    );
-  }
-
-  if (isLoading || listings == null) {
+  if (listings == null) {
     return (
       <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -172,6 +161,7 @@ export function ListingsMapSearchInner({ mapQueryString, initialListings, initia
           {mappableListings.length} mapped of {loadedListings.length} result(s) | {mapViewCount} in current map view
           {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
           {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
+          {isLoading ? " | refreshing full map results..." : ""}
         </p>
       </div>
       <div className="h-[24rem] overflow-hidden rounded-xl border border-brand-100">

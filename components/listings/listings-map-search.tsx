@@ -6,6 +6,7 @@ import type { Listing } from "@/types/listing";
 interface ListingsMapSearchProps {
   mapQueryString: string;
   initialListings?: Listing[];
+  hasMoreListings?: boolean;
   initialBounds?: {
     minLatitude?: number;
     maxLatitude?: number;
