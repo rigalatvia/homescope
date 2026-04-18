@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SyncMode = "full" | "incremental" | "cleanup";
 
@@ -179,7 +179,7 @@ export function MlsSyncPanel() {
     }
   }
 
-  async function loadListingsStats() {
+  const loadListingsStats = useCallback(async () => {
     if (!adminToken.trim()) return;
     setIsLoadingStats(true);
     try {
@@ -200,7 +200,7 @@ export function MlsSyncPanel() {
     } finally {
       setIsLoadingStats(false);
     }
-  }
+  }, [adminToken]);
 
   useEffect(() => {
     const token = adminToken.trim();
@@ -213,7 +213,7 @@ export function MlsSyncPanel() {
     if (autoLoadedStatsForTokenRef.current === token) return;
     autoLoadedStatsForTokenRef.current = token;
     void loadListingsStats();
-  }, [adminToken]);
+  }, [adminToken, loadListingsStats]);
 
   useEffect(() => {
     const token = adminToken.trim();
@@ -224,7 +224,7 @@ export function MlsSyncPanel() {
     }, 30000);
 
     return () => window.clearInterval(interval);
-  }, [adminToken]);
+  }, [adminToken, loadListingsStats]);
 
   async function runFullUntilEnd() {
     if (isRunningFullAll) return;

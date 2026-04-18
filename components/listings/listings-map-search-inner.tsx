@@ -5,7 +5,7 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { formatPrice } from "@/lib/utils/format";
@@ -35,7 +35,7 @@ export function ListingsMapSearchInner({ mapQueryString, initialBounds }: Listin
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const loadedListings = listings ?? [];
+  const loadedListings = useMemo(() => listings ?? [], [listings]);
 
   useEffect(() => {
     setListings(null);
@@ -288,16 +288,9 @@ function MapBoundsTracker({
     maxLongitude: number;
   }) => void;
 }) {
-  const map = useMapEvents({
-    moveend: updateBounds,
-    zoomend: updateBounds
-  });
+  const map = useMap();
 
-  useEffect(() => {
-    updateBounds();
-  }, []);
-
-  function updateBounds(): void {
+  const updateBounds = useCallback((): void => {
     const bounds = map.getBounds();
     onBoundsChange({
       minLatitude: bounds.getSouth(),
@@ -305,7 +298,16 @@ function MapBoundsTracker({
       minLongitude: bounds.getWest(),
       maxLongitude: bounds.getEast()
     });
-  }
+  }, [map, onBoundsChange]);
+
+  useMapEvents({
+    moveend: updateBounds,
+    zoomend: updateBounds
+  });
+
+  useEffect(() => {
+    updateBounds();
+  }, [updateBounds]);
 
   return null;
 }
