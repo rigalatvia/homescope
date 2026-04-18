@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { Listing } from "@/types/listing";
 
 interface ListingsMapSearchProps {
   mapQueryString: string;
+  initialListings?: Listing[];
   initialBounds?: {
     minLatitude?: number;
     maxLatitude?: number;

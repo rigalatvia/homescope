@@ -13,6 +13,7 @@ import type { Listing } from "@/types/listing";
 
 interface ListingsMapSearchInnerProps {
   mapQueryString: string;
+  initialListings?: Listing[];
   initialBounds?: {
     minLatitude?: number;
     maxLatitude?: number;
@@ -29,21 +30,21 @@ const MAP_PIN_ICON = L.divIcon({
   iconAnchor: [7, 7]
 });
 
-export function ListingsMapSearchInner({ mapQueryString, initialBounds }: ListingsMapSearchInnerProps) {
+export function ListingsMapSearchInner({ mapQueryString, initialListings, initialBounds }: ListingsMapSearchInnerProps) {
   const [draftBounds, setDraftBounds] = useState(initialBounds || {});
   const [mapEnabled, setMapEnabled] = useState(false);
-  const [listings, setListings] = useState<Listing[] | null>(null);
+  const [listings, setListings] = useState<Listing[] | null>(initialListings ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadedListings = useMemo(() => listings ?? [], [listings]);
 
   useEffect(() => {
-    setListings(null);
+    setListings(initialListings ?? null);
     setDraftBounds(initialBounds || {});
     setMapEnabled(false);
     setIsLoading(false);
     setError(null);
-  }, [initialBounds, mapQueryString]);
+  }, [initialBounds, initialListings, mapQueryString]);
 
   useEffect(() => {
     if (!mapEnabled || listings != null || isLoading) return;

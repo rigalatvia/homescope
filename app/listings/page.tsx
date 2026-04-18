@@ -59,6 +59,7 @@ export default async function ListingsPage({
       <div className="mt-4">
         <ListingsMapSearch
           mapQueryString={mapQueryString}
+          initialListings={results.total <= results.pageSize ? results.items : undefined}
           initialBounds={{
             minLatitude: filters.minLatitude,
             maxLatitude: filters.maxLatitude,
