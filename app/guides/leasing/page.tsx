@@ -13,8 +13,8 @@ const LEASING_STEPS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Leasing Guide",
-  description: "Steps to rent a home in Ontario, from preparing documents to move-in."
+  title: "Ontario Leasing Guide",
+  description: "Learn how to rent a home in Ontario, from preparing documents and booking showings to applying and signing a lease."
 };
 
 export default function LeasingGuidePage() {

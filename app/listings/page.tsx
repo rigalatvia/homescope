@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { SITE_CONFIG } from "@/config/site";
 import { ListingFilters } from "@/components/listings/listing-filters";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingsPagination } from "@/components/listings/listings-pagination";
@@ -11,13 +12,39 @@ const ListingsMapSearch = dynamic(
   { ssr: false }
 );
 
-export const metadata: Metadata = {
-  title: "Listings",
-  description:
-    "Browse publicly advertisable listings in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto."
-};
-
 export const revalidate = 60;
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}): Promise<Metadata> {
+  const city = toString(searchParams.city);
+  const transactionType = toString(searchParams.transactionType);
+  const propertyType = toString(searchParams.propertyType);
+  const titleParts = [
+    city ? `${city} Listings` : "GTA Listings",
+    transactionType === "lease" ? "For Lease" : transactionType === "sale" ? "For Sale" : undefined,
+    propertyType && propertyType !== "all" && propertyType !== "Any" ? propertyType : undefined
+  ].filter(Boolean);
+  const title = titleParts.join(" - ");
+
+  const descriptionCity = city || "Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King";
+  const descriptionTransaction =
+    transactionType === "lease"
+      ? "rental homes and condos"
+      : transactionType === "sale"
+        ? "homes and condos for sale"
+        : "homes, condos, and rentals";
+
+  return {
+    title,
+    description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+    alternates: {
+      canonical: `${SITE_CONFIG.baseUrl}/listings`
+    }
+  };
+}
 
 export default async function ListingsPage({
   searchParams

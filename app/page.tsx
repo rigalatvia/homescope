@@ -7,9 +7,9 @@ import { ValuePointsSection } from "@/components/home/value-points";
 import { getFeaturedListings } from "@/lib/listings/service";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "GTA Real Estate Listings",
   description:
-    "HomeScope GTA helps buyers browse and view homes across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto."
+    "Search GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Browse homes for sale and lease with HomeScope GTA."
 };
 
 export default async function HomePage() {

@@ -14,18 +14,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: "Listing Not Found" };
   }
 
-  const title = `${listing.title} - ${listing.city}`;
-  const description = `${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType} in ${listing.city}. View details and request a showing.`;
+  const title = `${listing.title} in ${listing.city}`;
+  const description = `${formatPrice(listing.price)} • ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType} in ${listing.city}. View photos, listing details, and request a private showing.`;
   const url = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
+  const primaryImage = listing.images[0];
 
   return {
     title,
     description,
+    alternates: {
+      canonical: url
+    },
     openGraph: {
       title,
       description,
       url,
-      images: [{ url: `${listing.images[0]}?auto=format&fit=crop&w=1200&q=80` }]
+      type: "article",
+      images: primaryImage ? [{ url: `${primaryImage}?auto=format&fit=crop&w=1200&q=80` }] : undefined
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: primaryImage ? [`${primaryImage}?auto=format&fit=crop&w=1200&q=80`] : undefined
     }
   };
 }
@@ -50,12 +61,12 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             <p className="mt-1 text-sm text-brand-600">MLS Number: {listing.mlsNumber}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-5 lg:gap-2 xl:gap-3">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-[0.9fr_0.9fr_1fr_1fr_1.45fr] lg:gap-2 xl:gap-3">
             <Stat label="Beds" value={listing.bedrooms} />
             <Stat label="Baths" value={listing.bathrooms} />
-            <Stat label="Square Feet" value={listing.squareFootage || "N/A"} />
-            <Stat label="Type" value={listing.propertyType} />
             <Stat label="Listing" value={listing.transactionType === "lease" ? "For Lease" : "For Sale"} />
+            <Stat label="Type" value={listing.propertyType} />
+            <Stat label="Square Feet" value={listing.squareFootage || "N/A"} />
           </div>
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>

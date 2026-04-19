@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Guides",
-  description: "Helpful information for buying, renting, and preparing your next move in Ontario."
+  title: "Ontario Real Estate Guides",
+  description: "Read Ontario real estate guides for buying, leasing, and preparing rental documents with HomeScope GTA."
 };
 
 export default function GuidesPage() {

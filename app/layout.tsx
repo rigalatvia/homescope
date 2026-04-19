@@ -9,6 +9,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.baseUrl),
@@ -16,17 +17,32 @@ export const metadata: Metadata = {
     default: "HomeScope GTA",
     template: "%s | HomeScope GTA"
   },
-  description: "Real estate search platform for GTA",
+  description:
+    "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with HomeScope GTA.",
+  applicationName: "HomeScope GTA",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-icon.png"
   },
+  verification: GOOGLE_SITE_VERIFICATION
+    ? {
+        google: GOOGLE_SITE_VERIFICATION
+      }
+    : undefined,
   openGraph: {
     title: "HomeScope GTA",
-    description: "Find homes across Toronto and GTA",
+    description:
+      "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King.",
     url: SITE_CONFIG.baseUrl,
     siteName: "HomeScope GTA",
     type: "website",
+    images: ["/og-image.png"]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HomeScope GTA",
+    description:
+      "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King.",
     images: ["/og-image.png"]
   }
 };

@@ -21,8 +21,8 @@ const LEASE_DOCS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Lease Documents",
-  description: "Required documents to prepare before booking and applying for a rental home in Ontario."
+  title: "Ontario Rental Documents Checklist",
+  description: "See which rental documents to prepare in Ontario, including proof of income, credit report, employment letter, and references."
 };
 
 export default function LeaseDocumentsGuidePage() {

@@ -13,8 +13,8 @@ const BUYING_STEPS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Buying Guide",
-  description: "Steps to buy a home in Ontario, from pre-approval to closing."
+  title: "Ontario Home Buying Guide",
+  description: "Learn the steps to buy a home in Ontario, from mortgage pre-approval and showings to offers, inspections, and closing."
 };
 
 export default function BuyingGuidePage() {
