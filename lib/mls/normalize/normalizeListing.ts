@@ -9,7 +9,7 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
   const propertyType = deriveOwnershipType(raw.commonInterest, raw.propertyClass, raw.propertyType);
   const commonInterest = raw.commonInterest?.trim() || null;
   const style = raw.style?.trim() || null;
-  const publicRemarks = raw.publicRemarks?.trim() || null;
+  const publicRemarks = sanitizePublicRemarks(raw.publicRemarks);
   const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, style, publicRemarks);
 
   const normalized: NormalizedMLSListing = {
@@ -74,6 +74,18 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
   normalized.badges = computeBadges(normalized);
 
   return normalized;
+}
+
+function sanitizePublicRemarks(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() || "";
+  if (!trimmed) return null;
+
+  const withoutTrailingFeedId = trimmed
+    .replace(/\s*(?:photos?:[^()]*?)?\(id:\d+\)\s*$/i, "")
+    .replace(/\s*\(id:\d+\)\s*$/i, "")
+    .trim();
+
+  return withoutTrailingFeedId || null;
 }
 
 function derivePropertyClass(
