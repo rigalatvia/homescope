@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Breadcrumbs } from "@/components/guides/breadcrumbs";
+import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
 
 const LEASING_STEPS = [
   { title: "Prepare Your Documents", description: "Organize income proof, credit report, employment letter, and references." },
@@ -21,7 +23,26 @@ export default function LeasingGuidePage() {
   return (
     <section className="site-container py-14 sm:py-16">
       <div className="mx-auto max-w-4xl rounded-3xl border border-brand-100 bg-white p-8 shadow-soft sm:p-10">
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Guides", href: "/guides" },
+            { label: "Ontario Leasing Guide" }
+          ]}
+        />
         <h1 className="font-heading text-4xl text-brand-900">Steps to Rent a Home in Ontario</h1>
+        <p className="mt-3 text-brand-700">
+          Use this guide to understand the leasing process in Ontario, then keep your application materials ready so
+          you can move quickly when a rental matches your goals.
+        </p>
+
+        <LeaseApplicationDownloadCard
+          title="Ontario Rental Application Form 410"
+          description="Download the residential rental application form before showings so you can review required fields and prepare a stronger leasing package."
+          href="/forms/410-rental-application-ontario.pdf"
+          buttonLabel="Download Rental Application"
+        />
+
         <div className="mt-8 space-y-4">
           {LEASING_STEPS.map((step, index) => (
             <article key={step.title} className="rounded-2xl border border-brand-100 bg-brand-50/40 p-5">
@@ -46,6 +67,12 @@ export default function LeasingGuidePage() {
             className="mt-4 inline-flex rounded-full bg-white px-5 py-2 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
           >
             View Rentals
+          </Link>
+          <Link
+            href="/guides/rental-application-ontario"
+            className="mt-4 ml-3 inline-flex rounded-full border border-white/50 px-5 py-2 text-sm font-semibold text-white transition hover:border-white"
+          >
+            Rental Application Guide
           </Link>
         </div>
       </div>

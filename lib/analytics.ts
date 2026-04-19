@@ -21,6 +21,10 @@ export interface SaveListingPayload {
   propertyId: string;
 }
 
+export interface RentalApplicationDownloadPayload {
+  resourcePath: string;
+}
+
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
@@ -100,5 +104,19 @@ export function trackSaveListing({ propertyId }: SaveListingPayload): void {
   trackMetaEvent("AddToWishlist", {
     content_type: "property",
     content_ids: [propertyId]
+  });
+}
+
+export function trackRentalApplicationDownload({ resourcePath }: RentalApplicationDownloadPayload): void {
+  const payload: EventParams = {
+    resource_type: "rental_application",
+    resource_path: resourcePath
+  };
+
+  trackEvent("rental_application_download", payload);
+  trackMetaEvent("Lead", {
+    content_name: "Ontario Rental Application Form 410",
+    content_category: "download",
+    resource_path: resourcePath
   });
 }

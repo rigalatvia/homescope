@@ -14,11 +14,11 @@ const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATIO
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.baseUrl),
   title: {
-    default: "HomeScope GTA",
-    template: "%s | HomeScope GTA"
+    default: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
+    template: "%s | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
   },
   description:
-    "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with HomeScope GTA.",
+    "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
   applicationName: "HomeScope GTA",
   icons: {
     icon: "/favicon.ico",
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
       }
     : undefined,
   openGraph: {
-    title: "HomeScope GTA",
+    title: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
     description:
-      "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King.",
+      "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
     url: SITE_CONFIG.baseUrl,
     siteName: "HomeScope GTA",
     type: "website",
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "HomeScope GTA",
+    title: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
     description:
-      "Browse GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King.",
+      "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
     images: ["/og-image.png"]
   }
 };
