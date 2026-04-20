@@ -4,7 +4,11 @@ import { SITE_CONFIG } from "@/config/site";
 
 export function SiteHeader() {
   const guideItems = [
-    { href: "/guides/buying", label: "Buying Guide" },
+    { href: "/guides", label: "All Guides" },
+    { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
+    { href: "/guides/documents-needed-buy-house-toronto", label: "Toronto Buyer Documents" },
+    { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" },
+    { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" },
     { href: "/guides/leasing", label: "Leasing Guide" },
     { href: "/guides/lease-documents", label: "Lease Documents" }
   ];
@@ -33,7 +37,7 @@ export function SiteHeader() {
               Guides
               <span aria-hidden="true" className="text-xs">▾</span>
             </button>
-            <div className="invisible absolute right-0 top-full z-20 mt-2 w-48 rounded-xl border border-brand-100 bg-white p-2 opacity-0 shadow-soft transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="invisible absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 opacity-0 shadow-soft transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
               {guideItems.map((item) => (
                 <Link
                   key={item.href}
@@ -60,7 +64,7 @@ export function SiteHeader() {
             <summary className="cursor-pointer list-none transition hover:text-brand-900">
               Guides
             </summary>
-            <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-xl border border-brand-100 bg-white p-2 shadow-soft">
+            <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-soft">
               {guideItems.map((item) => (
                 <Link
                   key={item.href}
