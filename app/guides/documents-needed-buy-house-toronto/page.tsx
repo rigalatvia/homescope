@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  FileText,
+  FolderKanban,
+  Landmark,
+  Scale,
+  ShieldCheck
+} from "lucide-react";
 import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
+import {
+  GuideDarkHighlight,
+  GuideQuickChecklist,
+  GuideSectionCard
+} from "@/components/guides/guide-content-blocks";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { SITE_CONFIG } from "@/config/site";
 
@@ -32,6 +46,13 @@ export const metadata: Metadata = {
 
 export default function DocumentsNeededToBuyHouseTorontoPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/documents-needed-buy-house-toronto`;
+  const quickChecklist = [
+    "Keep photo ID and proof of address ready",
+    "Prepare income, savings, and debt records before pre-approval",
+    "Store lender letters and down payment proof in one folder",
+    "Save listing sheets, offer paperwork, and condo records as you go",
+    "Keep legal closing documents easy to access after possession"
+  ];
 
   return (
     <GuidePageLayout
@@ -68,90 +89,132 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
         url
       }}
     >
-      <section>
-        <h2>Why document preparation matters</h2>
-        <p>
-          Toronto buyers often move through fast timelines, especially when attractive properties receive immediate
-          interest. Having your documents ready can make mortgage conversations smoother, help your agent build a
-          stronger offer package, and reduce last-minute stress.
-        </p>
-      </section>
+      <GuideQuickChecklist
+        eyebrow="Buyer Document Checklist"
+        title="Documents at a Glance Before You Start Making Offers"
+        description="This shortlist helps Toronto buyers see what should be ready before a property search becomes competitive. The more organized your files are, the easier it is to move with confidence."
+        items={quickChecklist}
+        icon={BadgeCheck}
+      />
 
-      <section>
-        <h2>Personal identification</h2>
-        <ul>
-          <li>Government-issued photo identification</li>
-          <li>Proof of legal name and current address</li>
-          <li>Marriage certificate or separation documentation if relevant to financing or title</li>
-        </ul>
-      </section>
+      <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="Foundation"
+          title="Why document preparation matters"
+          icon={FolderKanban}
+          description="Strong document preparation keeps your Toronto purchase moving. It supports mortgage conversations, helps your agent structure cleaner offers, and reduces delays when deadlines tighten."
+          bullets={[
+            "Respond faster when lenders request follow-up documents",
+            "Keep offer paperwork cleaner during competitive situations",
+            "Reduce last-minute scrambling before closing"
+          ]}
+        />
 
-      <section>
-        <h2>Financial documents</h2>
-        <ul>
-          <li>Recent pay stubs</li>
-          <li>T4s and Notices of Assessment</li>
-          <li>Bank statements showing savings and down payment funds</li>
-          <li>Records of investments or gifted funds if applicable</li>
-          <li>Details of existing debts, loans, or monthly obligations</li>
-        </ul>
-      </section>
+        <GuideSectionCard
+          eyebrow="Category 1"
+          title="Personal identification"
+          icon={ShieldCheck}
+          description="Start with the identity and address records that lenders and legal professionals often need at the beginning of the transaction."
+          bullets={[
+            "Government-issued photo identification",
+            "Proof of legal name and current address",
+            "Marriage, separation, or name-change documents if relevant"
+          ]}
+        />
 
-      <section>
-        <h2>Mortgage documents</h2>
-        <p>
-          Your lender or mortgage broker may request additional supporting paperwork beyond standard income records.
-        </p>
-        <ul>
-          <li>Mortgage pre-approval letter</li>
-          <li>Employment letter confirming role, income, and job stability</li>
-          <li>Explanations for large deposits if needed</li>
-          <li>Proof of down payment source</li>
-        </ul>
-      </section>
+        <GuideSectionCard
+          eyebrow="Category 2"
+          title="Financial documents"
+          icon={BriefcaseBusiness}
+          description="Your financial package helps lenders evaluate affordability, down payment readiness, and ongoing obligations."
+          bullets={[
+            "Recent pay stubs",
+            "T4s and Notices of Assessment",
+            "Bank statements showing savings and down payment funds",
+            "Investment or gifted-fund records if applicable",
+            "Details of existing debts and recurring obligations"
+          ]}
+        />
 
-      <section>
-        <h2>Property-related documents</h2>
-        <ul>
-          <li>Listing sheet and MLS details</li>
-          <li>Signed offer documents and amendments</li>
-          <li>Home inspection report where applicable</li>
-          <li>Status certificate review materials for condos</li>
-        </ul>
-      </section>
+        <GuideSectionCard
+          eyebrow="Category 3"
+          title="Mortgage documents"
+          icon={Landmark}
+          description="Lenders and mortgage brokers may ask for supporting paperwork beyond standard income records, especially if deposits, employment status, or down payment sources need clarification."
+          bullets={[
+            "Mortgage pre-approval letter",
+            "Employment letter confirming role, income, and job stability",
+            "Explanations for large deposits if needed",
+            "Proof of down payment source"
+          ]}
+        />
 
-      <section>
-        <h2>Legal documents</h2>
-        <p>
-          Closing a house in Toronto also means coordinating with a real estate lawyer. Legal documents may include
-          title-related paperwork, closing adjustments, final statements, insurance confirmation, and transfer records.
-        </p>
-      </section>
+        <GuideDarkHighlight
+          title="Keep a lender-ready folder before the right listing appears"
+          description="Toronto homes can move quickly. If your ID, income records, statements, and approval letters are already organized, you can respond more calmly when a lender or agent needs something the same day."
+          icon={FileText}
+        />
 
-      <section>
-        <h2>Why organization matters</h2>
-        <p>
-          Missing paperwork can delay approvals or create friction at the exact moment when you want momentum. Buyers
-          who keep their records sorted can respond more quickly to lenders, lawyers, and agents.
-        </p>
-      </section>
+        <GuideSectionCard
+          eyebrow="Category 4"
+          title="Property-related documents"
+          icon={FolderKanban}
+          description="As your search turns into a live transaction, create a property-specific folder for each serious listing so you can compare and retrieve details easily."
+          bullets={[
+            "Listing sheet and MLS details",
+            "Signed offer documents and amendments",
+            "Home inspection report where applicable",
+            "Status certificate review materials for condos"
+          ]}
+        />
 
-      <section>
-        <h2>Keep everything in one place</h2>
-        <p>
-          HomeScope GTA can help Toronto buyers keep financial, property, and legal documents in one organized system
-          so they always know where to find the latest version of an approval, statement, or signed agreement.
-        </p>
-      </section>
+        <GuideSectionCard
+          eyebrow="Category 5"
+          title="Legal documents"
+          icon={Scale}
+          description="Your lawyer coordinates the final legal side of the purchase, but you should still keep your own copies of closing records and title-related paperwork."
+          bullets={[
+            "Title-related review documents",
+            "Closing adjustments and final statements",
+            "Insurance confirmation",
+            "Transfer and registration records"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="Workflow"
+          title="Why organization matters"
+          icon={FolderKanban}
+          description="Missing paperwork can slow approvals or create friction when momentum matters most. Buyers who keep records sorted can answer lender, lawyer, and agent requests far more quickly."
+          bullets={[
+            "Store approvals and revisions in dated folders",
+            "Keep each property file separate from your general buyer documents",
+            "Save final signed versions instead of relying on email search"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="HomeScope GTA"
+          title="Keep everything in one place"
+          icon={FileText}
+          description="HomeScope GTA can help Toronto buyers organize financial, property, and legal documents in one system so the latest approval letter, signed agreement, or closing file is always easier to find."
+          bullets={[
+            "Mortgage letters and lender requests",
+            "Offer documents and amendments",
+            "Inspection and condo review materials",
+            "Closing statements and long-term property records"
+          ]}
+        />
+      </div>
 
       <FAQSection items={faqItems} />
 
       <CTASection
-        title="Get your buying documents ready before the right listing appears"
-        description="Use a better system for approvals, offer paperwork, and closing documents, then browse GTA listings with more confidence."
+        title="Get your buying documents ready before the right Toronto listing appears"
+        description="Organize your approvals, offer paperwork, and closing records now so you can browse GTA listings and move faster when a strong opportunity comes up."
         links={[
-          { href: "/", label: "Go to Homepage" },
-          { href: "/listings", label: "Browse Listings", variant: "secondary" }
+          { href: "/listings", label: "Browse GTA Listings" },
+          { href: "/", label: "Explore HomeScope GTA", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>

@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Breadcrumbs } from "@/components/guides/breadcrumbs";
+import { BadgeCheck, BriefcaseBusiness, ClipboardCheck, FileSignature, ShieldCheck, Users } from "lucide-react";
+import { CTASection } from "@/components/guides/cta-section";
+import { FAQSection } from "@/components/guides/faq-section";
+import {
+  GuideDarkHighlight,
+  GuideQuickChecklist,
+  GuideSectionCard
+} from "@/components/guides/guide-content-blocks";
+import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
+import { SITE_CONFIG } from "@/config/site";
 
 const LEASE_DOCS = [
   {
@@ -28,55 +36,136 @@ export const metadata: Metadata = {
 };
 
 export default function LeaseDocumentsGuidePage() {
+  const url = `${SITE_CONFIG.baseUrl}/guides/lease-documents`;
+  const faqItems = [
+    {
+      question: "What rental documents are most commonly requested in Ontario?",
+      answer:
+        "Landlords commonly ask for proof of income, employment confirmation, references, photo ID, and sometimes credit information or supporting financial records."
+    },
+    {
+      question: "Should I bring my documents before I decide on a rental?",
+      answer:
+        "It helps to have them ready before serious showings so you can apply quickly if you find a property that fits your needs."
+    },
+    {
+      question: "What should I store after my lease is signed?",
+      answer:
+        "Keep your signed lease, payment records, landlord communication, move-in documentation, and any later amendments or notices in one accessible folder."
+    }
+  ];
+
   return (
-    <section className="site-container py-14 sm:py-16">
-      <div className="mx-auto max-w-4xl rounded-3xl border border-brand-100 bg-white p-8 shadow-soft sm:p-10">
-        <Breadcrumbs
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Guides", href: "/guides" },
-            { label: "Lease Documents for Ontario Rentals" }
+    <GuidePageLayout
+      title="Lease Documents for Ontario Rentals"
+      intro="Preparing these documents in advance can help renters move faster when booking showings and submitting applications, especially when a strong lease opportunity receives immediate attention."
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Guides", href: "/guides" },
+        { label: "Lease Documents for Ontario Rentals" }
+      ]}
+      relatedLinks={[
+        { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
+        { href: "/guides", label: "All Guides", description: "Browse more Ontario buyer and renter resources." },
+        { href: "/listings", label: "Listings", description: "Search rental listings once your package is ready." },
+        {
+          href: "/guides/leasing",
+          label: "Ontario Leasing Guide",
+          description: "See how these documents fit into the wider leasing process."
+        },
+        {
+          href: "/guides/rental-application-ontario",
+          label: "Rental Application Ontario",
+          description: "Download Form 410 and review the application fields in advance."
+        }
+      ]}
+      articleSchema={{
+        title: "Lease Documents for Ontario Rentals",
+        description: metadata.description as string,
+        url
+      }}
+    >
+      <GuideQuickChecklist
+        eyebrow="Rental File Checklist"
+        title="The Core Documents Most Renters Should Prepare"
+        description="A complete rental package is easier to build when the key pieces are already organized before you find a listing you want."
+        items={LEASE_DOCS.map((item) => item.title)}
+        icon={BadgeCheck}
+      />
+
+      <LeaseApplicationDownloadCard
+        title="Download Ontario Rental Application Form 410"
+        description="Pair your supporting documents with a ready-to-review rental application so your leasing package is easier to complete when a suitable property appears."
+        href="/forms/410-rental-application-ontario.pdf"
+        buttonLabel="Download Rental Application"
+      />
+
+      <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="Core Document 1"
+          title="Proof of income"
+          icon={BriefcaseBusiness}
+          description={LEASE_DOCS[0].description}
+          bullets={[
+            "Recent pay stubs",
+            "Bank statements where relevant",
+            "Any other income verification the landlord may request"
           ]}
         />
-        <h1 className="font-heading text-4xl text-brand-900">Lease Documents for Ontario Rentals</h1>
-        <p className="mt-3 text-brand-700">
-          Preparing these documents in advance can help you move faster when booking showings and submitting rental applications.
-        </p>
 
-        <LeaseApplicationDownloadCard
-          title="Download Ontario Rental Application Form 410"
-          description="Pair your supporting documents with a ready-to-review rental application so your leasing package is easier to complete when a suitable property appears."
-          href="/forms/410-rental-application-ontario.pdf"
-          buttonLabel="Download Rental Application"
+        <GuideSectionCard
+          eyebrow="Core Document 2"
+          title="Credit report"
+          icon={ShieldCheck}
+          description={LEASE_DOCS[1].description}
+          bullets={[
+            "A current credit report if requested",
+            "Supporting context for any unusual items",
+            "A clean digital copy ready to share"
+          ]}
         />
 
-        <div className="mt-8 space-y-4">
-          {LEASE_DOCS.map((item, index) => (
-            <article key={item.title} className="rounded-2xl border border-brand-100 bg-brand-50/40 p-5">
-              <h2 className="font-semibold text-brand-900">
-                {index + 1}. {item.title}
-              </h2>
-              <p className="mt-2 text-sm text-brand-700">{item.description}</p>
-            </article>
-          ))}
-        </div>
+        <GuideSectionCard
+          eyebrow="Core Document 3"
+          title="Employment letter"
+          icon={FileSignature}
+          description={LEASE_DOCS[2].description}
+          bullets={[
+            "Role and employer confirmation",
+            "Compensation details where appropriate",
+            "Current employment status"
+          ]}
+        />
 
-        <div className="mt-10 rounded-2xl bg-brand-900 px-6 py-7 text-white">
-          <p className="text-lg font-semibold">Ready to view rental options?</p>
-          <Link
-            href="/listings"
-            className="mt-4 inline-flex rounded-full bg-white px-5 py-2 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
-          >
-            View Rentals
-          </Link>
-          <Link
-            href="/guides/rental-application-ontario"
-            className="mt-4 ml-3 inline-flex rounded-full border border-white/50 px-5 py-2 text-sm font-semibold text-white transition hover:border-white"
-          >
-            Rental Application Guide
-          </Link>
-        </div>
+        <GuideDarkHighlight
+          title="Your documents matter more when they are organized before the showing"
+          description="If your proof of income, references, and application form are already prepared, you can focus on whether the property is right for you instead of scrambling for paperwork afterward."
+          icon={ClipboardCheck}
+        />
+
+        <GuideSectionCard
+          eyebrow="Core Document 4"
+          title="References"
+          icon={Users}
+          description={LEASE_DOCS[3].description}
+          bullets={[
+            "Previous landlord contacts where available",
+            "Professional or personal references if requested",
+            "Reference details verified before submitting"
+          ]}
+        />
       </div>
-    </section>
+
+      <FAQSection items={faqItems} />
+
+      <CTASection
+        title="Prepare your rental package before the right listing appears"
+        description="Download the Ontario rental application, organize your supporting documents, and browse GTA lease listings with a cleaner process and less last-minute stress."
+        links={[
+          { href: "/listings", label: "Browse Lease Listings" },
+          { href: "/guides/rental-application-ontario", label: "Open Rental Application Guide", variant: "secondary" }
+        ]}
+      />
+    </GuidePageLayout>
   );
 }

@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
+import {
+  BriefcaseBusiness,
+  CarFront,
+  Download,
+  FileSignature,
+  FolderKanban,
+  MapPinned,
+  Users
+} from "lucide-react";
 import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
+import {
+  GuideDarkHighlight,
+  GuideQuickChecklist,
+  GuideSectionCard
+} from "@/components/guides/guide-content-blocks";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
 import { SITE_CONFIG } from "@/config/site";
@@ -33,6 +47,13 @@ export const metadata: Metadata = {
 
 export default function RentalApplicationOntarioPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/rental-application-ontario`;
+  const quickChecklist = [
+    "Download the form before you start active showings",
+    "Prepare ID, income proof, and references in advance",
+    "Review address, employment, and banking fields before you need them",
+    "Keep leasing documents together so your package is easy to submit",
+    "Use HomeScope GTA to stay organized while browsing listings"
+  ];
 
   return (
     <GuidePageLayout
@@ -69,6 +90,14 @@ export default function RentalApplicationOntarioPage() {
         url
       }}
     >
+      <GuideQuickChecklist
+        eyebrow="Leasing Prep"
+        title="What to Have Ready Before You Apply"
+        description="A rental application is easier to complete when you have already reviewed the form and gathered the documents that support it."
+        items={quickChecklist}
+        icon={Download}
+      />
+
       <LeaseApplicationDownloadCard
         title="Ontario Residential Rental Application Form 410"
         description="Download the Ontario rental application form so you can review the fields, prepare your supporting documents, and keep a ready-to-submit leasing package."
@@ -76,67 +105,98 @@ export default function RentalApplicationOntarioPage() {
         buttonLabel="Download Rental Application"
       />
 
-      <section>
-        <h2>What is this form?</h2>
-        <p>
-          This downloadable PDF is a residential rental application resource commonly used in Ontario leasing
-          situations. It helps gather the details a landlord or listing representative may ask for during the
-          application process.
-        </p>
-      </section>
+      <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="Overview"
+          title="What is this form?"
+          icon={FileSignature}
+          description="This PDF is a residential rental application resource commonly used in Ontario leasing situations. It gives renters a practical way to review the details a landlord or listing representative may request during the application process."
+        />
 
-      <section>
-        <h2>What information is typically included?</h2>
-        <p>Based on the form structure, applicants are commonly asked to prepare information such as:</p>
-        <ul>
-          <li>Applicant names and personal details</li>
-          <li>Current and previous addresses</li>
-          <li>Landlord references</li>
-          <li>Employment history</li>
-          <li>Banking information</li>
-          <li>Financial obligations</li>
-          <li>Personal references</li>
-          <li>Vehicle information</li>
-          <li>Consent and signatures</li>
-        </ul>
-      </section>
+        <GuideSectionCard
+          eyebrow="Form Fields"
+          title="What information is typically included?"
+          icon={FolderKanban}
+          description="Based on the structure of the form, applicants are commonly asked to prepare a broad picture of their identity, rental history, work situation, and financial background."
+          bullets={[
+            "Applicant names and personal details",
+            "Current and previous addresses",
+            "Landlord references",
+            "Employment history",
+            "Banking information",
+            "Financial obligations",
+            "Personal references",
+            "Vehicle information",
+            "Consent and signatures"
+          ]}
+        />
 
-      <section>
-        <h2>Why download it in advance?</h2>
-        <p>
-          Reviewing the form before you book showings can help you understand what information may be requested and
-          what documents you may want to collect early. That can be especially useful in busy Ontario rental markets
-          where timing matters.
-        </p>
-      </section>
+        <GuideDarkHighlight
+          title="Download it before you start booking competitive showings"
+          description="Busy Ontario rental markets reward preparation. If you understand the form and have your documents ready before you fall in love with a unit, your leasing package can move faster when timing matters."
+          icon={Download}
+        />
 
-      <section>
-        <h2>Helpful documents to prepare for leasing</h2>
-        <ul>
-          <li>Photo identification</li>
-          <li>Employment letter or proof of income</li>
-          <li>Recent pay stubs or financial statements</li>
-          <li>Credit report or credit profile information</li>
-          <li>Landlord and personal references</li>
-        </ul>
-      </section>
+        <GuideSectionCard
+          eyebrow="Why It Helps"
+          title="Why download it in advance?"
+          icon={MapPinned}
+          description="Reviewing the application before you start viewing rentals helps you understand what may be requested and what documents you should prepare early."
+          bullets={[
+            "You can spot information gaps before a deadline",
+            "You can collect references and income proof sooner",
+            "You reduce delays when a suitable property appears"
+          ]}
+        />
 
-      <section>
-        <h2>Keep your lease documents organized</h2>
-        <p>
-          HomeScope GTA can help renters keep application forms, references, income documents, and signed lease records
-          together in one organized system instead of scattered across email and local downloads.
-        </p>
-      </section>
+        <GuideSectionCard
+          eyebrow="Support File"
+          title="Helpful documents to prepare for leasing"
+          icon={BriefcaseBusiness}
+          description="The form is only one part of a strong rental application package. Supporting documents often matter just as much."
+          bullets={[
+            "Photo identification",
+            "Employment letter or proof of income",
+            "Recent pay stubs or financial statements",
+            "Credit report or credit profile information",
+            "Landlord and personal references"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="Practical Details"
+          title="Other details renters often overlook"
+          icon={CarFront}
+          description="Some applications also request vehicle details, additional occupants, emergency contacts, or permission-related signatures, so it helps to read the whole form before you need to submit it."
+          bullets={[
+            "Vehicle and parking-related information",
+            "Names of all intended occupants",
+            "Reference details you may need to confirm quickly"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="Organization"
+          title="Keep your lease documents organized"
+          icon={Users}
+          description="HomeScope GTA can help renters keep application forms, references, income documents, and signed lease records together in one organized system instead of scattering them across email, screenshots, and local downloads."
+          bullets={[
+            "Application forms and versions",
+            "Income and employment proof",
+            "Reference details and landlord communication",
+            "Signed lease records after approval"
+          ]}
+        />
+      </div>
 
       <FAQSection items={faqItems} />
 
       <CTASection
-        title="Prepare your Ontario rental application before the right listing appears"
-        description="Download the form, gather your supporting documents, and browse GTA lease listings with a more complete application package."
+        title="Download the form now so you can apply faster later"
+        description="Review the Ontario rental application, organize your supporting files, and browse GTA lease listings with a package that is ready when the right home appears."
         links={[
-          { href: "/listings", label: "Browse Listings" },
-          { href: "/", label: "Go to Homepage", variant: "secondary" }
+          { href: "/listings", label: "Browse Lease Listings" },
+          { href: "/", label: "Explore HomeScope GTA", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>
