@@ -49,7 +49,10 @@ export const metadata: Metadata = {
     absolute: "First Time Home Buyer Checklist Ontario | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
   },
   description:
-    "Step-by-step checklist for first time home buyers in Ontario. Learn how to prepare finances, get pre-approved, search for homes, and close your purchase smoothly."
+    "Step-by-step checklist for first time home buyers in Ontario. Learn how to prepare finances, get pre-approved, search for homes, and close your purchase smoothly.",
+  alternates: {
+    canonical: "/guides/first-time-home-buyer-ontario"
+  }
 };
 
 export default function FirstTimeHomeBuyerOntarioPage() {

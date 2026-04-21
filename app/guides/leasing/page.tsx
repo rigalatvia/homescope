@@ -24,7 +24,10 @@ const LEASING_STEPS = [
 
 export const metadata: Metadata = {
   title: "Ontario Leasing Guide",
-  description: "Learn how to rent a home in Ontario, from preparing documents and booking showings to applying and signing a lease."
+  description: "Learn how to rent a home in Ontario, from preparing documents and booking showings to applying and signing a lease.",
+  alternates: {
+    canonical: "/guides/leasing"
+  }
 };
 
 export default function LeasingGuidePage() {

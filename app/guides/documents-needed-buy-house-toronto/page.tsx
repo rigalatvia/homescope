@@ -41,7 +41,10 @@ export const metadata: Metadata = {
     absolute: "Documents Needed to Buy a House in Toronto | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
   },
   description:
-    "Complete list of documents required to buy a house in Toronto, including ID, financial records, mortgage paperwork, and legal closing documents."
+    "Complete list of documents required to buy a house in Toronto, including ID, financial records, mortgage paperwork, and legal closing documents.",
+  alternates: {
+    canonical: "/guides/documents-needed-buy-house-toronto"
+  }
 };
 
 export default function DocumentsNeededToBuyHouseTorontoPage() {

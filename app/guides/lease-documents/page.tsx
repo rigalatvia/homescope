@@ -32,7 +32,10 @@ const LEASE_DOCS = [
 
 export const metadata: Metadata = {
   title: "Ontario Rental Documents Checklist",
-  description: "See which rental documents to prepare in Ontario, including proof of income, credit report, employment letter, and references."
+  description: "See which rental documents to prepare in Ontario, including proof of income, credit report, employment letter, and references.",
+  alternates: {
+    canonical: "/guides/lease-documents"
+  }
 };
 
 export default function LeaseDocumentsGuidePage() {
