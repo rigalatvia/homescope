@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadCaptureModal } from "@/components/leads/lead-capture-modal";
 import { ListingGallery } from "@/components/listings/gallery";
@@ -47,6 +48,18 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
+  const relatedGuideLinks =
+    listing.transactionType === "lease"
+      ? [
+          { href: "/guides/leasing", label: "Ontario Leasing Guide" },
+          { href: "/guides/lease-documents", label: "Lease Documents Checklist" },
+          { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" }
+        ]
+      : [
+          { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
+          { href: "/guides/documents-needed-buy-house-toronto", label: "Buyer Documents Guide" },
+          { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" }
+        ];
 
   return (
     <section className="site-container py-10">
@@ -70,6 +83,35 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
           </div>
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>
+
+          <section className="rounded-2xl border border-brand-100 bg-brand-50/50 p-5 shadow-soft">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Helpful Guide</p>
+            <h2 className="mt-2 font-heading text-2xl text-brand-900">
+              {listing.transactionType === "lease"
+                ? "Leasing advice and rental document help"
+                : "Buying advice and document help"}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-brand-700">
+              {listing.transactionType === "lease"
+                ? "Before you apply for a rental, it helps to understand the leasing process and have your supporting documents organized."
+                : "If you are planning a purchase, it helps to understand the buyer process and keep your financing and closing documents organized."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {relatedGuideLinks.map((guide, index) => (
+                <Link
+                  key={guide.href}
+                  href={guide.href}
+                  className={
+                    index === 0
+                      ? "inline-flex rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+                      : "inline-flex rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+                  }
+                >
+                  {guide.label}
+                </Link>
+              ))}
+            </div>
+          </section>
 
           <LeadCaptureModal
             listingId={listing.id}
