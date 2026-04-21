@@ -1,8 +1,12 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_CONFIG } from "@/config/site";
 
 export function SiteHeader() {
+  const mobileGuidesRef = useRef<HTMLDetailsElement>(null);
   const guideItems = [
     { href: "/guides", label: "All Guides" },
     { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
@@ -12,6 +16,12 @@ export function SiteHeader() {
     { href: "/guides/leasing", label: "Leasing Guide" },
     { href: "/guides/lease-documents", label: "Lease Documents" }
   ];
+
+  function closeMobileGuidesMenu() {
+    if (mobileGuidesRef.current) {
+      mobileGuidesRef.current.open = false;
+    }
+  }
 
   return (
     <header className="border-b border-brand-100 bg-white/95 backdrop-blur">
@@ -60,7 +70,7 @@ export function SiteHeader() {
           <Link href="/listings" className="transition hover:text-brand-900">
             Listings
           </Link>
-          <details className="group relative">
+          <details ref={mobileGuidesRef} className="group relative">
             <summary className="cursor-pointer list-none transition hover:text-brand-900">
               Guides
             </summary>
@@ -69,6 +79,7 @@ export function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={closeMobileGuidesMenu}
                   className="block rounded-lg px-3 py-2 text-sm text-brand-800 transition hover:bg-brand-50 hover:text-brand-900"
                 >
                   {item.label}

@@ -45,6 +45,24 @@ export function SiteFooter() {
                 First-Time Buyer Checklist
               </Link>
               <Link
+                href="/guides/documents-needed-buy-house-toronto"
+                className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
+              >
+                Toronto Buyer Documents
+              </Link>
+              <Link
+                href="/guides/leasing"
+                className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
+              >
+                Ontario Leasing Guide
+              </Link>
+              <Link
+                href="/guides/lease-documents"
+                className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
+              >
+                Lease Documents Checklist
+              </Link>
+              <Link
                 href="/guides/rental-application-ontario"
                 className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
               >
