@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     absolute: "Documents Needed to Buy a House in Toronto | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
   },
   description:
-    "Complete list of documents required to buy a house in Toronto, including ID, financial records, mortgage paperwork, and legal closing documents.",
+    "Complete document checklist for buying a house in Toronto, including ID, income records, mortgage paperwork, property documents, and closing files.",
   alternates: {
     canonical: "/guides/documents-needed-buy-house-toronto"
   }
@@ -95,12 +95,26 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
       <GuideQuickChecklist
         eyebrow="Buyer Document Checklist"
         title="Documents at a Glance Before You Start Making Offers"
-        description="This shortlist helps Toronto buyers see what should be ready before a property search becomes competitive. The more organized your files are, the easier it is to move with confidence."
+        description="This page is a Toronto buyer paperwork guide, not a general home buying roadmap. Use it to understand which records lenders, lawyers, and agents may need at each document-heavy stage."
         items={quickChecklist}
         icon={BadgeCheck}
       />
 
       <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="What This Page Covers"
+          title="This guide is about paperwork, not the full buying journey"
+          icon={FileText}
+          description="If you are looking for a step-by-step first-time buyer roadmap, use the Ontario buyer checklist. This page is narrower by design: it focuses on the actual records buyers in Toronto should gather, store, and retrieve throughout a purchase."
+          bullets={[
+            "Identity and address documents",
+            "Income, savings, and debt records",
+            "Mortgage approval paperwork",
+            "Property-specific files",
+            "Legal and closing documents"
+          ]}
+        />
+
         <GuideSectionCard
           eyebrow="Foundation"
           title="Why document preparation matters"
@@ -181,6 +195,20 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
             "Closing adjustments and final statements",
             "Insurance confirmation",
             "Transfer and registration records"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="Checklist Workflow"
+          title="How to structure your buyer document folders"
+          icon={FileText}
+          description="One of the easiest ways to reduce confusion is to separate your buyer documents into simple working folders instead of saving everything in email or one download folder."
+          bullets={[
+            "Personal ID and address records",
+            "Mortgage and banking documents",
+            "Property-specific files for each serious listing",
+            "Signed offer and amendment folder",
+            "Lawyer and closing package folder"
           ]}
         />
 

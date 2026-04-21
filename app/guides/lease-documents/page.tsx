@@ -32,7 +32,8 @@ const LEASE_DOCS = [
 
 export const metadata: Metadata = {
   title: "Ontario Rental Documents Checklist",
-  description: "See which rental documents to prepare in Ontario, including proof of income, credit report, employment letter, and references.",
+  description:
+    "Ontario rental document checklist covering proof of income, credit report, employment letter, references, and what to keep after the lease is signed.",
   alternates: {
     canonical: "/guides/lease-documents"
   }
@@ -55,6 +56,11 @@ export default function LeaseDocumentsGuidePage() {
       question: "What should I store after my lease is signed?",
       answer:
         "Keep your signed lease, payment records, landlord communication, move-in documentation, and any later amendments or notices in one accessible folder."
+    },
+    {
+      question: "Is this page different from the Ontario Leasing Guide?",
+      answer:
+        "Yes. This page is a rental document checklist. The Ontario Leasing Guide covers the wider leasing process from budgeting and showings through signing and move-in."
     }
   ];
 
@@ -91,7 +97,7 @@ export default function LeaseDocumentsGuidePage() {
       <GuideQuickChecklist
         eyebrow="Rental File Checklist"
         title="The Core Documents Most Renters Should Prepare"
-        description="A complete rental package is easier to build when the key pieces are already organized before you find a listing you want."
+        description="This page is intentionally document-focused. Use it to understand which rental files matter, why they matter, and what to keep after a lease is approved."
         items={LEASE_DOCS.map((item) => item.title)}
         icon={BadgeCheck}
       />
@@ -104,6 +110,19 @@ export default function LeaseDocumentsGuidePage() {
       />
 
       <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="What This Page Covers"
+          title="This guide is your rental document checklist"
+          icon={ClipboardCheck}
+          description="Unlike the Ontario Leasing Guide, which explains the leasing process, this page focuses narrowly on the supporting documents renters often need before and after they apply."
+          bullets={[
+            "What each file helps prove",
+            "Why landlords may ask for it",
+            "When to prepare it",
+            "What to keep after approval"
+          ]}
+        />
+
         <GuideSectionCard
           eyebrow="Core Document 1"
           title="Proof of income"
@@ -155,6 +174,19 @@ export default function LeaseDocumentsGuidePage() {
             "Previous landlord contacts where available",
             "Professional or personal references if requested",
             "Reference details verified before submitting"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="After Approval"
+          title="What to keep after the lease is signed"
+          icon={FileSignature}
+          description="Your document checklist does not end when the landlord approves you. Keep the final records that protect you and help with future reference checks, renewals, and moving questions."
+          bullets={[
+            "Signed lease agreement",
+            "Deposit and rent payment records",
+            "Move-in condition photos or notes",
+            "Important landlord communication and amendments"
           ]}
         />
       </div>

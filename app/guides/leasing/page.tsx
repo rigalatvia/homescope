@@ -12,7 +12,7 @@ import { LeaseApplicationDownloadCard } from "@/components/guides/lease-applicat
 import { SITE_CONFIG } from "@/config/site";
 
 const LEASING_STEPS = [
-  { title: "Prepare Your Documents", description: "Organize income proof, credit report, employment letter, and references." },
+  { title: "Prepare Your Documents", description: "Get your rental paperwork together early so you are ready when a property matches your budget and timing." },
   { title: "Set Your Budget", description: "Define monthly rent limits and expected utilities or additional costs." },
   { title: "Search Listings", description: "Review available rental options by location, layout, and amenities." },
   { title: "Book a Showing", description: "Visit shortlisted properties and compare fit, condition, and commute." },
@@ -47,6 +47,11 @@ export default function LeasingGuidePage() {
       question: "Why is a complete application package important?",
       answer:
         "A complete package can reduce delays and make it easier to submit quickly when you find a rental that fits your needs."
+    },
+    {
+      question: "Is this page the same as a lease document checklist?",
+      answer:
+        "No. This page explains the rental process from budget to move-in. For a document-by-document checklist, use the lease documents guide."
     }
   ];
 
@@ -83,7 +88,7 @@ export default function LeasingGuidePage() {
       <GuideQuickChecklist
         eyebrow="Rental Roadmap"
         title="The Leasing Process at a Glance"
-        description="This quick overview helps Ontario renters see the full leasing flow before the process speeds up around a property they want."
+        description="This page is about the rental process itself: how to move from planning and search into showings, applications, approval, lease signing, and move-in."
         items={LEASING_STEPS.map((step) => step.title)}
         icon={ClipboardCheck}
       />
@@ -96,6 +101,19 @@ export default function LeasingGuidePage() {
       />
 
       <div className="mt-10 grid gap-5">
+        <GuideSectionCard
+          eyebrow="What This Page Covers"
+          title="Use this page for process, not paperwork details"
+          icon={Home}
+          description="This guide is designed to explain how leasing works in Ontario from start to finish. If you need a checklist of the exact supporting files to gather, the lease documents page is the stronger match."
+          bullets={[
+            "Budgeting and search strategy",
+            "How to compare rentals during showings",
+            "When to apply and what happens next",
+            "Lease signing and move-in steps"
+          ]}
+        />
+
         <GuideSectionCard eyebrow="Step 1" title="Prepare your documents" icon={BriefcaseBusiness} description={LEASING_STEPS[0].description} bullets={["Organize income proof and employment confirmation", "Keep references and ID ready", "Review the rental application before you need it"]} />
         <GuideSectionCard eyebrow="Step 2" title="Set your budget" icon={Wallet} description={LEASING_STEPS[1].description} bullets={["Plan for rent plus utilities and deposits", "Know your comfort range before touring", "Stay realistic about commute and location tradeoffs"]} />
         <GuideSectionCard eyebrow="Step 3" title="Search listings" icon={Search} description={LEASING_STEPS[2].description} bullets={["Compare layout, amenities, and lease terms", "Track your shortlist in one place", "Save links and notes for each property"]} />
@@ -111,6 +129,18 @@ export default function LeasingGuidePage() {
         <GuideSectionCard eyebrow="Step 6" title="Landlord review" icon={ShieldCheck} description={LEASING_STEPS[5].description} bullets={["Be ready for follow-up questions", "Respond quickly to document requests", "Keep communication records organized"]} />
         <GuideSectionCard eyebrow="Step 7" title="Sign lease agreement" icon={ClipboardCheck} description={LEASING_STEPS[6].description} bullets={["Review lease terms carefully", "Store the signed agreement and deposit records", "Track key dates from the start"]} />
         <GuideSectionCard eyebrow="Step 8" title="Move in" icon={Wrench} description={LEASING_STEPS[7].description} bullets={["Confirm keys and logistics", "Save move-in condition photos", "Keep lease records accessible after possession"]} />
+
+        <GuideSectionCard
+          eyebrow="Related Resource"
+          title="Use the lease documents guide as your companion checklist"
+          icon={ClipboardCheck}
+          description="Most renters need two resources: a process guide and a document checklist. This page covers the process. The lease documents guide covers the exact records many landlords ask for."
+          bullets={[
+            "Proof of income and employment",
+            "Credit-related records",
+            "References and application support files"
+          ]}
+        />
       </div>
 
       <FAQSection items={faqItems} />

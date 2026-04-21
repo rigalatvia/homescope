@@ -96,6 +96,13 @@ const GUIDE_PATHS = [
   }
 ] as const;
 
+const PRIORITY_GUIDE_HREFS = new Set([
+  "/guides/first-time-home-buyer-ontario",
+  "/guides/documents-needed-buy-house-toronto",
+  "/guides/leasing",
+  "/guides/lease-documents"
+]);
+
 export const metadata: Metadata = {
   title: {
     absolute: "Ontario Real Estate Guides | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
@@ -106,7 +113,10 @@ export const metadata: Metadata = {
 
 export default function GuidesPage() {
   const featuredGuide = GUIDE_CARDS[0];
-  const supportingGuides = GUIDE_CARDS.slice(1);
+  const priorityGuides = GUIDE_CARDS.filter((guide) => PRIORITY_GUIDE_HREFS.has(guide.href));
+  const supportingGuides = GUIDE_CARDS.filter(
+    (guide) => guide.href !== featuredGuide.href && !PRIORITY_GUIDE_HREFS.has(guide.href)
+  );
 
   return (
     <section className="site-container py-12 sm:py-16">
@@ -179,6 +189,25 @@ export default function GuidesPage() {
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           {GUIDE_PATHS.map((path) => (
             <PathCard key={path.href} {...path} />
+          ))}
+        </div>
+
+        <div className="mt-12 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Priority Guides</p>
+            <h2 className="mt-2 font-heading text-3xl text-brand-900">
+              Start with these four core buyer and renter resources
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-700 sm:text-base">
+              These pages are the main buyer and renter guide resources on HomeScope GTA, covering first-time buying,
+              Toronto purchase documents, leasing flow, and rental document preparation.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {priorityGuides.map((guide) => (
+            <GuideCard key={guide.href} {...guide} />
           ))}
         </div>
 

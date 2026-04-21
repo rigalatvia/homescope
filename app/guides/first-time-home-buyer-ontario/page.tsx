@@ -33,6 +33,11 @@ const faqItems = [
     question: "Why is mortgage pre-approval important?",
     answer:
       "Mortgage pre-approval helps Ontario buyers understand their real budget before touring homes. It also shows sellers you are serious and can move more quickly when you find the right property."
+  },
+  {
+    question: "Is this checklist the same as a buyer document list?",
+    answer:
+      "No. This page focuses on the buying journey itself, from financial readiness to closing. For a document-focused checklist, see the Toronto buyer documents guide."
   }
 ];
 
@@ -135,6 +140,25 @@ export default function FirstTimeHomeBuyerOntarioPage() {
             "Keep recent pay stubs, tax returns, and bank statements ready"
           ]}
         />
+
+        <section className="rounded-[2rem] border border-brand-100 bg-brand-50/50 p-6 shadow-soft sm:p-8">
+          <div className="flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-900 shadow-soft">
+              <Landmark className="h-6 w-6" />
+            </span>
+            <div>
+              <h2 className="font-heading text-3xl text-brand-900">Know the goal of this guide</h2>
+              <p className="mt-3 text-sm leading-7 text-brand-700 sm:text-base">
+                This page is your Ontario first-time buyer roadmap. It is meant to help you understand the sequence of
+                decisions and milestones from planning to possession. If you need a strict paperwork checklist, the{" "}
+                <a href="/guides/documents-needed-buy-house-toronto" className="font-semibold text-brand-900 underline underline-offset-4">
+                  Toronto buyer documents guide
+                </a>{" "}
+                is the better companion page.
+              </p>
+            </div>
+          </div>
+        </section>
 
         <StepCard
           step="Step 2"

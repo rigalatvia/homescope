@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { SITE_CONFIG } from "@/config/site";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const [isDesktopGuidesOpen, setIsDesktopGuidesOpen] = useState(false);
   const mobileGuidesRef = useRef<HTMLDetailsElement>(null);
   const guideItems = [
     { href: "/guides", label: "All Guides" },
@@ -22,6 +25,15 @@ export function SiteHeader() {
       mobileGuidesRef.current.open = false;
     }
   }
+
+  function closeAllGuidesMenus() {
+    setIsDesktopGuidesOpen(false);
+    closeMobileGuidesMenu();
+  }
+
+  useEffect(() => {
+    closeAllGuidesMenus();
+  }, [pathname]);
 
   return (
     <header className="border-b border-brand-100 bg-white/95 backdrop-blur">
@@ -42,16 +54,26 @@ export function SiteHeader() {
           <Link href="/listings" className="transition hover:text-brand-900">
             Listings
           </Link>
-          <div className="group relative">
-            <button type="button" className="inline-flex items-center gap-1 transition hover:text-brand-900">
+          <div className="relative">
+            <button
+              type="button"
+              aria-expanded={isDesktopGuidesOpen}
+              onClick={() => setIsDesktopGuidesOpen((open) => !open)}
+              className="inline-flex items-center gap-1 transition hover:text-brand-900"
+            >
               Guides
               <span aria-hidden="true" className="text-xs">▾</span>
             </button>
-            <div className="invisible absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 opacity-0 shadow-soft transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div
+              className={`absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-soft transition ${
+                isDesktopGuidesOpen ? "visible opacity-100" : "invisible opacity-0"
+              }`}
+            >
               {guideItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={closeAllGuidesMenus}
                   className="block rounded-lg px-3 py-2 text-sm text-brand-800 transition hover:bg-brand-50 hover:text-brand-900"
                 >
                   {item.label}
@@ -79,7 +101,7 @@ export function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={closeMobileGuidesMenu}
+                  onClick={closeAllGuidesMenus}
                   className="block rounded-lg px-3 py-2 text-sm text-brand-800 transition hover:bg-brand-50 hover:text-brand-900"
                 >
                   {item.label}
