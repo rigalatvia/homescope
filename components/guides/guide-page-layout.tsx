@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/guides/breadcrumbs";
+import type { FAQItem } from "@/components/guides/faq-section";
+import { SITE_CONFIG } from "@/config/site";
 
 export interface RelatedGuideLink {
   href: string;
@@ -19,6 +21,7 @@ export function GuidePageLayout({
   breadcrumbs,
   relatedLinks,
   articleSchema,
+  faqItems,
   children
 }: {
   title: string;
@@ -26,9 +29,10 @@ export function GuidePageLayout({
   breadcrumbs: BreadcrumbItem[];
   relatedLinks: RelatedGuideLink[];
   articleSchema: ArticleSchemaInput;
+  faqItems?: FAQItem[];
   children: React.ReactNode;
 }) {
-  const schema = {
+  const articleSchemaJson = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: articleSchema.title,
@@ -43,10 +47,42 @@ export function GuidePageLayout({
       name: "HomeScope GTA"
     }
   };
+  const breadcrumbSchemaJson = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      item: item.href ? `${SITE_CONFIG.baseUrl}${item.href}` : articleSchema.url
+    }))
+  };
+  const faqSchemaJson =
+    faqItems && faqItems.length
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqItems.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer
+            }
+          }))
+        }
+      : null;
 
   return (
     <section className="site-container py-12 sm:py-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchemaJson) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchemaJson) }}
+      />
+      {faqSchemaJson ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchemaJson) }} />
+      ) : null}
       <div className="mx-auto max-w-5xl rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-10">
         <Breadcrumbs items={breadcrumbs} />
         <header className="max-w-3xl">

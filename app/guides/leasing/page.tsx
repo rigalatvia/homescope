@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
-import { BriefcaseBusiness, ClipboardCheck, FileSignature, Home, Search, ShieldCheck, Wallet, Wrench } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  ClipboardCheck,
+  FileSignature,
+  FolderKanban,
+  Home,
+  Search,
+  ShieldCheck,
+  Wallet,
+  Wrench
+} from "lucide-react";
 import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
 import {
@@ -23,12 +35,21 @@ const LEASING_STEPS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Ontario Leasing Guide",
-  description: "Learn how to rent a home in Ontario, from preparing documents and booking showings to applying and signing a lease.",
+  title: "Ontario Leasing Guide 2026 - Rental Applications, Documents & Tenant Tips | HomeScope GTA",
+  description:
+    "Learn how Ontario rental applications work, what documents landlords request, and how to improve approval chances before you lease a home. Updated 2026.",
   alternates: {
     canonical: "/guides/leasing"
   }
 };
+
+const TABLE_OF_CONTENTS = [
+  { href: "#leasing-overview", label: "Ontario rental application form explained" },
+  { href: "#leasing-documents", label: "Documents needed for a rental application in Ontario" },
+  { href: "#tenant-application", label: "Tenant application form Ontario - what to expect" },
+  { href: "#financial-obligations", label: "Understanding financial obligations on rental applications" },
+  { href: "#leasing-process", label: "The Ontario leasing process step by step" }
+] as const;
 
 export default function LeasingGuidePage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/leasing`;
@@ -57,8 +78,8 @@ export default function LeasingGuidePage() {
 
   return (
     <GuidePageLayout
-      title="Steps to Rent a Home in Ontario"
-      intro="Use this guide to understand the leasing process in Ontario, from document preparation and budgeting to showings, applications, and move-in coordination."
+      title="Ontario Leasing Guide 2026"
+      intro="Use this Ontario leasing guide to understand rental applications, tenant documents, landlord review, and the full path from your first showing to lease signing and move-in."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
@@ -80,18 +101,44 @@ export default function LeasingGuidePage() {
         }
       ]}
       articleSchema={{
-        title: "Steps to Rent a Home in Ontario",
+        title: "Ontario Leasing Guide 2026",
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Rental Roadmap"
         title="The Leasing Process at a Glance"
-        description="This page is about the rental process itself: how to move from planning and search into showings, applications, approval, lease signing, and move-in."
+        description="This guide explains how Ontario rental applications work, which leasing documents to prepare, what landlords often review, and how to improve your approval chances before the right rental appears."
         items={LEASING_STEPS.map((step) => step.title)}
         icon={ClipboardCheck}
       />
+
+      <section className="not-prose mt-6 rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Jump to What Matters</p>
+            <h2 className="mt-3 font-heading text-3xl text-brand-900">Use this Ontario leasing guide as a quick table of contents</h2>
+            <p className="mt-3 text-sm leading-7 text-brand-700 sm:text-base">
+              If you are renting in Ontario, the strongest rental applications usually come from people who understand
+              the process, the expected documents, and the financial questions landlords may ask before approval.
+            </p>
+          </div>
+          <div className="grid gap-3 lg:min-w-[320px]">
+            {TABLE_OF_CONTENTS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="inline-flex items-center justify-between gap-3 rounded-2xl border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+              >
+                <span>{item.label}</span>
+                <ArrowRight className="h-4 w-4 shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <LeaseApplicationDownloadCard
         title="Ontario Rental Application Form 410"
@@ -101,16 +148,92 @@ export default function LeasingGuidePage() {
       />
 
       <div className="mt-10 grid gap-5">
+        <div id="leasing-overview">
+          <GuideSectionCard
+            eyebrow="What This Guide Covers"
+            title="Ontario Rental Application Form Explained"
+            icon={Home}
+            description="Renters often hear about the Ontario rental application form before they fully understand how it fits into the leasing process. In practice, this form is part of a broader approval flow that also includes budgeting, showings, supporting documents, references, and final lease review."
+            bullets={[
+              "How the application fits into the leasing process",
+              "When to prepare your rental package",
+              "What landlords may review before approval",
+              "How HomeScope GTA can help you keep leasing files in one place"
+            ]}
+          />
+        </div>
+
+        <div id="leasing-documents">
+          <GuideSectionCard
+            eyebrow="Documents"
+            title="Documents Needed for a Rental Application in Ontario"
+            icon={BriefcaseBusiness}
+            description="Most Ontario rental applications move more smoothly when renters already have their supporting files ready. A strong package often includes identification, proof of income, employment confirmation, references, and any extra documents a landlord or listing agent may ask for."
+            bullets={[
+              "Government-issued ID and contact details",
+              "Income proof, employment letters, or recent pay statements",
+              "Reference contact information and prior landlord details",
+              "A saved copy of your completed application form"
+            ]}
+          />
+        </div>
+
+        <div id="tenant-application">
+          <GuideSectionCard
+            eyebrow="Application Expectations"
+            title="Tenant Application Form Ontario - What to Expect"
+            icon={FileSignature}
+            description="A tenant application form in Ontario typically asks for personal information, address history, employment details, references, and confirmation that the information provided is accurate. Reviewing those fields before booking serious showings can help you move faster once you find the right rental."
+            bullets={[
+              "Current and previous address details",
+              "Employment history and monthly income information",
+              "Reference names, contact details, and relationships",
+              "Consent sections and signatures"
+            ]}
+          />
+        </div>
+
+        <div id="financial-obligations">
+          <GuideSectionCard
+            eyebrow="Financial Fit"
+            title="Understanding Financial Obligations on Rental Applications"
+            icon={Wallet}
+            description="Some Ontario rental applications ask about recurring debts or financial obligations because landlords want to understand whether monthly rent fits comfortably within your broader budget. Renters who review those questions ahead of time can answer more confidently and avoid rushed or inconsistent submissions."
+            bullets={[
+              "Monthly rent versus your total housing budget",
+              "Utilities, parking, and storage costs",
+              "Existing debts or recurring monthly obligations",
+              "Why clarity matters when landlords review affordability"
+            ]}
+          />
+        </div>
+
+        <div id="leasing-process">
+          <GuideSectionCard
+            eyebrow="Leasing Flow"
+            title="The Ontario leasing process step by step"
+            icon={ClipboardCheck}
+            description="Once your application package is ready, the leasing process becomes much easier to manage. This is the practical sequence most Ontario renters follow, from planning and search to application review and move-in."
+            bullets={LEASING_STEPS.map((step) => step.title)}
+          />
+        </div>
+
+        <GuideDarkHighlight
+          title="Prepared renters usually have the strongest approval momentum"
+          description="The best leasing opportunities can move quickly. If your tenant application form, references, and financial documents are already organized, you can submit a cleaner package and spend less time scrambling after a showing."
+          icon={FolderKanban}
+        />
+
         <GuideSectionCard
           eyebrow="What This Page Covers"
-          title="Use this page for process, not paperwork details"
-          icon={Home}
-          description="This guide is designed to explain how leasing works in Ontario from start to finish. If you need a checklist of the exact supporting files to gather, the lease documents page is the stronger match."
+          title="Use this page for the rental process, then use the document guides beside it"
+          icon={Search}
+          description="This page is your process guide. If you want the exact paperwork to gather, use the lease documents guide and the Ontario rental application download page together so your package is organized before serious showings begin."
           bullets={[
-            "Budgeting and search strategy",
-            "How to compare rentals during showings",
-            "When to apply and what happens next",
-            "Lease signing and move-in steps"
+            "Leasing flow from showings to move-in",
+            "Document checklist support from the lease documents guide",
+            "Form review support from the rental application page",
+            "A stronger internal path between process and paperwork"
           ]}
         />
 
@@ -141,6 +264,34 @@ export default function LeasingGuidePage() {
             "References and application support files"
           ]}
         />
+
+        <section className="not-prose rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Related Next Steps</p>
+          <h2 className="mt-3 font-heading text-3xl text-brand-900">Keep reading before you apply for a rental in Ontario</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-700 sm:text-base">
+            Use these related pages to turn the leasing guide into a stronger rental package and a faster search process.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/guides/lease-documents"
+              className="inline-flex rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+            >
+              Lease Document Checklist
+            </Link>
+            <Link
+              href="/guides/rental-application-ontario"
+              className="inline-flex rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+            >
+              Rental Application Form 410
+            </Link>
+            <Link
+              href="/listings"
+              className="inline-flex rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+            >
+              Browse Lease Listings
+            </Link>
+          </div>
+        </section>
       </div>
 
       <FAQSection items={faqItems} />
