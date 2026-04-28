@@ -29,6 +29,8 @@ interface ContactProfileDocument {
   fullName: string;
   email: string;
   phone: string;
+  smsConsent: boolean;
+  smsConsentUpdatedAt: string | null;
   source: "website";
   firstSeenAt: string;
   lastSeenAt: string;
@@ -119,6 +121,8 @@ export async function upsertContactFromLead(lead: LeadSubmissionRecord): Promise
       fullName: lead.fullName,
       email: normalizeEmail(lead.email),
       phone: normalizePhone(lead.phone),
+      smsConsent: lead.agreesToTextMessages === true,
+      smsConsentUpdatedAt: now,
       source: "website",
       firstSeenAt: existing?.firstSeenAt ?? now,
       lastSeenAt: now,
@@ -170,6 +174,8 @@ export async function upsertContactFromMessage(contact: ContactSubmissionRecord)
       fullName: contact.fullName,
       email: normalizeEmail(contact.email),
       phone: normalizePhone(contact.phone),
+      smsConsent: existing?.smsConsent ?? false,
+      smsConsentUpdatedAt: existing?.smsConsentUpdatedAt ?? null,
       source: "website",
       firstSeenAt: existing?.firstSeenAt ?? now,
       lastSeenAt: now,

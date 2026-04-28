@@ -5,6 +5,7 @@ export interface LeadSubmissionInput {
   fullName: string;
   email: string;
   phone: string;
+  agreesToTextMessages?: boolean;
   preferredDateTime: string;
   message: string;
   intent: LeadIntent;

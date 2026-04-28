@@ -157,12 +157,12 @@ function parsePermToAdvertise(value: RawMLSFeedListing["permToAdvertise"]): bool
 function parseMunicipality(value: string | null | undefined): NormalizedMLSListing["municipality"] {
   const normalized = normalizeMunicipalityInput(value);
   if (!normalized) return null;
-  if (normalized.startsWith("toronto")) return "Toronto";
-  if (normalized.startsWith("vaughan")) return "Vaughan";
-  if (normalized.startsWith("richmond hill")) return "Richmond Hill";
-  if (normalized.startsWith("newmarket")) return "Newmarket";
-  if (normalized.startsWith("aurora")) return "Aurora";
-  if (normalized.startsWith("king")) return "King";
+  if (matchesMunicipality(normalized, "toronto")) return "Toronto";
+  if (matchesMunicipality(normalized, "vaughan")) return "Vaughan";
+  if (matchesMunicipality(normalized, "richmond hill")) return "Richmond Hill";
+  if (matchesMunicipality(normalized, "newmarket")) return "Newmarket";
+  if (matchesMunicipality(normalized, "aurora")) return "Aurora";
+  if (matchesMunicipality(normalized, "king")) return "King";
   return null;
 }
 
@@ -171,6 +171,10 @@ function normalizeMunicipalityInput(value: string | null | undefined): string {
   if (!base) return "";
   const withoutParens = base.split("(")[0]?.trim() || base;
   return withoutParens.replace(/^city of\s+/, "").trim();
+}
+
+function matchesMunicipality(input: string, municipality: string): boolean {
+  return input === municipality || input.startsWith(`${municipality} `) || input.startsWith(`${municipality}-`);
 }
 
 function normalizePostalCode(value: string | null | undefined): string | null {

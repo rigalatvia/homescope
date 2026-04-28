@@ -35,7 +35,8 @@ export async function POST(request: Request) {
       {
         success: true,
         id: record.id,
-        message: "Your request was received successfully."
+        message:
+          "Your request was received successfully. Please expect an email from info@homescopegta.ca and check your junk folder if you do not see it."
       },
       { status: 201 }
     );

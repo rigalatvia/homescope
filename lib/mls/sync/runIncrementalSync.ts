@@ -1,6 +1,7 @@
 ﻿import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
+import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getIncrementalSyncSince, setIncrementalSyncSince } from "@/lib/mls/sync/incrementalSyncCursor";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
@@ -46,6 +47,12 @@ export async function runIncrementalSync(params?: {
   });
 
   try {
+    const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
+    if (cleanupRemoved > 0) {
+      stats.archived += cleanupRemoved;
+      notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
+    }
+
     const rawListings = await connector.fetchUpdatedListings(since);
     stats.fetched = rawListings.length;
     logSyncInfo("Incremental sync fetched listings", { count: stats.fetched });

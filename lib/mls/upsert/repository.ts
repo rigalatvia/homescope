@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import type { MLSHiddenReason, MLSListingFirestoreDocument, MLSListingSnapshotDocument } from "@/lib/mls/types";
+import type {
+  MLSHiddenReason,
+  MLSListingFirestoreDocument,
+  MLSListingSnapshotDocument,
+  MLSMunicipality
+} from "@/lib/mls/types";
 
 const COLLECTIONS = {
   listings: "listings",
@@ -59,6 +64,14 @@ export async function listStaleVisibleListings(staleBeforeIso: string): Promise<
     .where("lastSeenInSourceAt", "<", staleBeforeIso)
     .get();
 
+  return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
+}
+
+export async function listListingsByMunicipality(
+  municipality: MLSMunicipality
+): Promise<MLSListingFirestoreDocument[]> {
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore.collection(COLLECTIONS.listings).where("municipality", "==", municipality).get();
   return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
 }
 

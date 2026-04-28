@@ -9,6 +9,7 @@ import type {
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
+import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getDefaultFullSyncStartPage, getFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
@@ -50,6 +51,12 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   });
 
   try {
+    const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
+    if (cleanupRemoved > 0) {
+      stats.archived += cleanupRemoved;
+      notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
+    }
+
     const startPage = await getFullSyncStartPage();
     let page = startPage;
     let reachedEnd = false;

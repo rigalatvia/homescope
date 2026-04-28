@@ -20,6 +20,7 @@ const initialForm = {
   fullName: "",
   email: "",
   phone: "",
+  agreesToTextMessages: false,
   preferredDateTime: "",
   message: "",
   isReadyToProvideDocs: false,
@@ -105,7 +106,9 @@ export function LeadCaptureModal({
 
       setSubmitState("success");
       setSuccessMessage(
-        typeof json.message === "string" ? json.message : "Thank you! Your request has been sent successfully."
+        typeof json.message === "string"
+          ? json.message
+          : "Thank you! Your request has been sent successfully. Please expect an email from info@homescopegta.ca and check your junk folder just in case."
       );
       setForm(initialForm);
     } catch (error) {
@@ -146,6 +149,9 @@ export function LeadCaptureModal({
               </button>
             </div>
             <p className="mt-1 text-xs text-brand-700 md:text-sm">We&apos;ll contact you shortly to confirm your visit.</p>
+            <p className="mt-1 text-xs text-brand-700 md:text-sm">
+              Please expect an email from info@homescopegta.ca and check your junk folder if you do not see it.
+            </p>
 
             <p className="mt-1 text-xs text-brand-700 md:text-sm">
               Listing: {listingAddress}, {listingCity}
@@ -189,6 +195,17 @@ export function LeadCaptureModal({
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
                 </FormField>
+                <label className="md:col-span-2 flex items-start gap-2 rounded-lg border border-brand-100 bg-brand-50/50 px-3 py-3 text-sm text-brand-800">
+                  <input
+                    id="agreesToTextMessages"
+                    name="agreesToTextMessages"
+                    type="checkbox"
+                    checked={form.agreesToTextMessages}
+                    onChange={onCheckboxChange}
+                    className="mt-0.5 h-4 w-4 rounded border-brand-300"
+                  />
+                  <span>I agree to receive text messages at this phone number about my showing request.</span>
+                </label>
                 <FormField label="Preferred Date/Time" htmlFor="preferredDateTime" required>
                   <input
                     id="preferredDateTime"
