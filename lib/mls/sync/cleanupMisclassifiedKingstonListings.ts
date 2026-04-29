@@ -1,9 +1,9 @@
 import { deleteListingDocument, listListingsByMunicipality } from "@/lib/mls/upsert/repository";
 import { logSyncInfo } from "@/lib/mls/utils/logger";
 
-function looksLikeKingston(value: string | null | undefined): boolean {
+function looksLikeMisclassifiedKingArea(value: string | null | undefined): boolean {
   const normalized = (value || "").trim().toLowerCase();
-  return normalized.includes("kingston");
+  return normalized.includes("kingston") || normalized.includes("kingsville");
 }
 
 function isMisclassifiedKingstonListing(listing: {
@@ -12,9 +12,9 @@ function isMisclassifiedKingstonListing(listing: {
   address: { fullAddress: string | null };
 }): boolean {
   return (
-    looksLikeKingston(listing.slug) ||
-    looksLikeKingston(listing.area) ||
-    looksLikeKingston(listing.address.fullAddress)
+    looksLikeMisclassifiedKingArea(listing.slug) ||
+    looksLikeMisclassifiedKingArea(listing.area) ||
+    looksLikeMisclassifiedKingArea(listing.address.fullAddress)
   );
 }
 
@@ -27,7 +27,7 @@ export async function cleanupMisclassifiedKingstonListings(): Promise<number> {
   }
 
   if (misclassified.length > 0) {
-    logSyncInfo("Removed misclassified Kingston listings from King municipality", {
+    logSyncInfo("Removed misclassified non-King listings from King municipality", {
       removed: misclassified.length,
       listingIds: misclassified.map((listing) => listing.listingId)
     });

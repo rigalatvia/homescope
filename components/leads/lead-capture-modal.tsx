@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
@@ -37,6 +38,7 @@ export function LeadCaptureModal({
   listingUrl,
   listingTransactionType
 }: LeadCaptureModalProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -111,6 +113,13 @@ export function LeadCaptureModal({
           : "Thank you! Your request has been sent successfully. Please expect an email from info@homescopegta.ca and check your junk folder just in case."
       );
       setForm(initialForm);
+      const params = new URLSearchParams({
+        returnTo: new URL(listingUrl).pathname
+      });
+      if (listingTitle.trim()) {
+        params.set("listingTitle", listingTitle);
+      }
+      router.push(`/thank-you/showing-request?${params.toString()}`);
     } catch (error) {
       setSubmitState("error");
       setErrorMessage(error instanceof Error ? error.message : "Submission failed.");

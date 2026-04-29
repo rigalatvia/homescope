@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       lastRunAt?: string;
       lastRunMode?: string;
       lastRunStatus?: string;
-      lastRunCounts?: { updated?: number; created?: number; fetched?: number; filtered?: number };
+      lastRunCounts?: { updated?: number; created?: number; archived?: number; fetched?: number; filtered?: number };
       lastError?: string | null;
     };
 
@@ -52,6 +52,7 @@ export async function GET(request: Request) {
         schedulerLastRunStatus: scheduler.lastRunStatus ?? null,
         schedulerLastRunUpdated: Number(scheduler.lastRunCounts?.updated ?? 0),
         schedulerLastRunCreated: Number(scheduler.lastRunCounts?.created ?? 0),
+        schedulerLastRunArchived: Number(scheduler.lastRunCounts?.archived ?? 0),
         schedulerLastRunFetched: Number(scheduler.lastRunCounts?.fetched ?? 0),
         schedulerLastRunFiltered: Number(scheduler.lastRunCounts?.filtered ?? 0),
         schedulerLastError: scheduler.lastError ?? null
