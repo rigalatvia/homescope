@@ -30,7 +30,7 @@ export default function ShowingRequestThankYouPage({
             ? `We received your request for ${listingTitle}.`
             : "We received your showing request."}{" "}
           Please expect an email from <span className="font-semibold text-brand-900">info@homescopegta.ca</span> and
-          check your junk folder if you do not see it right away.
+          check your junk folder if you do not see it in the next few hours.
         </p>
 
         <div className="mt-8 rounded-3xl border border-brand-100 bg-brand-50/60 p-6">

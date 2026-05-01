@@ -472,6 +472,8 @@ function inferTransactionType(record: JsonObject): string {
 function buildDefaultResidentialFilter(): string {
   const residentialSubTypes = ["Single Family", "Multi-family"];
   const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
-  const statusFilter = "StandardStatus eq 'Active'";
-  return `(${subTypeFilter}) and (${statusFilter})`;
+  // Do not filter by active status at the feed level. We need non-active rows too so
+  // incremental and full syncs can delete listings that changed from active to sold,
+  // suspended, terminated, expired, or similar non-displayable states.
+  return `(${subTypeFilter})`;
 }

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeScope GTA User Manual</title>
+    <style>
+      :root {
+        --ink: #21353d;
+        --muted: #5f7178;
+        --line: #dce7e8;
+        --panel: #ffffff;
+        --soft: #f4f8f8;
+        --brand: #2d3b40;
+        --brand-2: #4f7d88;
+        --accent: #b98a44;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background: #eef3f3;
+        line-height: 1.6;
+      }
+
+      .page {
+        width: 210mm;
+        margin: 0 auto;
+        background: white;
+        min-height: 297mm;
+        padding: 16mm;
+      }
+
+      .cover {
+        min-height: 250mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #f8fbfb 0%, #edf4f4 58%, #fffaf1 100%);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18mm;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(79, 125, 136, 0.12);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, "Times New Roman", serif;
+        line-height: 1.15;
+        margin: 0 0 10px;
+        color: var(--brand);
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-top: 24px;
+      }
+
+      h3 {
+        font-size: 18px;
+        margin-top: 18px;
+      }
+
+      p,
+      li {
+        font-size: 13.5px;
+      }
+
+      .lead {
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 85%;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .toc,
+      .card,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+      }
+
+      .toc {
+        padding: 16px 18px;
+        background: var(--soft);
+      }
+
+      .toc ul {
+        columns: 2;
+        gap: 28px;
+        padding-left: 18px;
+        margin: 10px 0 0;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 14px 16px;
+      }
+
+      .card h3 {
+        margin-top: 0;
+        font-size: 16px;
+      }
+
+      .chip {
+        display: inline-block;
+        margin: 0 6px 6px 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .stack > * + * {
+        margin-top: 10px;
+      }
+
+      .section {
+        margin-top: 22px;
+      }
+
+      .callout {
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: var(--brand);
+        color: white;
+      }
+
+      .callout h3,
+      .callout p,
+      .callout li {
+        color: white;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      .table th,
+      .table td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        vertical-align: top;
+      }
+
+      .table th {
+        background: #f6fafb;
+        text-align: left;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      code {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        background: #f6f8f9;
+        padding: 1px 5px;
+        border-radius: 6px;
+      }
+
+      .mini-shot {
+        padding: 16px;
+        border: 1px dashed #b5c7cb;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #ffffff 0%, #f5f9fa 100%);
+      }
+
+      .mini-shot .bar {
+        height: 10px;
+        width: 120px;
+        border-radius: 999px;
+        background: #d6e5e7;
+        margin-bottom: 12px;
+      }
+
+      .mini-shot .row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .mini-shot .box {
+        flex: 1;
+        height: 58px;
+        border-radius: 14px;
+        background: #eaf2f3;
+      }
+
+      .mini-shot .wide {
+        height: 120px;
+        margin-top: 12px;
+        border-radius: 18px;
+        background: #eaf2f3;
+      }
+
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="cover">
+        <div>
+          <span class="eyebrow">Operations Manual</span>
+          <h1 style="margin-top: 20px">HomeScope GTA User Manual</h1>
+          <p class="lead">
+            A practical guide for using the website, the admin area, listing sync tools, lead capture workflow, and
+            day-to-day operating tasks.
+          </p>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Designed For</h3>
+            <ul>
+              <li>Owners and operators</li>
+              <li>Admins running listing syncs</li>
+              <li>Marketing users monitoring leads</li>
+              <li>Anyone onboarding into the system</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Covers</h3>
+            <ul>
+              <li>Admin login and sync operations</li>
+              <li>Featured listings and lead handling</li>
+              <li>Search, chatbot, and contact tracking</li>
+              <li>Common troubleshooting routines</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="toc">
+          <h2 style="margin-top: 0">Table of Contents</h2>
+          <ul>
+            <li>Main areas of the site</li>
+            <li>Admin login</li>
+            <li>Dashboard</li>
+            <li>MLS sync operations</li>
+            <li>Featured listings</li>
+            <li>Leads and contacts</li>
+            <li>Listings search</li>
+            <li>Showing request flow</li>
+            <li>Guides and rental form</li>
+            <li>Chatbot</li>
+            <li>Daily / weekly routines</li>
+            <li>Troubleshooting</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>1. Main Areas of the Site</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Public Side</h3>
+            <ul>
+              <li>Homepage</li>
+              <li>Listings search</li>
+              <li>Listing detail pages</li>
+              <li>Guides</li>
+              <li>Contact page</li>
+              <li>Showing request thank-you page</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Admin Side</h3>
+            <ul>
+              <li><code>/admin</code></li>
+              <li><code>/admin/sync</code></li>
+              <li><code>/admin/featured</code></li>
+              <li><code>/admin/leads</code></li>
+              <li><code>/admin/contacts</code></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>2. Logging Into Admin</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Steps</h3>
+            <ol>
+              <li>Open <code>/admin/login</code></li>
+              <li>Enter the admin token</li>
+              <li>Submit</li>
+              <li>You are redirected into the admin dashboard</li>
+            </ol>
+          </div>
+          <div class="mini-shot">
+            <div class="bar"></div>
+            <strong style="display:block;margin-bottom:8px;color:#30454b">Admin Login Screen</strong>
+            <div class="box" style="height:42px"></div>
+            <div class="box" style="height:46px;margin-top:10px"></div>
+            <div class="box" style="height:48px;margin-top:16px;background:#30454b"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>3. Admin Dashboard</h2>
+        <p>The dashboard is the quickest way to check if the site is healthy.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>What to Look For</h3>
+            <ul>
+              <li>Total leads</li>
+              <li>Total contacts</li>
+              <li>Total listings</li>
+              <li>Visible listings</li>
+              <li>Latest leads preview</li>
+              <li>Quick action links</li>
+            </ul>
+          </div>
+          <div class="mini-shot">
+            <div class="bar"></div>
+            <strong style="display:block;margin-bottom:8px;color:#30454b">Admin Dashboard Layout</strong>
+            <div class="row">
+              <div class="box"></div>
+              <div class="box"></div>
+            </div>
+            <div class="row">
+              <div class="box"></div>
+              <div class="box"></div>
+            </div>
+            <div class="wide"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>4. MLS Sync Operations</h2>
+        <p>The sync page is the most important operational screen on the site.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>When to Use It</th>
+              <th>Expected Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Run Full Sync</td>
+              <td>Initial load or after a major logic change</td>
+              <td>Broad reprocessing of source data</td>
+            </tr>
+            <tr>
+              <td>Run Incremental</td>
+              <td>Normal recurring update</td>
+              <td>Faster source refresh since last checkpoint</td>
+            </tr>
+            <tr>
+              <td>Run Cleanup</td>
+              <td>Stale or hidden listing troubleshooting</td>
+              <td>Cleanup-only behavior</td>
+            </tr>
+            <tr>
+              <td>Stop Run</td>
+              <td>Run started by mistake or must be paused</td>
+              <td>Stops at the next safe boundary</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <div class="callout">
+          <h3>Important Sync Note</h3>
+          <p>
+            Incremental sync also runs the current municipality cleanup logic. That means it can remove listings that
+            were mistakenly imported into <code>King</code> from places like Kingston or Kingsville.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>5. Nightly Incremental Status</h2>
+        <p>This status block tells you whether the scheduled sync is healthy.</p>
+        <ul>
+          <li>Last run time</li>
+          <li>Status</li>
+          <li>Fetched</li>
+          <li>Filtered</li>
+          <li>Created</li>
+          <li>Updated</li>
+          <li>Deleted Records</li>
+          <li>Any sync error</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>6. Featured Listings</h2>
+        <p>Use <code>/admin/featured</code> when you want to manually control which listings are emphasized.</p>
+        <div class="card">
+          <h3>Best Practices</h3>
+          <ul>
+            <li>Use this page to pin or rotate highlighted listings</li>
+            <li>Re-check that each featured listing is still visible and active</li>
+            <li>Use this instead of editing Firestore listing documents directly</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>7. Leads and Contacts</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Leads</h3>
+            <ul>
+              <li>Usually created from showing requests</li>
+              <li>Include listing context and message</li>
+              <li>Store SMS consent preference</li>
+              <li>Track email delivery fields</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Contacts</h3>
+            <ul>
+              <li>Deduplicated profile view</li>
+              <li>Combines lead and contact history</li>
+              <li>Shows recent listings and summary activity</li>
+              <li>Useful as a lightweight CRM layer</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>8. Public Listings Search</h2>
+        <p>Visitors can search by city, price, transaction type, bedrooms, bathrooms, MLS number, property type, and address text.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>What Gets Saved</h3>
+            <ul>
+              <li>Search path</li>
+              <li>Query string</li>
+              <li>Filters</li>
+              <li>Result count</li>
+              <li>User agent</li>
+            </ul>
+          </div>
+          <div class="mini-shot">
+            <div class="bar"></div>
+            <strong style="display:block;margin-bottom:8px;color:#30454b">Listings Search Screen</strong>
+            <div class="row">
+              <div class="box" style="height:44px"></div>
+              <div class="box" style="height:44px"></div>
+            </div>
+            <div class="row">
+              <div class="box" style="height:44px"></div>
+              <div class="box" style="height:44px"></div>
+            </div>
+            <div class="wide"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>9. Showing Request Flow</h2>
+        <ol>
+          <li>User opens the showing request form from a listing page.</li>
+          <li>User enters name, email, phone, message, and SMS consent preference.</li>
+          <li>The request is saved to Firestore.</li>
+          <li>The contact profile is updated.</li>
+          <li>User is redirected to the thank-you page.</li>
+        </ol>
+        <div class="card">
+          <h3>What the User Sees</h3>
+          <p>
+            The confirmation messaging tells the user to expect an email from <code>info@homescopegta.ca</code> and to
+            check junk if they do not see it in the next few hours.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>10. Guides and Rental Application Resource</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Guide</th>
+              <th>Main Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>/guides/first-time-home-buyer-ontario</code></td><td>Buyer roadmap</td></tr>
+            <tr><td><code>/guides/documents-needed-buy-house-toronto</code></td><td>Buyer document checklist</td></tr>
+            <tr><td><code>/guides/organize-real-estate-documents-canada</code></td><td>Document organization</td></tr>
+            <tr><td><code>/guides/rental-application-ontario</code></td><td>Form 410 download and explanation</td></tr>
+            <tr><td><code>/guides/leasing</code></td><td>Leasing process guide</td></tr>
+            <tr><td><code>/guides/lease-documents</code></td><td>Lease document checklist</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>11. Chatbot</h2>
+        <p>The floating <strong>Ask HomeScope</strong> button opens a site assistant that helps users find the right guide or form.</p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>What It Can Answer</h3>
+            <ul>
+              <li>Rental application questions</li>
+              <li>Lease document questions</li>
+              <li>Buyer document questions</li>
+              <li>First-time buyer guide questions</li>
+              <li>Showing request questions</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>What Gets Saved</h3>
+            <ul>
+              <li>Conversation ID</li>
+              <li>Message history</li>
+              <li>Page paths involved</li>
+              <li>User agent</li>
+              <li>Timestamps</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>12. Daily, Weekly, and Monthly Routines</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Daily</h3>
+            <ul>
+              <li>Check admin dashboard</li>
+              <li>Review nightly incremental status</li>
+              <li>Review new leads and contacts</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Weekly</h3>
+            <ul>
+              <li>Review listing inventory counts</li>
+              <li>Review sync anomalies</li>
+              <li>Review featured listings</li>
+              <li>Review common chatbot questions</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 14px">
+          <h3>Monthly</h3>
+          <ul>
+            <li>Check Search Console sitemap health</li>
+            <li>Review contact and lead quality</li>
+            <li>Confirm email provider still works correctly</li>
+            <li>Confirm scheduler still runs on time</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>13. Common Troubleshooting</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>What to Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Listings missing</td>
+              <td>Admin sync page, DDF credentials, cursor state, visibility filters, scheduler status</td>
+            </tr>
+            <tr>
+              <td>Wrong King listings appear</td>
+              <td>Run incremental sync after deploy so Kingston / Kingsville cleanup runs</td>
+            </tr>
+            <tr>
+              <td>User says no showing email</td>
+              <td>Lead record, email delivery fields, site recipient settings, junk folder guidance</td>
+            </tr>
+            <tr>
+              <td>Featured listings wrong</td>
+              <td>Admin featured page, settings/site featured IDs, listing visibility</td>
+            </tr>
+            <tr>
+              <td>Chatbot answer too narrow</td>
+              <td>Current bot is site-content-based, not general AI</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <div class="callout">
+          <h3>Operator Best Practice</h3>
+          <p>
+            Prefer fixing sync logic and rerunning sync instead of manually editing Firestore listing documents. Use
+            Firestore edits only as a last resort.
+          </p>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

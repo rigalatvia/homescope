@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeScope GTA Infrastructure Guide</title>
+    <style>
+      :root {
+        --ink: #21353d;
+        --muted: #5f7178;
+        --line: #dce7e8;
+        --panel: #ffffff;
+        --soft: #f4f8f8;
+        --brand: #2d3b40;
+        --brand-2: #4f7d88;
+        --accent: #b98a44;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background: #eef3f3;
+        line-height: 1.6;
+      }
+
+      .page {
+        width: 210mm;
+        margin: 0 auto;
+        background: white;
+        min-height: 297mm;
+        padding: 16mm;
+      }
+
+      .cover {
+        min-height: 250mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #f8fbfb 0%, #edf4f4 58%, #fffaf1 100%);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18mm;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(79, 125, 136, 0.12);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, "Times New Roman", serif;
+        line-height: 1.15;
+        margin: 0 0 10px;
+        color: var(--brand);
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-top: 24px;
+      }
+
+      h3 {
+        font-size: 18px;
+        margin-top: 18px;
+      }
+
+      p,
+      li {
+        font-size: 13.5px;
+      }
+
+      .lead {
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 85%;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .toc,
+      .card,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+      }
+
+      .toc {
+        padding: 16px 18px;
+        background: var(--soft);
+      }
+
+      .toc ul {
+        columns: 2;
+        gap: 28px;
+        padding-left: 18px;
+        margin: 10px 0 0;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 14px 16px;
+      }
+
+      .card h3 {
+        margin-top: 0;
+        font-size: 16px;
+      }
+
+      .chip {
+        display: inline-block;
+        margin: 0 6px 6px 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .stack > * + * {
+        margin-top: 10px;
+      }
+
+      .section {
+        margin-top: 22px;
+      }
+
+      .callout {
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: var(--brand);
+        color: white;
+      }
+
+      .callout h3,
+      .callout p,
+      .callout li {
+        color: white;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      .table th,
+      .table td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        vertical-align: top;
+      }
+
+      .table th {
+        background: #f6fafb;
+        text-align: left;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      code {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        background: #f6f8f9;
+        padding: 1px 5px;
+        border-radius: 6px;
+      }
+
+      .footer-note {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 20px;
+      }
+
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="cover">
+        <div>
+          <span class="eyebrow">Technical Blueprint</span>
+          <h1 style="margin-top: 20px">HomeScope GTA Infrastructure Guide</h1>
+          <p class="lead">
+            Complete infrastructure, deployment, data, sync, admin, and operational documentation for rebuilding
+            HomeScope GTA in a new environment.
+          </p>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Platform Stack</h3>
+            <div>
+              <span class="chip">Next.js 14</span>
+              <span class="chip">TypeScript</span>
+              <span class="chip">Tailwind CSS</span>
+              <span class="chip">Firebase Admin</span>
+              <span class="chip">Firestore</span>
+              <span class="chip">Cloud Scheduler</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Key Capabilities</h3>
+            <ul>
+              <li>MLS listing sync from Toronto Board DDF feed</li>
+              <li>Lead, contact, search, and chat capture</li>
+              <li>Admin sync control and featured listing management</li>
+              <li>Public guides, SEO pages, maps, and showing requests</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="footer-note">Prepared for migration, installation, and operational continuity.</p>
+      </section>
+
+      <section class="section">
+        <div class="toc">
+          <h2 style="margin-top: 0">Table of Contents</h2>
+          <ul>
+            <li>System overview</li>
+            <li>High-level architecture</li>
+            <li>Repository structure</li>
+            <li>Runtime architecture</li>
+            <li>Firestore data model</li>
+            <li>Rules and access model</li>
+            <li>Lead, contact, search, and chat flows</li>
+            <li>Email infrastructure</li>
+            <li>MLS sync architecture</li>
+            <li>Secrets and configuration</li>
+            <li>Deployment model</li>
+            <li>Migration checklist</li>
+            <li>Operational constraints</li>
+            <li>Recommended improvements</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>1. System Overview</h2>
+        <p>
+          HomeScope GTA is a Next.js App Router website for GTA real estate listings, buyer and renter guides, showing
+          request capture, operational admin tooling, Firestore-backed telemetry, and a site knowledge chatbot.
+        </p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Public Features</h3>
+            <ul>
+              <li>Listings search and filters</li>
+              <li>Listing detail pages with map and guide links</li>
+              <li>Guides for buyers, renters, and document prep</li>
+              <li>Contact form and showing request flow</li>
+              <li>Search logging and chatbot assistance</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Operational Features</h3>
+            <ul>
+              <li>Manual and scheduled MLS sync</li>
+              <li>Sync statistics, stop controls, and cleanup logic</li>
+              <li>Featured listings management</li>
+              <li>Lead and contact review in admin</li>
+              <li>Server-side secret loading and email integration</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>2. High-Level Architecture</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Purpose</th>
+              <th>Implementation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Frontend</td>
+              <td>Public pages, admin pages, listings UI, guides, chatbot, forms</td>
+              <td>Next.js 14 App Router + React 18 + Tailwind</td>
+            </tr>
+            <tr>
+              <td>Application API</td>
+              <td>Leads, contacts, searches, chat, maps, admin auth, MLS sync triggers</td>
+              <td>App Router route handlers under <code>app/api</code></td>
+            </tr>
+            <tr>
+              <td>Database</td>
+              <td>Listings, sync cursors, settings, submissions, searches, chatbot history</td>
+              <td>Cloud Firestore</td>
+            </tr>
+            <tr>
+              <td>Secrets</td>
+              <td>DDF credentials, admin token, scheduler token, email keys</td>
+              <td>Environment variables + Google Secret Manager autoload</td>
+            </tr>
+            <tr>
+              <td>Inbound feed</td>
+              <td>MLS / DDF listing ingestion</td>
+              <td>Toronto Board DDF connector</td>
+            </tr>
+            <tr>
+              <td>Scheduler</td>
+              <td>Recurring incremental sync</td>
+              <td>Cloud Scheduler hitting internal HTTP endpoint</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>3. Repository Structure</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>app</code></td><td>App Router pages, layouts, SEO endpoints, API routes</td></tr>
+            <tr><td><code>components</code></td><td>Reusable UI and feature components</td></tr>
+            <tr><td><code>config</code></td><td>Site-level constants and configuration helpers</td></tr>
+            <tr><td><code>lib</code></td><td>Business logic, sync, Firebase, email, settings, analytics, chat</td></tr>
+            <tr><td><code>public</code></td><td>Logos, downloadable forms, static assets</td></tr>
+            <tr><td><code>types</code></td><td>Shared TypeScript types for listings, leads, chat, contacts</td></tr>
+            <tr><td><code>firebase</code></td><td>Firebase Functions scaffolding and related config</td></tr>
+            <tr><td><code>docs</code></td><td>Operational and technical documentation</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>4. Firestore Collections</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Core Collections</h3>
+            <ul>
+              <li><code>listings</code></li>
+              <li><code>listingSnapshots</code></li>
+              <li><code>settings</code></li>
+              <li><code>leads</code></li>
+              <li><code>contactMessages</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Operational / Insight Collections</h3>
+            <ul>
+              <li><code>contacts</code></li>
+              <li><code>searches</code></li>
+              <li><code>chatConversations</code></li>
+              <li><code>communications</code> (present in codebase)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>5. Critical Settings Documents</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Purpose</th>
+              <th>Important Fields</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>settings/site</code></td>
+              <td>Site-level runtime configuration</td>
+              <td><code>leadRecipientEmail</code>, <code>leadEmailSubject</code>, <code>featuredListingIds</code></td>
+            </tr>
+            <tr>
+              <td><code>settings/mlsFullSyncCursor</code></td>
+              <td>Remembers full sync page state</td>
+              <td><code>nextPage</code>, <code>updatedAt</code></td>
+            </tr>
+            <tr>
+              <td><code>settings/mlsIncrementalCursor</code></td>
+              <td>Remembers incremental since timestamp</td>
+              <td><code>sinceIso</code>, <code>updatedAt</code></td>
+            </tr>
+            <tr>
+              <td><code>settings/mlsSchedulerStatus</code></td>
+              <td>Nightly / scheduled sync status</td>
+              <td><code>lastRunAt</code>, <code>lastRunStatus</code>, <code>lastRunCounts</code>, <code>lastError</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <div class="callout">
+          <h3>Important Runtime Rule</h3>
+          <p>
+            The site only publicly exposes listings that are visible, permitted to advertise, and in the supported
+            municipalities. All lead, search, contact, settings, and chat writes are server-side only.
+          </p>
+        </div>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>6. Secrets and Environment Variables</h2>
+        <p>
+          The application supports both direct environment variables and runtime autoload from Google Secret Manager.
+          Missing server-side values are loaded on demand where possible.
+        </p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Variables</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Public Metadata / Analytics</td>
+              <td><code>NEXT_PUBLIC_SITE_URL</code>, <code>NEXT_PUBLIC_GA_MEASUREMENT_ID</code>, <code>NEXT_PUBLIC_META_PIXEL_ID</code>, <code>NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION</code></td>
+            </tr>
+            <tr>
+              <td>Firebase Admin</td>
+              <td><code>FIREBASE_PROJECT_ID</code>, <code>FIREBASE_CLIENT_EMAIL</code>, <code>FIREBASE_PRIVATE_KEY</code></td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td><code>EMAIL_PROVIDER</code>, <code>EMAIL_ENABLED</code>, <code>FROM_EMAIL</code>, <code>RESEND_API_KEY</code></td>
+            </tr>
+            <tr>
+              <td>DDF Feed</td>
+              <td><code>DDF_TOKEN_URL</code>, <code>DDF_LISTINGS_URL</code>, <code>DDF_REPLICATION_URL</code>, <code>DDF_CLIENT_ID</code>, <code>DDF_CLIENT_SECRET</code></td>
+            </tr>
+            <tr>
+              <td>Sync Control</td>
+              <td><code>MLS_SYNC_ADMIN_TOKEN</code>, <code>MLS_SCHEDULER_TOKEN</code>, <code>MLS_CONNECTOR_KIND</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>7. MLS Sync Flow</h2>
+        <div class="grid grid-2">
+          <div class="card stack">
+            <h3>Full Sync</h3>
+            <p>Manual or batch-run process to walk source pages, normalize listings, and upsert them into Firestore.</p>
+            <p>Key files:</p>
+            <ul>
+              <li><code>lib/mls/sync/runFullSync.ts</code></li>
+              <li><code>lib/mls/sync/fullSyncCursor.ts</code></li>
+              <li><code>app/api/admin/mls-sync/route.ts</code></li>
+            </ul>
+          </div>
+          <div class="card stack">
+            <h3>Incremental Sync</h3>
+            <p>Primary recurring job. Fetches changes since the last checkpoint and updates scheduler status.</p>
+            <p>Key files:</p>
+            <ul>
+              <li><code>lib/mls/sync/runIncrementalSync.ts</code></li>
+              <li><code>lib/mls/sync/incrementalSyncCursor.ts</code></li>
+              <li><code>app/api/internal/mls-sync/scheduled/route.ts</code></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>8. Sync Cleanup Logic</h2>
+        <p>Special municipality cleanup exists to remove listings incorrectly imported under <code>King</code>.</p>
+        <ul>
+          <li>Kingston is removed if misclassified</li>
+          <li>Kingsville is removed if misclassified</li>
+          <li>Cleanup runs during both full and incremental sync</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>9. Lead, Contact, Search, and Chat Capture</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Storage</th>
+              <th>Key Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Showing Requests</td>
+              <td><code>leads</code></td>
+              <td>Stores listing context, message, transaction type, and SMS consent</td>
+            </tr>
+            <tr>
+              <td>Contact Form</td>
+              <td><code>contactMessages</code></td>
+              <td>Also updates <code>contacts</code> and email delivery status</td>
+            </tr>
+            <tr>
+              <td>Site Search</td>
+              <td><code>searches</code></td>
+              <td>Saves filters, path, query string, and result count</td>
+            </tr>
+            <tr>
+              <td>Chatbot</td>
+              <td><code>chatConversations</code></td>
+              <td>Saves full website-assistant exchanges and page paths</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="page-break"></div>
+
+      <section class="section">
+        <h2>10. Deployment Plan for a New Environment</h2>
+        <ol>
+          <li>Create a new Firebase / GCP project.</li>
+          <li>Enable Firestore.</li>
+          <li>Create or assign a service account with Firestore and Secret Manager access.</li>
+          <li>Deploy Firestore rules and indexes.</li>
+          <li>Set all required environment variables and secrets.</li>
+          <li>Create <code>settings/site</code> in Firestore.</li>
+          <li>Deploy the Next.js app.</li>
+          <li>Configure the scheduler to call <code>/api/internal/mls-sync/scheduled</code>.</li>
+          <li>Run the first sync from <code>/admin/sync</code>.</li>
+          <li>Verify forms, listings, guides, search logging, and chatbot behavior.</li>
+        </ol>
+      </section>
+
+      <section class="section">
+        <h2>11. Migration Checklist</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Before Go-Live</h3>
+            <ul>
+              <li>Set production domain and <code>NEXT_PUBLIC_SITE_URL</code></li>
+              <li>Verify Firebase Admin credentials</li>
+              <li>Verify DDF secrets</li>
+              <li>Verify email provider and sender</li>
+              <li>Verify admin and scheduler tokens</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>After Go-Live</h3>
+            <ul>
+              <li>Run first sync and confirm listings count</li>
+              <li>Test showing request and thank-you redirect</li>
+              <li>Test contact form and email delivery</li>
+              <li>Test search logging and chatbot persistence</li>
+              <li>Verify sitemap and robots output</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>12. Recommended Improvements</h2>
+        <ul>
+          <li>Add explicit Firestore rules entries for <code>contacts</code>, <code>searches</code>, and <code>chatConversations</code>.</li>
+          <li>Add automated backups and recovery procedures for Firestore.</li>
+          <li>Add monitoring and alerting around sync failures and email delivery.</li>
+          <li>Add smoke tests for lead, contact, and sync routes.</li>
+          <li>Consider an AI-backed chatbot if broader question answering is needed.</li>
+        </ul>
+      </section>
+    </div>
+  </body>
+</html>
