@@ -33,6 +33,7 @@ export async function POST(request: Request) {
           filtered: result.stats.filtered,
           created: result.stats.created,
           updated: result.stats.updated,
+          deleted: result.stats.archived,
           archived: result.stats.archived,
           failed: result.stats.failed
         },
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
           filtered: result.stats.filtered,
           created: result.stats.created,
           updated: result.stats.updated,
+          deleted: result.stats.archived,
           archived: result.stats.archived,
           failed: result.stats.failed
         },

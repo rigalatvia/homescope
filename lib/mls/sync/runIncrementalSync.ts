@@ -5,7 +5,7 @@ import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisc
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import { getIncrementalSyncSince, setIncrementalSyncSince } from "@/lib/mls/sync/incrementalSyncCursor";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
-import { deleteListingDocument } from "@/lib/mls/upsert/repository";
+import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 
@@ -103,8 +103,11 @@ export async function runIncrementalSync(params?: {
     stats.snapshotsWritten = upsert.snapshotsWritten;
 
     if (hiddenListings.length > 0) {
-      for (const listing of hiddenListings) {
-        await deleteListingDocument(listing.listingId);
+      const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
+      stats.archived += deleted;
+      stats.hidden += deleted;
+      if (deleted > 0) {
+        notes.push(`incremental deleted ${deleted} non-active or hidden listing(s).`);
       }
     }
 

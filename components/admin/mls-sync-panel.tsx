@@ -9,6 +9,7 @@ interface SyncCounts {
   filtered: number;
   created: number;
   updated: number;
+  deleted?: number;
   archived: number;
   failed: number;
 }
@@ -64,7 +65,7 @@ interface ListingsStatsResponse {
     schedulerLastRunStatus: string | null;
     schedulerLastRunUpdated: number;
     schedulerLastRunCreated: number;
-    schedulerLastRunArchived: number;
+    schedulerLastRunDeleted: number;
     schedulerLastRunFetched: number;
     schedulerLastRunFiltered: number;
     schedulerLastError: string | null;
@@ -449,12 +450,12 @@ export function MlsSyncPanel() {
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-brand-800 sm:grid-cols-3">
             <p>Fetched: {lastCounts.fetched}</p>
             <p>Filtered: {lastCounts.filtered}</p>
-            <p>Created: {lastCounts.created}</p>
-            <p>Updated: {lastCounts.updated}</p>
-            <p>Archived: {lastCounts.archived}</p>
-            <p>Failed: {lastCounts.failed}</p>
+              <p>Created: {lastCounts.created}</p>
+              <p>Updated: {lastCounts.updated}</p>
+              <p>Deleted: {lastCounts.deleted ?? lastCounts.archived}</p>
+              <p>Failed: {lastCounts.failed}</p>
+            </div>
           </div>
-        </div>
       )}
 
       {listingsStats && (
@@ -492,7 +493,7 @@ export function MlsSyncPanel() {
               <p>Mode: {listingsStats.schedulerLastRunMode ?? "-"}</p>
               <p>Updated Records: {listingsStats.schedulerLastRunUpdated}</p>
               <p>Created Records: {listingsStats.schedulerLastRunCreated}</p>
-              <p>Deleted Records: {listingsStats.schedulerLastRunArchived}</p>
+              <p>Deleted Records: {listingsStats.schedulerLastRunDeleted}</p>
               <p>
                 Fetched/Filtered: {listingsStats.schedulerLastRunFetched}/{listingsStats.schedulerLastRunFiltered}
               </p>

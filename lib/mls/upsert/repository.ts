@@ -50,6 +50,32 @@ export async function deleteListingDocument(listingId: string): Promise<void> {
   await firestore.collection(COLLECTIONS.listings).doc(listingId).delete();
 }
 
+export async function deleteExistingListingDocuments(listingIds: string[]): Promise<number> {
+  const firestore = getFirebaseAdminFirestore();
+  const uniqueIds = Array.from(new Set(listingIds.filter(Boolean)));
+  if (uniqueIds.length === 0) return 0;
+
+  let deleted = 0;
+  const chunkSize = 250;
+
+  for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+    const chunk = uniqueIds.slice(i, i + chunkSize);
+    const refs = chunk.map((listingId) => firestore.collection(COLLECTIONS.listings).doc(listingId));
+    const snapshots = await firestore.getAll(...refs);
+    const existing = snapshots.filter((snapshot) => snapshot.exists);
+    if (existing.length === 0) continue;
+
+    const batch = firestore.batch();
+    for (const snapshot of existing) {
+      batch.delete(snapshot.ref);
+    }
+    await batch.commit();
+    deleted += existing.length;
+  }
+
+  return deleted;
+}
+
 export async function listAllListingIds(): Promise<string[]> {
   const firestore = getFirebaseAdminFirestore();
   const snapshot = await firestore.collection(COLLECTIONS.listings).select().get();
@@ -61,6 +87,16 @@ export async function listStaleVisibleListings(staleBeforeIso: string): Promise<
   const snapshot = await firestore
     .collection(COLLECTIONS.listings)
     .where("isVisible", "==", true)
+    .where("lastSeenInSourceAt", "<", staleBeforeIso)
+    .get();
+
+  return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
+}
+
+export async function listListingsNotSeenSince(staleBeforeIso: string): Promise<MLSListingFirestoreDocument[]> {
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore
+    .collection(COLLECTIONS.listings)
     .where("lastSeenInSourceAt", "<", staleBeforeIso)
     .get();
 

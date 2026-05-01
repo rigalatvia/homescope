@@ -11,9 +11,16 @@ import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPos
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
-import { getDefaultFullSyncStartPage, getFullSyncStartPage, setFullSyncStartPage } from "@/lib/mls/sync/fullSyncCursor";
+import {
+  getDefaultFullSyncStartPage,
+  getFullSyncStartPage,
+  getFullSyncSweepStartedAt,
+  setFullSyncStartPage,
+  setFullSyncSweepStartedAt
+} from "@/lib/mls/sync/fullSyncCursor";
+import { deleteListingsNotSeenSince } from "@/lib/mls/sync/staleCleanup";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
-import { deleteListingDocument } from "@/lib/mls/upsert/repository";
+import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 
@@ -58,6 +65,16 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     }
 
     const startPage = await getFullSyncStartPage();
+    let sweepStartedAt = await getFullSyncSweepStartedAt();
+    if (startPage === getDefaultFullSyncStartPage()) {
+      sweepStartedAt = startedAt;
+      await setFullSyncSweepStartedAt(sweepStartedAt);
+      notes.push(`Full sync sweep started at ${sweepStartedAt}.`);
+    } else if (!sweepStartedAt) {
+      notes.push(
+        "Full sync resumed without a sweep marker. End-of-feed stale deletion will be skipped for this cycle as a safety precaution."
+      );
+    }
     let page = startPage;
     let reachedEnd = false;
     const unlimited = mlsSyncConfig.fullSyncMaxPagesPerRun <= 0;
@@ -129,8 +146,11 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       stats.snapshotsWritten += upsert.snapshotsWritten;
 
       if (hiddenListings.length > 0) {
-        for (const listing of hiddenListings) {
-          await deleteListingDocument(listing.listingId);
+        const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
+        stats.archived += deleted;
+        stats.hidden += deleted;
+        if (deleted > 0) {
+          notes.push(`full sync deleted ${deleted} non-active or hidden listing(s) from page ${page}.`);
         }
       }
 
@@ -145,9 +165,19 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     const stopRequested = notes.some((note) => note.includes("stop requested"));
 
     if (reachedEnd) {
+      if (sweepStartedAt) {
+        const notReturnedDeleted = await deleteListingsNotSeenSince(sweepStartedAt);
+        if (notReturnedDeleted > 0) {
+          stats.archived += notReturnedDeleted;
+          stats.hidden += notReturnedDeleted;
+          stats.hiddenByReason.connector_not_returned =
+            (stats.hiddenByReason.connector_not_returned || 0) + notReturnedDeleted;
+          notes.push(`Full sync deleted ${notReturnedDeleted} listing(s) not returned by the feed.`);
+        }
+      }
       await setFullSyncStartPage(getDefaultFullSyncStartPage());
+      await setFullSyncSweepStartedAt(null);
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
-      notes.push("Safety mode: end-of-feed stale deletion skipped to prevent accidental bulk removals.");
     } else if (!stopRequested) {
       await setFullSyncStartPage(page);
       const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";
