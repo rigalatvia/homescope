@@ -13,8 +13,10 @@ import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisc
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import {
   getDefaultFullSyncStartPage,
+  getFullSyncNextCursor,
   getFullSyncStartPage,
   getFullSyncSweepStartedAt,
+  setFullSyncNextCursor,
   setFullSyncStartPage,
   setFullSyncSweepStartedAt
 } from "@/lib/mls/sync/fullSyncCursor";
@@ -64,9 +66,24 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
     }
 
-    const startPage = await getFullSyncStartPage();
+    const savedStartPage = await getFullSyncStartPage();
+    let nextCursor = await getFullSyncNextCursor();
     let sweepStartedAt = await getFullSyncSweepStartedAt();
-    if (startPage === getDefaultFullSyncStartPage()) {
+    let startPage = savedStartPage;
+
+    if (startPage > getDefaultFullSyncStartPage() && !nextCursor && connector.fetchAllListingsPage) {
+      startPage = getDefaultFullSyncStartPage();
+      nextCursor = null;
+      sweepStartedAt = startedAt;
+      await setFullSyncStartPage(startPage);
+      await setFullSyncNextCursor(null);
+      await setFullSyncSweepStartedAt(sweepStartedAt);
+      notes.push(
+        `Full sync cursor was upgraded from legacy page-only pagination and restarted at page ${startPage}.`
+      );
+    } else if (startPage === getDefaultFullSyncStartPage()) {
+      nextCursor = null;
+      await setFullSyncNextCursor(null);
       sweepStartedAt = startedAt;
       await setFullSyncSweepStartedAt(sweepStartedAt);
       notes.push(`Full sync sweep started at ${sweepStartedAt}.`);
@@ -90,16 +107,30 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     while (page <= stopPage) {
       if (await isMLSSyncStopRequested()) {
         await setFullSyncStartPage(page);
+        await setFullSyncNextCursor(nextCursor);
         await clearMLSSyncStop();
         notes.push(`Full sync stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
         logSyncInfo("Full sync stop requested", { nextPage: page });
         break;
       }
 
-      const rawPage = await connector.fetchAllListings({
-        page,
-        pageSize: mlsSyncConfig.pageSize
-      });
+      let rawPage: RawMLSFeedListing[] = [];
+      let nextCursorFromFeed: string | null = null;
+      if (connector.fetchAllListingsPage) {
+        const rawPageResponse = await connector.fetchAllListingsPage({
+          page,
+          pageSize: mlsSyncConfig.pageSize,
+          cursor: nextCursor
+        });
+        nextCursorFromFeed = rawPageResponse.nextCursor;
+        rawPage = rawPageResponse.items;
+      } else {
+        rawPage = await connector.fetchAllListings({
+          page,
+          pageSize: mlsSyncConfig.pageSize,
+          cursor: nextCursor
+        });
+      }
 
       if (rawPage.length === 0) {
         reachedEnd = true;
@@ -154,12 +185,22 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
         }
       }
 
-      if (rawPage.length < mlsSyncConfig.pageSize) {
-        reachedEnd = true;
-        break;
-      }
+      if (connector.fetchAllListingsPage) {
+        if (!nextCursorFromFeed || rawPage.length < mlsSyncConfig.pageSize) {
+          reachedEnd = true;
+          break;
+        }
 
-      page += 1;
+        page += 1;
+        nextCursor = nextCursorFromFeed;
+      } else {
+        if (rawPage.length < mlsSyncConfig.pageSize) {
+          reachedEnd = true;
+          break;
+        }
+
+        page += 1;
+      }
     }
 
     const stopRequested = notes.some((note) => note.includes("stop requested"));
@@ -176,10 +217,12 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
         }
       }
       await setFullSyncStartPage(getDefaultFullSyncStartPage());
+      await setFullSyncNextCursor(null);
       await setFullSyncSweepStartedAt(null);
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
     } else if (!stopRequested) {
       await setFullSyncStartPage(page);
+      await setFullSyncNextCursor(nextCursor);
       const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";
       const note = `Full sync processed a batch (${pageLabel} pages) from page ${startPage}. Continue from page ${page} on next run.`;
       notes.push(note);

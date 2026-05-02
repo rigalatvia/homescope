@@ -7,6 +7,7 @@ const DEFAULT_START_PAGE = 1;
 
 interface FullSyncCursorDocument {
   nextPage?: number;
+  nextCursor?: string | null;
   updatedAt?: string;
   sweepStartedAt?: string | null;
 }
@@ -28,6 +29,27 @@ export async function setFullSyncStartPage(nextPage: number): Promise<void> {
   await firestore.collection(SETTINGS_COLLECTION).doc(FULL_SYNC_CURSOR_DOC_ID).set(
     {
       nextPage: safePage,
+      updatedAt: new Date().toISOString(),
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+}
+
+export async function getFullSyncNextCursor(): Promise<string | null> {
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(FULL_SYNC_CURSOR_DOC_ID).get();
+  if (!snapshot.exists) return null;
+
+  const data = snapshot.data() as FullSyncCursorDocument;
+  return typeof data.nextCursor === "string" && data.nextCursor.trim() ? data.nextCursor : null;
+}
+
+export async function setFullSyncNextCursor(nextCursor: string | null): Promise<void> {
+  const firestore = getFirebaseAdminFirestore();
+  await firestore.collection(SETTINGS_COLLECTION).doc(FULL_SYNC_CURSOR_DOC_ID).set(
+    {
+      nextCursor,
       updatedAt: new Date().toISOString(),
       updatedAtServer: FieldValue.serverTimestamp()
     },

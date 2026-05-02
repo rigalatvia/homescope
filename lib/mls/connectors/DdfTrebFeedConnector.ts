@@ -1,6 +1,12 @@
 import { logSyncInfo, logSyncWarn } from "@/lib/mls/utils/logger";
 import { withRetry } from "@/lib/mls/utils/retry";
-import type { MLSConnectorHealth, MLSFetchOptions, MLSListingMedia, RawMLSFeedListing } from "@/lib/mls/types";
+import type {
+  MLSConnectorHealth,
+  MLSFetchOptions,
+  MLSFetchedPage,
+  MLSListingMedia,
+  RawMLSFeedListing
+} from "@/lib/mls/types";
 import type { MLSFeedConnector } from "@/lib/mls/connectors/MLSFeedConnector";
 
 type JsonObject = Record<string, unknown>;
@@ -51,6 +57,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     return responseItems.map((item, index) => this.mapDdfRecordToRawListing(item, index));
   }
 
+  async fetchAllListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    const page = await this.fetchPage(undefined, options);
+    return {
+      items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
+      nextCursor: page.nextCursor
+    };
+  }
+
   async fetchUpdatedListings(since?: Date, options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {
     const responseItems = await this.fetchPaginated(since, options);
     return responseItems.map((item, index) => this.mapDdfRecordToRawListing(item, index));
@@ -79,12 +93,13 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     const rows: JsonObject[] = [];
     const limitPageSize = options?.pageSize ?? this.config.pageSize;
     const requestedPage = options?.page && options.page > 0 ? options.page : null;
+    const requestedCursor = typeof options?.cursor === "string" && options.cursor.trim() ? options.cursor.trim() : null;
 
-    if (requestedPage != null) {
-      const url = this.buildListingsUrl(limitPageSize, since, true, requestedPage);
+    if (requestedPage != null || requestedCursor != null) {
+      const url = requestedCursor || this.buildListingsUrl(limitPageSize, since, true, requestedPage ?? 1);
       const payload = await this.fetchListingsPage(url, since);
       const items = extractListingsArray(payload);
-      logSyncInfo("DDF page fetched", { requestedPage, count: items.length });
+      logSyncInfo("DDF page fetched", { requestedPage, requestedCursor: requestedCursor ? "provided" : null, count: items.length });
       return items;
     }
 
@@ -109,6 +124,27 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
 
     logSyncInfo("DDF fetch completed", { fetched: rows.length });
     return rows;
+  }
+
+  private async fetchPage(
+    since?: Date,
+    options?: MLSFetchOptions
+  ): Promise<{ items: JsonObject[]; nextCursor: string | null }> {
+    const limitPageSize = options?.pageSize ?? this.config.pageSize;
+    const requestedPage = options?.page && options.page > 0 ? options.page : null;
+    const requestedCursor = typeof options?.cursor === "string" && options.cursor.trim() ? options.cursor.trim() : null;
+    const isFirstPage = !requestedCursor;
+    const url = requestedCursor || this.buildListingsUrl(limitPageSize, since, isFirstPage, requestedPage ?? 1);
+    const payload = await this.fetchListingsPage(url, since);
+    const items = extractListingsArray(payload);
+    const nextCursor = extractNextUrl(payload);
+    logSyncInfo("DDF cursor page fetched", {
+      requestedPage,
+      requestedCursor: requestedCursor ? "provided" : null,
+      count: items.length,
+      hasNextCursor: Boolean(nextCursor)
+    });
+    return { items, nextCursor };
   }
 
   private buildListingsUrl(pageSize: number, since?: Date, isFirstPage = true, page = 1): string {

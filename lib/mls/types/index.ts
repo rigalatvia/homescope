@@ -167,6 +167,12 @@ export interface MLSFetchOptions {
   since?: Date;
   page?: number;
   pageSize?: number;
+  cursor?: string | null;
+}
+
+export interface MLSFetchedPage<TItem> {
+  items: TItem[];
+  nextCursor: string | null;
 }
 
 export interface MLSSyncStats {

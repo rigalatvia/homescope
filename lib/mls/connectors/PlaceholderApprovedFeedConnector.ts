@@ -1,4 +1,4 @@
-import type { MLSConnectorHealth, MLSFetchOptions, RawMLSFeedListing } from "@/lib/mls/types";
+import type { MLSConnectorHealth, MLSFetchOptions, MLSFetchedPage, RawMLSFeedListing } from "@/lib/mls/types";
 import type { MLSFeedConnector } from "@/lib/mls/connectors/MLSFeedConnector";
 
 /**
@@ -16,6 +16,13 @@ export class PlaceholderApprovedFeedConnector implements MLSFeedConnector {
   async fetchAllListings(_options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {
     // TODO: Implement real full-feed fetch with official provider API credentials.
     return [];
+  }
+
+  async fetchAllListingsPage(_options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    return {
+      items: [],
+      nextCursor: null
+    };
   }
 
   async fetchUpdatedListings(_since?: Date, _options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {

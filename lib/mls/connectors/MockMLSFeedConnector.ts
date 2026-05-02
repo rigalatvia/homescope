@@ -1,5 +1,5 @@
 import { mockMLSFeedListings } from "@/data/mockFeed/mls-listings";
-import type { MLSConnectorHealth, MLSFetchOptions, RawMLSFeedListing } from "@/lib/mls/types";
+import type { MLSConnectorHealth, MLSFetchOptions, MLSFetchedPage, RawMLSFeedListing } from "@/lib/mls/types";
 import type { MLSFeedConnector } from "@/lib/mls/connectors/MLSFeedConnector";
 
 export class MockMLSFeedConnector implements MLSFeedConnector {
@@ -8,6 +8,20 @@ export class MockMLSFeedConnector implements MLSFeedConnector {
 
   async fetchAllListings(options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {
     return paginate(mockMLSFeedListings, options);
+  }
+
+  async fetchAllListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    const items = paginate(mockMLSFeedListings, options);
+    if (!options?.pageSize) {
+      return { items, nextCursor: null };
+    }
+
+    const page = options.page ?? 1;
+    const hasMore = page * options.pageSize < mockMLSFeedListings.length;
+    return {
+      items,
+      nextCursor: hasMore ? String(page + 1) : null
+    };
   }
 
   async fetchUpdatedListings(since?: Date, options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {

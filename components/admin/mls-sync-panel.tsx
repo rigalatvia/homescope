@@ -84,6 +84,26 @@ async function parseApiResponse<T>(response: Response): Promise<T | null> {
   }
 }
 
+function mergeSyncCounts(current: SyncCounts | null, incoming: SyncCounts | null | undefined): SyncCounts | null {
+  if (!incoming) return current;
+  if (!current) {
+    return {
+      ...incoming,
+      deleted: incoming.deleted ?? incoming.archived
+    };
+  }
+
+  return {
+    fetched: current.fetched + incoming.fetched,
+    filtered: current.filtered + incoming.filtered,
+    created: current.created + incoming.created,
+    updated: current.updated + incoming.updated,
+    deleted: (current.deleted ?? current.archived) + (incoming.deleted ?? incoming.archived),
+    archived: current.archived + incoming.archived,
+    failed: current.failed + incoming.failed
+  };
+}
+
 export function MlsSyncPanel() {
   const [adminToken, setAdminToken] = useState("");
   const [sinceIso, setSinceIso] = useState("");
@@ -238,6 +258,7 @@ export function MlsSyncPanel() {
 
     // Safety guard only. In practice this should never be reached.
     const maxIterations = 5000;
+    let cumulativeCounts: SyncCounts | null = null;
 
     try {
       for (let i = 0; i < maxIterations; i += 1) {
@@ -246,6 +267,8 @@ export function MlsSyncPanel() {
           return;
         }
         const json = await runSync("full", { resetCursorToFirstPage: i === 0 });
+        cumulativeCounts = mergeSyncCounts(cumulativeCounts, json.counts);
+        setLastCounts(cumulativeCounts);
         setFullAllRunsCompleted(i + 1);
         if (stopRequestedRef.current) {
           setSuccessMessage(`Stop requested. Full sync paused after ${i + 1} completed run(s).`);
@@ -254,7 +277,9 @@ export function MlsSyncPanel() {
         const notes = json.result?.notes || [];
         const reachedEnd = notes.some((note) => /reached end of feed|cursor reset to page 1/i.test(note));
         if (reachedEnd) {
-          setSuccessMessage(`Full sync completed for all pages (cursor reached end of feed). Runs completed: ${i + 1}.`);
+          setSuccessMessage(
+            `Full sync completed for all pages (cursor reached end of feed). Runs completed: ${i + 1}. Deleted records: ${cumulativeCounts?.deleted ?? cumulativeCounts?.archived ?? 0}.`
+          );
           return;
         }
       }
