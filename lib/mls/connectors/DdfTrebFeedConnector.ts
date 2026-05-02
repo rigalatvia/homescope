@@ -68,7 +68,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 
   async fetchNonActiveListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
-    const page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), true);
+    let page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), true);
+    const isInitialRequest = !(typeof options?.cursor === "string" && options.cursor.trim());
+    if (isInitialRequest && page.items.length === 0 && !page.nextCursor) {
+      logSyncInfo("DDF current listings endpoint returned no non-active rows; retrying via replication endpoint", {
+        page: options?.page ?? 1
+      });
+      page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), false);
+    }
     return {
       items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
       nextCursor: page.nextCursor

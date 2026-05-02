@@ -110,6 +110,8 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
           notes.push(
             `cleanup checked ${fetchedFromFeed} current non-active feed row(s) and deleted ${deletedFromFeed} matching listing(s) from Firestore.`
           );
+        } else {
+          notes.push("cleanup feed-based non-active scan returned 0 rows.");
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown cleanup feed error";
