@@ -1,6 +1,7 @@
 import { mlsSyncConfig } from "@/lib/mls/config";
 import type { MLSConnectorKind, MLSSyncResult, MLSSyncStats } from "@/lib/mls/types";
 import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
+import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import {
   getDefaultFullSyncStartPage,
   setFullSyncNextCursor,
@@ -41,6 +42,8 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
   });
 
   try {
+    const connector = createMLSConnector(_connectorKind);
+
     const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
     if (cleanupRemoved > 0) {
       stats.archived += cleanupRemoved;
@@ -68,6 +71,46 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
       ...(nonActiveIds.length > 0 ? { status_not_displayable: nonActiveIds.length } : {}),
       ...(hiddenIds.length > 0 ? { stale_listing: hiddenIds.length } : {})
     };
+
+    if (connector.fetchNonActiveListingsPage) {
+      let page = 1;
+      let cursor: string | null = null;
+      let fetchedFromFeed = 0;
+      let deletedFromFeed = 0;
+
+      while (true) {
+        const feedPage = await connector.fetchNonActiveListingsPage({
+          page,
+          pageSize: mlsSyncConfig.pageSize,
+          cursor
+        });
+
+        if (feedPage.items.length === 0) break;
+
+        fetchedFromFeed += feedPage.items.length;
+        const listingIds = feedPage.items.map((listing) => `${listing.sourceSystem}:${listing.sourceListingKey}`);
+        const removed = await deleteExistingListingDocuments(listingIds);
+        deletedFromFeed += removed;
+
+        if (!feedPage.nextCursor || feedPage.items.length < mlsSyncConfig.pageSize) {
+          break;
+        }
+
+        cursor = feedPage.nextCursor;
+        page += 1;
+      }
+
+      if (fetchedFromFeed > 0) {
+        stats.fetched += fetchedFromFeed;
+        stats.hidden += deletedFromFeed;
+        stats.archived += deletedFromFeed;
+        stats.hiddenByReason.status_not_displayable =
+          (stats.hiddenByReason.status_not_displayable || 0) + deletedFromFeed;
+        notes.push(
+          `cleanup checked ${fetchedFromFeed} current non-active feed row(s) and deleted ${deletedFromFeed} matching listing(s) from Firestore.`
+        );
+      }
+    }
 
     await setFullSyncStartPage(getDefaultFullSyncStartPage());
     await setFullSyncNextCursor(null);
