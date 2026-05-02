@@ -1,6 +1,8 @@
 import {
   deleteExistingListingDocuments,
   listAllListingIds,
+  listHiddenListings,
+  listListingsWithStatuses,
   listListingsNotSeenSince,
   listStaleVisibleListings
 } from "@/lib/mls/upsert/repository";
@@ -44,4 +46,33 @@ export async function deleteListingsNotSeenSince(staleBeforeIso: string): Promis
   }
 
   return deleted;
+}
+
+export async function deleteStoredHiddenAndNonActiveListings(): Promise<{
+  deleted: number;
+  hiddenCandidates: number;
+  nonActiveCandidates: number;
+}> {
+  const [hiddenListings, nonActiveListings] = await Promise.all([
+    listHiddenListings(),
+    listListingsWithStatuses(["sold", "leased", "suspended", "expired", "terminated", "draft"])
+  ]);
+
+  const hiddenIds = hiddenListings.map((listing) => listing.listingId);
+  const nonActiveIds = nonActiveListings.map((listing) => listing.listingId);
+  const deleted = await deleteExistingListingDocuments(Array.from(new Set([...hiddenIds, ...nonActiveIds])));
+
+  if (deleted > 0) {
+    logSyncInfo("Deleted listings already stored as hidden or non-active", {
+      deleted,
+      hiddenCandidates: hiddenIds.length,
+      nonActiveCandidates: nonActiveIds.length
+    });
+  }
+
+  return {
+    deleted,
+    hiddenCandidates: hiddenIds.length,
+    nonActiveCandidates: nonActiveIds.length
+  };
 }

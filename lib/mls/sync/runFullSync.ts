@@ -20,7 +20,7 @@ import {
   setFullSyncStartPage,
   setFullSyncSweepStartedAt
 } from "@/lib/mls/sync/fullSyncCursor";
-import { deleteListingsNotSeenSince } from "@/lib/mls/sync/staleCleanup";
+import { deleteListingsNotSeenSince, deleteStoredHiddenAndNonActiveListings } from "@/lib/mls/sync/staleCleanup";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
 import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
@@ -64,6 +64,15 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     if (cleanupRemoved > 0) {
       stats.archived += cleanupRemoved;
       notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
+    }
+
+    const preCleanup = await deleteStoredHiddenAndNonActiveListings();
+    if (preCleanup.deleted > 0) {
+      stats.archived += preCleanup.deleted;
+      stats.hidden += preCleanup.deleted;
+      notes.push(
+        `cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active before full sync processing.`
+      );
     }
 
     const savedStartPage = await getFullSyncStartPage();

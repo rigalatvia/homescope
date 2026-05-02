@@ -364,7 +364,7 @@ export function MlsSyncPanel() {
 
   function confirmAndRunCleanup() {
     const confirmed = window.confirm(
-      "Run Cleanup will remove existing listings data. Are you sure you want to continue?"
+      "Run Cleanup will remove listings already stored as hidden or non-active. Are you sure you want to continue?"
     );
     if (!confirmed) return;
     void runSync("cleanup");

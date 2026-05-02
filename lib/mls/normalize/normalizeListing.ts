@@ -211,12 +211,22 @@ function parseDisplayPrice(raw: RawMLSFeedListing, transactionType: string | nul
 
 function parseListingStatus(value: string | null | undefined): MLSListingStatus {
   const normalized = (value || "").trim().toLowerCase();
-  if (normalized.includes("active")) return "active";
-  if (normalized.includes("sold")) return "sold";
-  if (normalized.includes("leased")) return "leased";
-  if (normalized.includes("suspend")) return "suspended";
-  if (normalized.includes("expire")) return "expired";
-  if (normalized.includes("terminat")) return "terminated";
+  const compact = normalized.replace(/[^a-z0-9]+/g, " ").trim();
+  if (!compact) return "draft";
+
+  if (
+    /\bnot active\b|\binactive\b|\btombstone\b|\bwithdrawn\b|\bcancelled\b|\bcanceled\b|\bterminated\b|\btermination\b/.test(
+      compact
+    )
+  ) {
+    return "terminated";
+  }
+  if (/\bsold\b|\bconditional sale\b|\bsold conditional\b|\bsold cond\b/.test(compact)) return "sold";
+  if (/\bleased\b|\blease\b.*\bexecuted\b/.test(compact)) return "leased";
+  if (/\bsuspend/.test(compact)) return "suspended";
+  if (/\bexpire/.test(compact)) return "expired";
+  if (/\bdraft\b|\bcoming soon\b|\bpending\b|\bon hold\b|\bhold\b/.test(compact)) return "draft";
+  if (/\bactive\b|\bavailable\b/.test(compact)) return "active";
   return "draft";
 }
 

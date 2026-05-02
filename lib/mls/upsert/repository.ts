@@ -5,6 +5,7 @@ import type {
   MLSHiddenReason,
   MLSListingFirestoreDocument,
   MLSListingSnapshotDocument,
+  MLSListingStatus,
   MLSMunicipality
 } from "@/lib/mls/types";
 
@@ -108,6 +109,23 @@ export async function listListingsByMunicipality(
 ): Promise<MLSListingFirestoreDocument[]> {
   const firestore = getFirebaseAdminFirestore();
   const snapshot = await firestore.collection(COLLECTIONS.listings).where("municipality", "==", municipality).get();
+  return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
+}
+
+export async function listHiddenListings(): Promise<MLSListingFirestoreDocument[]> {
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore.collection(COLLECTIONS.listings).where("isVisible", "==", false).get();
+  return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
+}
+
+export async function listListingsWithStatuses(
+  statuses: MLSListingStatus[]
+): Promise<MLSListingFirestoreDocument[]> {
+  const uniqueStatuses = Array.from(new Set(statuses.filter(Boolean)));
+  if (uniqueStatuses.length === 0) return [];
+
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore.collection(COLLECTIONS.listings).where("status", "in", uniqueStatuses).get();
   return snapshot.docs.map((doc) => doc.data() as MLSListingFirestoreDocument);
 }
 
