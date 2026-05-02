@@ -41,6 +41,7 @@ interface SyncResponse {
     };
   };
   error?: string;
+  detail?: string;
 }
 
 interface SecretsCheckResponse {
@@ -159,7 +160,8 @@ export function MlsSyncPanel() {
       const json = await parseApiResponse<SyncResponse>(response);
       if (!json || !response.ok || !json.success) {
         const apiError = json?.error || `Sync failed with status ${response.status}.`;
-        throw new Error(apiError);
+        const apiDetail = json?.detail ? `${apiError} ${json.detail}` : apiError;
+        throw new Error(apiDetail);
       }
 
       setLastCounts(json.counts ?? null);

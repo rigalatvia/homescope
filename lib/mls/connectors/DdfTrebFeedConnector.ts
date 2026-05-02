@@ -68,7 +68,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 
   async fetchNonActiveListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
-    const page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter());
+    const page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), true);
     return {
       items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
       nextCursor: page.nextCursor
@@ -102,7 +102,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   private async fetchPaginated(
     since?: Date,
     options?: MLSFetchOptions,
-    baseFilterOverride?: string | null
+    baseFilterOverride?: string | null,
+    forceCurrentListingsEndpoint = false
   ): Promise<JsonObject[]> {
     const rows: JsonObject[] = [];
     const limitPageSize = options?.pageSize ?? this.config.pageSize;
@@ -111,7 +112,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
 
     if (requestedPage != null || requestedCursor != null) {
       const url =
-        requestedCursor || this.buildListingsUrl(limitPageSize, since, true, requestedPage ?? 1, baseFilterOverride);
+        requestedCursor ||
+        this.buildListingsUrl(limitPageSize, since, true, requestedPage ?? 1, baseFilterOverride, forceCurrentListingsEndpoint);
       const payload = await this.fetchListingsPage(url, since);
       const items = extractListingsArray(payload);
       logSyncInfo("DDF page fetched", { requestedPage, requestedCursor: requestedCursor ? "provided" : null, count: items.length });
@@ -122,7 +124,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     let isFirstPage = true;
 
     while (true) {
-      const url = nextUrl || this.buildListingsUrl(limitPageSize, since, isFirstPage, 1, baseFilterOverride);
+      const url =
+        nextUrl || this.buildListingsUrl(limitPageSize, since, isFirstPage, 1, baseFilterOverride, forceCurrentListingsEndpoint);
       const payload = await this.fetchListingsPage(url, since);
       const items = extractListingsArray(payload);
       rows.push(...items);
@@ -144,14 +147,23 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   private async fetchPage(
     since?: Date,
     options?: MLSFetchOptions,
-    baseFilterOverride?: string | null
+    baseFilterOverride?: string | null,
+    forceCurrentListingsEndpoint = false
   ): Promise<{ items: JsonObject[]; nextCursor: string | null }> {
     const limitPageSize = options?.pageSize ?? this.config.pageSize;
     const requestedPage = options?.page && options.page > 0 ? options.page : null;
     const requestedCursor = typeof options?.cursor === "string" && options.cursor.trim() ? options.cursor.trim() : null;
     const isFirstPage = !requestedCursor;
     const url =
-      requestedCursor || this.buildListingsUrl(limitPageSize, since, isFirstPage, requestedPage ?? 1, baseFilterOverride);
+      requestedCursor ||
+      this.buildListingsUrl(
+        limitPageSize,
+        since,
+        isFirstPage,
+        requestedPage ?? 1,
+        baseFilterOverride,
+        forceCurrentListingsEndpoint
+      );
     const payload = await this.fetchListingsPage(url, since);
     const items = extractListingsArray(payload);
     const nextCursor = extractNextUrl(payload);
@@ -169,9 +181,10 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     since?: Date,
     isFirstPage = true,
     page = 1,
-    baseFilterOverride?: string | null
+    baseFilterOverride?: string | null,
+    forceCurrentListingsEndpoint = false
   ): string {
-    const baseUrl = since ? this.config.listingsUrl : this.config.replicationUrl;
+    const baseUrl = since || forceCurrentListingsEndpoint ? this.config.listingsUrl : this.config.replicationUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
     const skip = Math.max(0, page - 1) * pageSize;

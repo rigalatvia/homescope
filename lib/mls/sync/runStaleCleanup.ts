@@ -13,7 +13,7 @@ import {
   listHiddenListings,
   listListingsWithStatuses
 } from "@/lib/mls/upsert/repository";
-import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
+import { logSyncError, logSyncInfo, logSyncWarn } from "@/lib/mls/utils/logger";
 
 export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
   const startedAt = new Date().toISOString();
@@ -73,42 +73,48 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
     };
 
     if (connector.fetchNonActiveListingsPage) {
-      let page = 1;
-      let cursor: string | null = null;
-      let fetchedFromFeed = 0;
-      let deletedFromFeed = 0;
+      try {
+        let page = 1;
+        let cursor: string | null = null;
+        let fetchedFromFeed = 0;
+        let deletedFromFeed = 0;
 
-      while (true) {
-        const feedPage = await connector.fetchNonActiveListingsPage({
-          page,
-          pageSize: mlsSyncConfig.pageSize,
-          cursor
-        });
+        while (true) {
+          const feedPage = await connector.fetchNonActiveListingsPage({
+            page,
+            pageSize: mlsSyncConfig.pageSize,
+            cursor
+          });
 
-        if (feedPage.items.length === 0) break;
+          if (feedPage.items.length === 0) break;
 
-        fetchedFromFeed += feedPage.items.length;
-        const listingIds = feedPage.items.map((listing) => `${listing.sourceSystem}:${listing.sourceListingKey}`);
-        const removed = await deleteExistingListingDocuments(listingIds);
-        deletedFromFeed += removed;
+          fetchedFromFeed += feedPage.items.length;
+          const listingIds = feedPage.items.map((listing) => `${listing.sourceSystem}:${listing.sourceListingKey}`);
+          const removed = await deleteExistingListingDocuments(listingIds);
+          deletedFromFeed += removed;
 
-        if (!feedPage.nextCursor || feedPage.items.length < mlsSyncConfig.pageSize) {
-          break;
+          if (!feedPage.nextCursor || feedPage.items.length < mlsSyncConfig.pageSize) {
+            break;
+          }
+
+          cursor = feedPage.nextCursor;
+          page += 1;
         }
 
-        cursor = feedPage.nextCursor;
-        page += 1;
-      }
-
-      if (fetchedFromFeed > 0) {
-        stats.fetched += fetchedFromFeed;
-        stats.hidden += deletedFromFeed;
-        stats.archived += deletedFromFeed;
-        stats.hiddenByReason.status_not_displayable =
-          (stats.hiddenByReason.status_not_displayable || 0) + deletedFromFeed;
-        notes.push(
-          `cleanup checked ${fetchedFromFeed} current non-active feed row(s) and deleted ${deletedFromFeed} matching listing(s) from Firestore.`
-        );
+        if (fetchedFromFeed > 0) {
+          stats.fetched += fetchedFromFeed;
+          stats.hidden += deletedFromFeed;
+          stats.archived += deletedFromFeed;
+          stats.hiddenByReason.status_not_displayable =
+            (stats.hiddenByReason.status_not_displayable || 0) + deletedFromFeed;
+          notes.push(
+            `cleanup checked ${fetchedFromFeed} current non-active feed row(s) and deleted ${deletedFromFeed} matching listing(s) from Firestore.`
+          );
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown cleanup feed error";
+        logSyncWarn("Cleanup skipped feed-based non-active pass after upstream error", { message });
+        notes.push(`cleanup feed check skipped after upstream error: ${message}`);
       }
     }
 
