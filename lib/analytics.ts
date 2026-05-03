@@ -25,7 +25,8 @@ export interface RentalApplicationDownloadPayload {
   resourcePath: string;
 }
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const DEFAULT_GA_MEASUREMENT_ID = "G-1G84P57QZY";
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID;
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 function canTrackGA(): boolean {

@@ -118,7 +118,12 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 
   async fetchUpdatedListings(since?: Date, options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {
-    const responseItems = await this.fetchPaginated(since, options);
+    // Incremental sync should use the current listings endpoint. In practice the
+    // replication feed is better for full-feed reconciliation, but the
+    // date-filtered incremental query has been returning 400s upstream there.
+    // Cleanup/full sync now own the authoritative removal path for non-active
+    // rows, so incremental can safely focus on current changed listings.
+    const responseItems = await this.fetchPaginated(since, options, undefined, true);
     return responseItems.map((item, index) => this.mapDdfRecordToRawListing(item, index));
   }
 
