@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { CookieSettingsButton } from "@/components/analytics/cookie-settings-button";
 import { SITE_CONFIG } from "@/config/site";
 
 export function SiteFooter() {
@@ -33,6 +34,7 @@ export function SiteFooter() {
               <Link href="/contact" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 Contact Us
               </Link>
+              <CookieSettingsButton />
             </div>
           </div>
           <div>

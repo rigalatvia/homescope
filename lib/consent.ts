@@ -2,6 +2,7 @@ export type ConsentChoice = "accepted" | "rejected";
 
 export const CONSENT_STORAGE_KEY = "homescope-consent-choice";
 export const CONSENT_UPDATED_EVENT = "homescope:consent-updated";
+export const CONSENT_MANAGE_EVENT = "homescope:consent-manage";
 
 export interface GoogleConsentState {
   ad_storage: "granted" | "denied";
@@ -79,4 +80,10 @@ export function broadcastConsentUpdate(choice: ConsentChoice): void {
       detail: choice
     })
   );
+}
+
+export function requestConsentManagement(): void {
+  if (typeof window === "undefined") return;
+
+  window.dispatchEvent(new CustomEvent(CONSENT_MANAGE_EVENT));
 }

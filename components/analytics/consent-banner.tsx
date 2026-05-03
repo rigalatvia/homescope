@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Cookie, ShieldCheck, X } from "lucide-react";
 import {
+  CONSENT_MANAGE_EVENT,
   type ConsentChoice,
   applyGoogleConsent,
   broadcastConsentUpdate,
@@ -18,10 +19,13 @@ function saveConsent(choice: ConsentChoice) {
 
 export function ConsentBanner() {
   const [choice, setChoice] = useState<ConsentChoice | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setChoice(getStoredConsentChoice());
+    const storedChoice = getStoredConsentChoice();
+    setChoice(storedChoice);
+    setIsOpen(!storedChoice);
     setMounted(true);
   }, []);
 
@@ -30,7 +34,21 @@ export function ConsentBanner() {
     applyGoogleConsent(choice);
   }, [choice, mounted]);
 
-  const isVisible = mounted && !choice;
+  useEffect(() => {
+    const handleManageRequest = () => {
+      setChoice(getStoredConsentChoice());
+      setIsOpen(true);
+    };
+
+    window.addEventListener(CONSENT_MANAGE_EVENT, handleManageRequest);
+
+    return () => {
+      window.removeEventListener(CONSENT_MANAGE_EVENT, handleManageRequest);
+    };
+  }, []);
+
+  const isVisible = mounted && isOpen;
+  const hasExistingChoice = !!choice;
 
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
@@ -46,17 +64,25 @@ export function ConsentBanner() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">Privacy Settings</p>
-              <h2 className="mt-1 text-lg font-semibold text-brand-900">Allow analytics and advertising cookies?</h2>
+              <h2 className="mt-1 text-lg font-semibold text-brand-900">
+                {hasExistingChoice ? "Update your cookie preferences" : "Allow analytics and advertising cookies?"}
+              </h2>
             </div>
           </div>
           <button
             type="button"
             onClick={() => {
+              if (hasExistingChoice) {
+                setIsOpen(false);
+                return;
+              }
+
               saveConsent("rejected");
               setChoice("rejected");
+              setIsOpen(false);
             }}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-100 text-brand-600 transition hover:border-brand-200 hover:text-brand-900"
-            aria-label="Close cookie banner and keep only necessary cookies"
+            aria-label={hasExistingChoice ? "Close cookie settings" : "Close cookie banner and keep only necessary cookies"}
           >
             <X className="h-4 w-4" />
           </button>
@@ -103,6 +129,7 @@ export function ConsentBanner() {
                 onClick={() => {
                   saveConsent("accepted");
                   setChoice("accepted");
+                  setIsOpen(false);
                 }}
                 className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
               >
@@ -113,6 +140,7 @@ export function ConsentBanner() {
                 onClick={() => {
                   saveConsent("rejected");
                   setChoice("rejected");
+                  setIsOpen(false);
                 }}
                 className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/10"
               >
