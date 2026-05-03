@@ -6,6 +6,8 @@ import { SITE_CONFIG } from "@/config/site";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { ConsentBanner } from "@/components/analytics/consent-banner";
+import { MetaPixelScript } from "@/components/analytics/meta-pixel-script";
 import { SiteChatbot } from "@/components/chat/site-chatbot";
 
 const DEFAULT_GA_MEASUREMENT_ID = "G-1G84P57QZY";
@@ -55,6 +57,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         {GA_MEASUREMENT_ID ? (
           <>
+            <Script id="google-consent-default" strategy="beforeInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('consent', 'default', {
+                  ad_storage: 'denied',
+                  ad_user_data: 'denied',
+                  ad_personalization: 'denied',
+                  analytics_storage: 'denied',
+                  functionality_storage: 'granted',
+                  personalization_storage: 'denied',
+                  security_storage: 'granted'
+                });
+              `}
+            </Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
               strategy="afterInteractive"
@@ -65,34 +83,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 function gtag(){dataLayer.push(arguments);}
                 window.gtag = gtag;
                 gtag('js', new Date());
-                gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
+                gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
               `}
             </Script>
           </>
         ) : null}
 
-        {META_PIXEL_ID ? (
-          <Script id="meta-pixel" strategy="afterInteractive">
-            {`
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '${META_PIXEL_ID}');
-              fbq('track', 'PageView');
-            `}
-          </Script>
-        ) : null}
+        <MetaPixelScript pixelId={META_PIXEL_ID} />
         <Suspense fallback={null}>
           <PageViewTracker />
         </Suspense>
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
+        <ConsentBanner />
         <SiteChatbot />
       </body>
     </html>

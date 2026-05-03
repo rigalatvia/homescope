@@ -1,6 +1,8 @@
 type Primitive = string | number | boolean | null | undefined;
 type EventParams = Record<string, Primitive | Primitive[]>;
 
+import { hasTrackingConsent } from "@/lib/consent";
+
 export interface PropertyViewPayload {
   propertyId: string;
   city?: string;
@@ -30,18 +32,22 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_G
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 function canTrackGA(): boolean {
-  return typeof window !== "undefined" && !!GA_MEASUREMENT_ID && typeof window.gtag === "function";
+  return typeof window !== "undefined" && hasTrackingConsent() && !!GA_MEASUREMENT_ID && typeof window.gtag === "function";
 }
 
 function canTrackMeta(): boolean {
-  return typeof window !== "undefined" && !!META_PIXEL_ID && typeof window.fbq === "function";
+  return typeof window !== "undefined" && hasTrackingConsent() && !!META_PIXEL_ID && typeof window.fbq === "function";
 }
 
 export function trackPageView(url: string): void {
   if (canTrackGA()) {
     const gtag = window.gtag;
     if (gtag) {
-      gtag("config", GA_MEASUREMENT_ID!, { page_path: url });
+      gtag("event", "page_view", {
+        page_path: url,
+        page_location: `${window.location.origin}${url}`,
+        page_title: document.title
+      });
     }
   }
 
