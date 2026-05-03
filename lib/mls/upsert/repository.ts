@@ -32,6 +32,18 @@ export async function upsertListingDocument(doc: MLSListingFirestoreDocument): P
   );
 }
 
+export async function touchListingLastSeen(listingId: string, nowIso: string): Promise<void> {
+  const firestore = getFirebaseAdminFirestore();
+  await firestore.collection(COLLECTIONS.listings).doc(listingId).set(
+    {
+      lastSeenInSourceAt: nowIso,
+      syncedAt: nowIso,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+}
+
 export async function hideListingDocument(listingId: string, hiddenReason: MLSHiddenReason, nowIso: string): Promise<void> {
   const firestore = getFirebaseAdminFirestore();
   await firestore.collection(COLLECTIONS.listings).doc(listingId).set(

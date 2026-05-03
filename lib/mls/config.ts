@@ -28,6 +28,7 @@ export const mlsSyncConfig = {
   // Keep each run tightly bounded so a single admin/API request does not hit
   // platform timeouts when the upstream feed gets slow on deep pages.
   fullSyncMaxPagesPerRun: Math.max(Number(process.env.MLS_FULL_SYNC_MAX_PAGES_PER_RUN || 1), 1),
+  cleanupMaxPagesPerRun: Math.max(Number(process.env.MLS_CLEANUP_MAX_PAGES_PER_RUN || 10), 1),
   featureFlags: {
     snapshotsEnabled: process.env.MLS_SNAPSHOTS_ENABLED !== "false",
     cleanupEnabled: process.env.MLS_CLEANUP_ENABLED !== "false",

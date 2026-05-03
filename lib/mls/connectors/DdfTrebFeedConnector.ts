@@ -67,8 +67,43 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     };
   }
 
+  async fetchActiveListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    let page: { items: JsonObject[]; nextCursor: string | null };
+    try {
+      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown current-feed error";
+      logSyncWarn("DDF current listings endpoint rejected active cleanup query; retrying via replication endpoint", {
+        page: options?.page ?? 1,
+        message
+      });
+      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), false);
+    }
+    const isInitialRequest = !(typeof options?.cursor === "string" && options.cursor.trim());
+    if (isInitialRequest && page.items.length === 0 && !page.nextCursor) {
+      logSyncInfo("DDF current listings endpoint returned no active rows; retrying via replication endpoint", {
+        page: options?.page ?? 1
+      });
+      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), false);
+    }
+    return {
+      items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
+      nextCursor: page.nextCursor
+    };
+  }
+
   async fetchNonActiveListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
-    let page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), true);
+    let page: { items: JsonObject[]; nextCursor: string | null };
+    try {
+      page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown current-feed error";
+      logSyncWarn("DDF current listings endpoint rejected non-active query; retrying via replication endpoint", {
+        page: options?.page ?? 1,
+        message
+      });
+      page = await this.fetchPage(undefined, options, buildNonActiveResidentialFilter(), false);
+    }
     const isInitialRequest = !(typeof options?.cursor === "string" && options.cursor.trim());
     if (isInitialRequest && page.items.length === 0 && !page.nextCursor) {
       logSyncInfo("DDF current listings endpoint returned no non-active rows; retrying via replication endpoint", {
@@ -191,7 +226,11 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     baseFilterOverride?: string | null,
     forceCurrentListingsEndpoint = false
   ): string {
-    const baseUrl = since || forceCurrentListingsEndpoint ? this.config.listingsUrl : this.config.replicationUrl;
+    // Use the replication feed for both full and incremental syncs so we can
+    // receive non-active transitions/tombstones, not just current active rows.
+    // Only force the current listings endpoint in the narrow cleanup probe that
+    // checks whether the standard property feed exposes non-active rows.
+    const baseUrl = forceCurrentListingsEndpoint ? this.config.listingsUrl : this.config.replicationUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
     const skip = Math.max(0, page - 1) * pageSize;
@@ -565,4 +604,9 @@ function buildDefaultResidentialFilter(): string {
 function buildNonActiveResidentialFilter(): string {
   const residentialFilter = buildDefaultResidentialFilter();
   return `${residentialFilter} and (StandardStatus ne 'Active')`;
+}
+
+function buildActiveResidentialFilter(): string {
+  const residentialFilter = buildDefaultResidentialFilter();
+  return `${residentialFilter} and (StandardStatus eq 'Active')`;
 }

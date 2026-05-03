@@ -48,6 +48,24 @@ export async function deleteListingsNotSeenSince(staleBeforeIso: string): Promis
   return deleted;
 }
 
+export async function deleteListingsNotSeenSinceForSource(staleBeforeIso: string, sourceSystem: string): Promise<number> {
+  const prefix = `${sourceSystem}:`;
+  const stale = await listListingsNotSeenSince(staleBeforeIso);
+  const deleted = await deleteExistingListingDocuments(
+    stale.filter((listing) => listing.listingId.startsWith(prefix)).map((listing) => listing.listingId)
+  );
+
+  if (deleted > 0) {
+    logSyncInfo("Listings deleted because they were not seen during the current cleanup sweep", {
+      staleBeforeIso,
+      sourceSystem,
+      deleted
+    });
+  }
+
+  return deleted;
+}
+
 export async function deleteStoredHiddenAndNonActiveListings(): Promise<{
   deleted: number;
   hiddenCandidates: number;

@@ -1,6 +1,6 @@
 import type { MLSListingFirestoreDocument, NormalizedMLSListing } from "@/lib/mls/types";
 import { mlsSyncConfig } from "@/lib/mls/config";
-import { createListingSnapshot, getListingById, upsertListingDocument } from "@/lib/mls/upsert/repository";
+import { createListingSnapshot, getListingById, touchListingLastSeen, upsertListingDocument } from "@/lib/mls/upsert/repository";
 import { logSyncInfo } from "@/lib/mls/utils/logger";
 
 const TRACKED_FIELDS: Array<keyof MLSListingFirestoreDocument> = ["price", "status", "publicRemarks", "isVisible", "hiddenReason"];
@@ -23,6 +23,7 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
     const doc = toFirestoreDoc(listing, nowIso, existing);
 
     if (existing && existing.rawSourceHash === doc.rawSourceHash && existing.isVisible === doc.isVisible) {
+      await touchListingLastSeen(doc.listingId, nowIso);
       unchanged += 1;
       continue;
     }

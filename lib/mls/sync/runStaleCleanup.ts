@@ -1,23 +1,26 @@
 import { mlsSyncConfig } from "@/lib/mls/config";
-import type { MLSConnectorKind, MLSSyncResult, MLSSyncStats } from "@/lib/mls/types";
+import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
+import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
 import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
+import {
+  getCleanupNextCursor,
+  getCleanupStartPage,
+  getCleanupSweepStartedAt,
+  getDefaultCleanupStartPage,
+  setCleanupNextCursor,
+  setCleanupStartPage,
+  setCleanupSweepStartedAt
+} from "@/lib/mls/sync/cleanupCursor";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
-import {
-  getDefaultFullSyncStartPage,
-  setFullSyncNextCursor,
-  setFullSyncStartPage,
-  setFullSyncSweepStartedAt
-} from "@/lib/mls/sync/fullSyncCursor";
-import {
-  deleteExistingListingDocuments,
-  listHiddenListings,
-  listListingsWithStatuses
-} from "@/lib/mls/upsert/repository";
-import { logSyncError, logSyncInfo, logSyncWarn } from "@/lib/mls/utils/logger";
+import { deleteListingsNotSeenSinceForSource, deleteStoredHiddenAndNonActiveListings } from "@/lib/mls/sync/staleCleanup";
+import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
+import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
+import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
+import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
+import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 
-export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
   const startedAt = new Date().toISOString();
-  const nowIso = new Date().toISOString();
   const notes: string[] = [];
   const stats: MLSSyncStats = {
     fetched: 0,
@@ -37,12 +40,12 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
     failed: 0
   };
 
-  logSyncInfo("Cleanup started (non-active and hidden listings mode)", {
+  logSyncInfo("Cleanup started (active-feed reconciliation mode)", {
     sourceSystem: mlsSyncConfig.sourceSystem
   });
 
   try {
-    const connector = createMLSConnector(_connectorKind);
+    const connector = createMLSConnector(connectorKind);
 
     const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
     if (cleanupRemoved > 0) {
@@ -52,108 +55,202 @@ export async function runStaleCleanup(_connectorKind?: MLSConnectorKind): Promis
       notes.push(`cleanup removed ${cleanupRemoved} misclassified King-area listing(s).`);
     }
 
-    const [hiddenListings, nonActiveListings] = await Promise.all([
-      listHiddenListings(),
-      listListingsWithStatuses(["sold", "leased", "suspended", "expired", "terminated", "draft"])
-    ]);
-
-    const hiddenIds = hiddenListings.map((listing) => listing.listingId);
-    const nonActiveIds = nonActiveListings.map((listing) => listing.listingId);
-    const candidateIds = Array.from(new Set([...hiddenIds, ...nonActiveIds]));
-    stats.fetched = candidateIds.length;
-
-    const deleted = await deleteExistingListingDocuments(candidateIds);
-
-    stats.hidden += deleted;
-    stats.archived += deleted;
-    stats.hiddenByReason = {
-      ...(cleanupRemoved > 0 ? { connector_not_returned: cleanupRemoved } : {}),
-      ...(nonActiveIds.length > 0 ? { status_not_displayable: nonActiveIds.length } : {}),
-      ...(hiddenIds.length > 0 ? { stale_listing: hiddenIds.length } : {})
-    };
-
-    if (connector.fetchNonActiveListingsPage) {
-      try {
-        let page = 1;
-        let cursor: string | null = null;
-        let fetchedFromFeed = 0;
-        let deletedFromFeed = 0;
-
-        while (true) {
-          const feedPage = await connector.fetchNonActiveListingsPage({
-            page,
-            pageSize: mlsSyncConfig.pageSize,
-            cursor
-          });
-
-          if (feedPage.items.length === 0) break;
-
-          fetchedFromFeed += feedPage.items.length;
-          const listingIds = feedPage.items.map((listing) => `${listing.sourceSystem}:${listing.sourceListingKey}`);
-          const removed = await deleteExistingListingDocuments(listingIds);
-          deletedFromFeed += removed;
-
-          if (!feedPage.nextCursor || feedPage.items.length < mlsSyncConfig.pageSize) {
-            break;
-          }
-
-          cursor = feedPage.nextCursor;
-          page += 1;
-        }
-
-        if (fetchedFromFeed > 0) {
-          stats.fetched += fetchedFromFeed;
-          stats.hidden += deletedFromFeed;
-          stats.archived += deletedFromFeed;
-          stats.hiddenByReason.status_not_displayable =
-            (stats.hiddenByReason.status_not_displayable || 0) + deletedFromFeed;
-          notes.push(
-            `cleanup checked ${fetchedFromFeed} current non-active feed row(s) and deleted ${deletedFromFeed} matching listing(s) from Firestore.`
-          );
-        } else {
-          notes.push("cleanup feed-based non-active scan returned 0 rows.");
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown cleanup feed error";
-        logSyncWarn("Cleanup skipped feed-based non-active pass after upstream error", { message });
-        notes.push(`cleanup feed check skipped after upstream error: ${message}`);
-      }
+    const preCleanup = await deleteStoredHiddenAndNonActiveListings();
+    if (preCleanup.deleted > 0) {
+      stats.archived += preCleanup.deleted;
+      stats.hidden += preCleanup.deleted;
+      stats.hiddenByReason.status_not_displayable =
+        (stats.hiddenByReason.status_not_displayable || 0) + preCleanup.deleted;
+      notes.push(`cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active.`);
     }
 
-    await setFullSyncStartPage(getDefaultFullSyncStartPage());
-    await setFullSyncNextCursor(null);
-    await setFullSyncSweepStartedAt(null);
-    notes.push(`cleanup deleted ${deleted} hidden or non-active listing(s).`);
+    if (!connector.fetchActiveListingsPage) {
+      notes.push("cleanup connector does not support active-feed reconciliation.");
+      return buildCleanupResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
+    }
 
-    const finishedAt = new Date().toISOString();
-    logSyncInfo("Cleanup summary (non-active and hidden listings mode)", {
-      totalFetched: stats.fetched,
-      totalWritten: stats.upserted,
-      totalVisible: stats.included,
-      totalHidden: stats.archived,
-      totalArchived: stats.archived,
-      hiddenByReason: stats.hiddenByReason
-    });
-    logSyncInfo("Cleanup completed", {
-      hidden: stats.hidden,
-      cursorResetToPage: getDefaultFullSyncStartPage(),
-      deletedNonActive: nonActiveIds.length,
-      deletedHidden: hiddenIds.length,
-      completedAt: nowIso
-    });
+    let startPage = await getCleanupStartPage();
+    let nextCursor = await getCleanupNextCursor();
+    let sweepStartedAt = await getCleanupSweepStartedAt();
 
-    return {
-      mode: "cleanup",
-      connector: "mock",
-      sourceSystem: mlsSyncConfig.sourceSystem,
+    if (startPage > getDefaultCleanupStartPage() && !nextCursor) {
+      startPage = getDefaultCleanupStartPage();
+      sweepStartedAt = startedAt;
+      await setCleanupStartPage(startPage);
+      await setCleanupNextCursor(null);
+      await setCleanupSweepStartedAt(sweepStartedAt);
+      notes.push(`Cleanup cursor was reset from an incomplete legacy state and restarted at page ${startPage}.`);
+    } else if (startPage === getDefaultCleanupStartPage()) {
+      nextCursor = null;
+      sweepStartedAt = startedAt;
+      await setCleanupNextCursor(null);
+      await setCleanupSweepStartedAt(sweepStartedAt);
+      notes.push(`Cleanup sweep started at ${sweepStartedAt}.`);
+    } else if (!sweepStartedAt) {
+      startPage = getDefaultCleanupStartPage();
+      nextCursor = null;
+      sweepStartedAt = startedAt;
+      await setCleanupStartPage(startPage);
+      await setCleanupNextCursor(null);
+      await setCleanupSweepStartedAt(sweepStartedAt);
+      notes.push(`Cleanup resumed without a sweep marker, so it restarted safely at page ${startPage}.`);
+    }
+
+    let page = startPage;
+    let reachedEnd = false;
+    const maxPages = Math.max(1, mlsSyncConfig.cleanupMaxPagesPerRun);
+    const stopPage = startPage + maxPages - 1;
+
+    while (page <= stopPage) {
+      if (await isMLSSyncStopRequested()) {
+        await setCleanupStartPage(page);
+        await setCleanupNextCursor(nextCursor);
+        await clearMLSSyncStop();
+        notes.push(`Cleanup stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
+        return buildCleanupResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
+      }
+
+      const activePage = await connector.fetchActiveListingsPage({
+        page,
+        pageSize: mlsSyncConfig.pageSize,
+        cursor: nextCursor
+      });
+
+      if (activePage.items.length === 0) {
+        reachedEnd = true;
+        break;
+      }
+
+      stats.fetched += activePage.items.length;
+      logSyncInfo("Cleanup fetched current active page", { page, count: activePage.items.length });
+
+      const filteredRaw = filterRawListingsByTargetPostalAreas(activePage.items);
+      stats.filtered += filteredRaw.included.length;
+
+      const nowIso = new Date().toISOString();
+      const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
+      stats.normalized += normalized.length;
+      stats.included += normalized.filter((listing) => listing.isVisible).length;
+      stats.excluded += normalized.length - normalized.filter((listing) => listing.isVisible).length;
+      incrementHiddenReasonCounts(stats.hiddenByReason, buildHiddenReasonCounts(normalized));
+      stats.excludedPermToAdvertiseFalse += normalized.filter(
+        (listing) => listing.hiddenReason === "perm_to_advertise_false"
+      ).length;
+
+      const visibleListings = normalized.filter((listing) => listing.isVisible);
+      const hiddenListings = normalized.filter((listing) => !listing.isVisible);
+
+      const upsert = await upsertNormalizedListings(visibleListings, nowIso);
+      stats.created += upsert.created;
+      stats.updated += upsert.updated;
+      stats.upserted += upsert.upserted;
+      stats.unchanged += upsert.unchanged;
+      stats.snapshotsWritten += upsert.snapshotsWritten;
+
+      if (hiddenListings.length > 0) {
+        const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
+        stats.archived += deleted;
+        stats.hidden += deleted;
+        if (deleted > 0) {
+          notes.push(`cleanup deleted ${deleted} non-displayable listing(s) from active-feed page ${page}.`);
+        }
+      }
+
+      if (!activePage.nextCursor || activePage.items.length < mlsSyncConfig.pageSize) {
+        reachedEnd = true;
+        break;
+      }
+
+      nextCursor = activePage.nextCursor;
+      page += 1;
+    }
+
+    if (reachedEnd) {
+      if (stats.fetched === 0) {
+        notes.push(
+          "Cleanup reached end of the active feed without fetching any rows, so stale deletion was skipped as a safety precaution."
+        );
+      } else if (sweepStartedAt) {
+        const deletedNotSeen = await deleteListingsNotSeenSinceForSource(sweepStartedAt, connector.sourceSystem);
+        if (deletedNotSeen > 0) {
+          stats.archived += deletedNotSeen;
+          stats.hidden += deletedNotSeen;
+          stats.hiddenByReason.connector_not_returned =
+            (stats.hiddenByReason.connector_not_returned || 0) + deletedNotSeen;
+          notes.push(`cleanup deleted ${deletedNotSeen} listing(s) not present in the current active feed.`);
+        }
+      }
+
+      await setCleanupStartPage(getDefaultCleanupStartPage());
+      await setCleanupNextCursor(null);
+      await setCleanupSweepStartedAt(null);
+      notes.push("Cleanup reached end of current active feed. Cursor reset to page 1.");
+    } else {
+      await setCleanupStartPage(page);
+      await setCleanupNextCursor(nextCursor);
+      notes.push(
+        `Cleanup processed a batch (${maxPages} page${maxPages === 1 ? "" : "s"}) from page ${startPage}. Continue from page ${page} on next run.`
+      );
+    }
+
+    return buildCleanupResult(
       startedAt,
-      finishedAt,
       stats,
-      notes
-    };
+      notes,
+      connector.connectorName as MLSConnectorKind,
+      connector.sourceSystem
+    );
   } catch (error) {
     stats.failed += 1;
     logSyncError("Stale cleanup failed", error, { stats });
     throw error;
   }
+}
+
+function buildCleanupResult(
+  startedAt: string,
+  stats: MLSSyncStats,
+  notes: string[],
+  connectorKind: MLSConnectorKind,
+  sourceSystem: string
+): MLSSyncResult {
+  const finishedAt = new Date().toISOString();
+  logSyncInfo("Cleanup completed", {
+    fetched: stats.fetched,
+    filtered: stats.filtered,
+    created: stats.created,
+    updated: stats.updated,
+    deleted: stats.archived,
+    completedAt: finishedAt
+  });
+  return {
+    mode: "cleanup",
+    connector: connectorKind,
+    sourceSystem,
+    startedAt,
+    finishedAt,
+    stats,
+    notes
+  };
+}
+
+function incrementHiddenReasonCounts(
+  target: MLSSyncStats["hiddenByReason"],
+  source: MLSSyncStats["hiddenByReason"]
+): void {
+  for (const [reason, count] of Object.entries(source)) {
+    if (!reason || !count) continue;
+    const key = reason as MLSHiddenReason;
+    target[key] = (target[key] || 0) + count;
+  }
+}
+
+function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats["hiddenByReason"] {
+  const counts: MLSSyncStats["hiddenByReason"] = {};
+  for (const listing of listings) {
+    if (!listing.hiddenReason) continue;
+    const reason = listing.hiddenReason as MLSHiddenReason;
+    counts[reason] = (counts[reason] || 0) + 1;
+  }
+  return counts;
 }

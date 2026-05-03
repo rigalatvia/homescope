@@ -61,6 +61,8 @@ interface ListingsStatsResponse {
     fullSyncCursorUpdatedAt: string | null;
     incrementalSinceIso: string | null;
     incrementalCursorUpdatedAt: string | null;
+    cleanupNextPage: number;
+    cleanupCursorUpdatedAt: string | null;
     schedulerLastRunAt: string | null;
     schedulerLastRunMode: string | null;
     schedulerLastRunStatus: string | null;
@@ -116,11 +118,14 @@ export function MlsSyncPanel() {
   const [diagnosticLogs, setDiagnosticLogs] = useState<string>("");
   const [isCheckingSecrets, setIsCheckingSecrets] = useState(false);
   const [isRunningFullAll, setIsRunningFullAll] = useState(false);
+  const [isRunningCleanupAll, setIsRunningCleanupAll] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [fullAllRunsCompleted, setFullAllRunsCompleted] = useState(0);
+  const [cleanupRunsCompleted, setCleanupRunsCompleted] = useState(0);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [listingsStats, setListingsStats] = useState<ListingsStatsResponse["stats"] | null>(null);
   const stopRequestedRef = useRef(false);
+  const pagedLoopActiveRef = useRef(false);
   const autoLoadedStatsForTokenRef = useRef<string | null>(null);
 
   function appendDiagnosticLog(lines: string[]): void {
@@ -196,7 +201,7 @@ export function MlsSyncPanel() {
     } finally {
       setIsSubmitting(false);
       setActiveMode(null);
-      if (!isRunningFullAll) {
+      if (!pagedLoopActiveRef.current) {
         setIsStopping(false);
         stopRequestedRef.current = false;
       }
@@ -253,6 +258,7 @@ export function MlsSyncPanel() {
   async function runFullUntilEnd() {
     if (isRunningFullAll) return;
     setIsRunningFullAll(true);
+    pagedLoopActiveRef.current = true;
     stopRequestedRef.current = false;
     setFullAllRunsCompleted(0);
     setErrorMessage("");
@@ -293,6 +299,59 @@ export function MlsSyncPanel() {
       // runSync already logs and sets error state
     } finally {
       setIsRunningFullAll(false);
+      pagedLoopActiveRef.current = false;
+      setIsStopping(false);
+      stopRequestedRef.current = false;
+    }
+  }
+
+  async function runCleanupUntilEnd() {
+    if (isRunningCleanupAll) return;
+    setIsRunningCleanupAll(true);
+    pagedLoopActiveRef.current = true;
+    stopRequestedRef.current = false;
+    setCleanupRunsCompleted(0);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const maxIterations = 500;
+    let cumulativeCounts: SyncCounts | null = null;
+
+    try {
+      for (let i = 0; i < maxIterations; i += 1) {
+        if (stopRequestedRef.current) {
+          setSuccessMessage(`Stop requested. Cleanup paused after ${i} completed run(s).`);
+          return;
+        }
+
+        const json = await runSync("cleanup");
+        cumulativeCounts = mergeSyncCounts(cumulativeCounts, json.counts);
+        setLastCounts(cumulativeCounts);
+        setCleanupRunsCompleted(i + 1);
+
+        if (stopRequestedRef.current) {
+          setSuccessMessage(`Stop requested. Cleanup paused after ${i + 1} completed run(s).`);
+          return;
+        }
+
+        const notes = json.result?.notes || [];
+        const reachedEnd = notes.some((note) => /cleanup reached end of current active feed/i.test(note));
+        if (reachedEnd) {
+          setSuccessMessage(
+            `Cleanup completed for the full active feed. Runs completed: ${i + 1}. Deleted records: ${cumulativeCounts?.deleted ?? cumulativeCounts?.archived ?? 0}.`
+          );
+          return;
+        }
+      }
+
+      setSuccessMessage(
+        "Cleanup stopped after the safety limit. Re-run Cleanup to continue from the saved cleanup cursor."
+      );
+    } catch {
+      // runSync already logs and sets error state
+    } finally {
+      setIsRunningCleanupAll(false);
+      pagedLoopActiveRef.current = false;
       setIsStopping(false);
       stopRequestedRef.current = false;
     }
@@ -366,10 +425,10 @@ export function MlsSyncPanel() {
 
   function confirmAndRunCleanup() {
     const confirmed = window.confirm(
-      "Run Cleanup will remove listings already stored as hidden or non-active. Are you sure you want to continue?"
+      "Run Cleanup will reconcile Firestore against the current active feed, continue across multiple batches, and delete listings not present in that active set. Are you sure you want to continue?"
     );
     if (!confirmed) return;
-    void runSync("cleanup");
+    void runCleanupUntilEnd();
   }
 
   return (
@@ -401,7 +460,7 @@ export function MlsSyncPanel() {
           <button
             type="button"
             onClick={() => runSync("full")}
-            disabled={isSubmitting || isRunningFullAll}
+            disabled={isSubmitting || isRunningFullAll || isRunningCleanupAll}
             className="rounded-full bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isSubmitting && activeMode === "full" ? "Running..." : "Run Full Sync"}
@@ -409,7 +468,7 @@ export function MlsSyncPanel() {
           <button
             type="button"
             onClick={runFullUntilEnd}
-            disabled={isSubmitting || isRunningFullAll}
+            disabled={isSubmitting || isRunningFullAll || isRunningCleanupAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >
             {isRunningFullAll ? "Running All..." : "Run Full (All Pages)"}
@@ -417,7 +476,7 @@ export function MlsSyncPanel() {
           <button
             type="button"
             onClick={() => runSync("incremental")}
-            disabled={isSubmitting || isRunningFullAll}
+            disabled={isSubmitting || isRunningFullAll || isRunningCleanupAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >
             {isSubmitting && activeMode === "incremental" ? "Running..." : "Run Incremental"}
@@ -425,17 +484,17 @@ export function MlsSyncPanel() {
           <button
             type="button"
             onClick={confirmAndRunCleanup}
-            disabled={isSubmitting || isRunningFullAll}
+            disabled={isSubmitting || isRunningFullAll || isRunningCleanupAll}
             className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
           >
-            {isSubmitting && activeMode === "cleanup" ? "Running..." : "Run Cleanup"}
+            {isRunningCleanupAll ? "Running Cleanup..." : isSubmitting && activeMode === "cleanup" ? "Running..." : "Run Cleanup"}
           </button>
         </div>
 
         <button
           type="button"
           onClick={requestStopRun}
-          disabled={(!isSubmitting && !isRunningFullAll) || isStopping}
+          disabled={(!isSubmitting && !isRunningFullAll && !isRunningCleanupAll) || isStopping}
           className="rounded-full border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 disabled:opacity-60"
         >
           {isStopping ? "Stopping..." : "Stop Run"}
@@ -444,6 +503,11 @@ export function MlsSyncPanel() {
         {isRunningFullAll ? (
           <p className="text-xs text-brand-700">
             Full all-pages run is active. Completed runs in this session: {fullAllRunsCompleted}
+          </p>
+        ) : null}
+        {isRunningCleanupAll ? (
+          <p className="text-xs text-brand-700">
+            Cleanup active-feed reconciliation is running. Completed runs in this session: {cleanupRunsCompleted}
           </p>
         ) : null}
 
@@ -508,6 +572,10 @@ export function MlsSyncPanel() {
               </p>
               <p>
                 Incremental Cursor Updated: {listingsStats.incrementalCursorUpdatedAt ? new Date(listingsStats.incrementalCursorUpdatedAt).toLocaleString() : "-"}
+              </p>
+              <p>Cleanup Next Page: {listingsStats.cleanupNextPage}</p>
+              <p>
+                Cleanup Cursor Updated: {listingsStats.cleanupCursorUpdatedAt ? new Date(listingsStats.cleanupCursorUpdatedAt).toLocaleString() : "-"}
               </p>
             </div>
           </div>

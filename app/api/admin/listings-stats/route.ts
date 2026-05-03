@@ -19,16 +19,18 @@ export async function GET(request: Request) {
 
   try {
     const firestore = getFirebaseAdminFirestore();
-    const [totalAgg, visibleAgg, fullCursorSnap, incCursorSnap, schedulerSnap] = await Promise.all([
+    const [totalAgg, visibleAgg, fullCursorSnap, incCursorSnap, cleanupCursorSnap, schedulerSnap] = await Promise.all([
       firestore.collection(LISTINGS_COLLECTION).count().get(),
       firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true).count().get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsFullSyncCursor").get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsIncrementalCursor").get(),
+      firestore.collection(SETTINGS_COLLECTION).doc("mlsCleanupCursor").get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsSchedulerStatus").get()
     ]);
 
     const fullCursor = (fullCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
     const incrementalCursor = (incCursorSnap.data() ?? {}) as { sinceIso?: string; updatedAt?: string };
+    const cleanupCursor = (cleanupCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
     const scheduler = (schedulerSnap.data() ?? {}) as {
       lastRunAt?: string;
       lastRunMode?: string;
@@ -54,6 +56,8 @@ export async function GET(request: Request) {
         fullSyncCursorUpdatedAt: fullCursor.updatedAt ?? null,
         incrementalSinceIso: incrementalCursor.sinceIso ?? null,
         incrementalCursorUpdatedAt: incrementalCursor.updatedAt ?? null,
+        cleanupNextPage: Number(cleanupCursor.nextPage ?? 1),
+        cleanupCursorUpdatedAt: cleanupCursor.updatedAt ?? null,
         schedulerLastRunAt: scheduler.lastRunAt ?? null,
         schedulerLastRunMode: scheduler.lastRunMode ?? null,
         schedulerLastRunStatus: scheduler.lastRunStatus ?? null,
