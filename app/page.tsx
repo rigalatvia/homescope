@@ -48,6 +48,44 @@ export default async function HomePage() {
       <HeroSection />
       <ServiceAreasSection />
       <ValuePointsSection />
+      <section className="site-container py-8 sm:py-10">
+        <div className="rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Buyer Resource</p>
+            <h2 className="mt-2 font-heading text-3xl text-brand-900 sm:text-4xl">First Time Buying in Ontario?</h2>
+            <p className="mt-3 text-base leading-8 text-brand-700">
+              Buying your first home can feel overwhelming, especially when you are trying to understand budget,
+              mortgage pre-approval, showings, offers, and closing steps. Start with our simple{" "}
+              <Link
+                href="/guides/first-time-home-buyer-ontario"
+                className="font-semibold text-brand-900 underline underline-offset-4"
+              >
+                First-Time Buyer Checklist Ontario
+              </Link>{" "}
+              before you begin touring homes.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/guides/first-time-home-buyer-ontario"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                Read the First-Time Buyer Checklist
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-brand-700 sm:text-base">
+              Already working on approvals and lender paperwork? Review{" "}
+              <Link
+                href="/guides/documents-needed-buy-house-toronto"
+                className="font-semibold text-brand-900 underline underline-offset-4"
+              >
+                Documents Needed to Buy a House in Toronto
+              </Link>{" "}
+              before you start comparing serious options.
+            </p>
+          </div>
+        </div>
+      </section>
       <FeaturedListingsPreview listings={featuredListings} />
       <section className="site-container py-8 sm:py-12">
         <div className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-10">

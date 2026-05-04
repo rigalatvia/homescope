@@ -102,6 +102,29 @@ export default function OrganizeRealEstateDocumentsCanadaPage() {
           ]}
         />
 
+        <section className="rounded-[2rem] border border-brand-100 bg-brand-50/60 p-6 shadow-soft sm:p-8">
+          <p className="text-sm leading-7 text-brand-700 sm:text-base">
+            First-time buyers can also use the{" "}
+            <a
+              href="/guides/first-time-home-buyer-ontario"
+              className="font-semibold text-brand-900 underline underline-offset-4"
+            >
+              First-Time Buyer Checklist Ontario
+            </a>{" "}
+            to understand which documents appear at each stage of the buying process.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-brand-700 sm:text-base">
+            If you are specifically collecting lender, offer, and closing paperwork for a Toronto purchase, review the{" "}
+            <a
+              href="/guides/documents-needed-buy-house-toronto"
+              className="font-semibold text-brand-900 underline underline-offset-4"
+            >
+              Documents Needed to Buy a House in Toronto
+            </a>{" "}
+            guide for a more focused buyer checklist.
+          </p>
+        </section>
+
         <GuideSectionCard
           eyebrow="System Design"
           title="Categorize your documents"

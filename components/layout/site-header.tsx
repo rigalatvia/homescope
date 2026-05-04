@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -20,20 +20,20 @@ export function SiteHeader() {
     { href: "/guides/lease-documents", label: "Lease Documents" }
   ];
 
-  function closeMobileGuidesMenu() {
+  const closeMobileGuidesMenu = useCallback(() => {
     if (mobileGuidesRef.current) {
       mobileGuidesRef.current.open = false;
     }
-  }
+  }, []);
 
-  function closeAllGuidesMenus() {
+  const closeAllGuidesMenus = useCallback(() => {
     setIsDesktopGuidesOpen(false);
     closeMobileGuidesMenu();
-  }
+  }, [closeMobileGuidesMenu]);
 
   useEffect(() => {
     closeAllGuidesMenus();
-  }, [pathname]);
+  }, [pathname, closeAllGuidesMenus]);
 
   return (
     <header className="border-b border-brand-100 bg-white/95 backdrop-blur">

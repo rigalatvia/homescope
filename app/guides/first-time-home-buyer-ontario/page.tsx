@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import type { LucideIcon } from "lucide-react";
 import {
   BadgeDollarSign,
+  ClipboardCheck,
   Compass,
   FileStack,
   Handshake,
   HardHat,
-  Home,
   Landmark,
   Lightbulb,
+  Map,
   Search,
   ShieldCheck,
-  ClipboardCheck
+  Users
 } from "lucide-react";
 import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
@@ -20,41 +21,44 @@ import { SITE_CONFIG } from "@/config/site";
 
 const faqItems = [
   {
-    question: "How much down payment do I need in Ontario?",
+    question: "What should a first-time home buyer do first in Ontario?",
     answer:
-      "The minimum down payment depends on purchase price and lending rules. Many first-time buyers start with the minimum permitted by their lender, but they should also budget for closing costs, inspections, legal fees, and moving expenses."
+      "Start by reviewing your budget, savings, credit profile, and monthly carrying costs. After that, speak with a mortgage professional about pre-approval so you understand your realistic price range."
   },
   {
-    question: "What documents should first-time buyers keep?",
+    question: "Do I need mortgage pre-approval before viewing homes?",
     answer:
-      "Keep mortgage pre-approval letters, pay stubs, tax returns, proof of down payment, signed offers, inspection reports, lawyer correspondence, insurance details, and final closing documents in one organized system."
+      "It is strongly recommended. Pre-approval helps you understand your budget and allows you to move faster when the right home becomes available."
   },
   {
-    question: "Why is mortgage pre-approval important?",
+    question: "What documents should first-time buyers prepare?",
     answer:
-      "Mortgage pre-approval helps Ontario buyers understand their real budget before touring homes. It also shows sellers you are serious and can move more quickly when you find the right property."
+      "Buyers often prepare ID, proof of income, employment details, bank statements, down payment confirmation, mortgage documents, signed offers, inspection reports, legal paperwork, and closing documents."
   },
   {
-    question: "Is this checklist the same as a buyer document list?",
+    question: "Is this guide only for Toronto buyers?",
     answer:
-      "No. This page focuses on the buying journey itself, from financial readiness to closing. For a document-focused checklist, see the Toronto buyer documents guide."
+      "No. This guide is for Ontario buyers, especially people searching in Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King."
   }
 ];
 
-const quickChecklist = [
-  "Review your budget, savings, and monthly carrying costs",
-  "Get mortgage pre-approval before active house hunting",
-  "Choose an agent who understands your target neighborhoods",
-  "Track listings, showing notes, and offer deadlines in one place",
-  "Keep inspection, financing, and legal records organized from day one"
+const quickRoadmap = [
+  "Review your budget and savings",
+  "Get mortgage pre-approval",
+  "Choose your target cities or neighborhoods",
+  "Start viewing homes",
+  "Compare listings and showing notes",
+  "Make an offer with the right conditions",
+  "Complete inspection, financing, and legal steps",
+  "Prepare for closing and possession"
 ];
 
 export const metadata: Metadata = {
   title: {
-    absolute: "First Time Home Buyer Checklist Ontario | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
+    absolute: "First-Time Home Buyer Checklist Ontario | HomeScope GTA"
   },
   description:
-    "Step-by-step checklist for first time home buyers in Ontario. Learn how to prepare finances, get pre-approved, search for homes, and close your purchase smoothly.",
+    "A simple first-time home buyer checklist for Ontario. Learn how to prepare your budget, mortgage pre-approval, showings, offers, closing steps, and documents before buying a home.",
   alternates: {
     canonical: "/guides/first-time-home-buyer-ontario"
   }
@@ -65,12 +69,12 @@ export default function FirstTimeHomeBuyerOntarioPage() {
 
   return (
     <GuidePageLayout
-      title="First Time Home Buyer Checklist in Ontario"
-      intro="Buying your first home in Ontario can feel exciting and overwhelming at the same time. A clearer roadmap helps you move from saving and pre-approval to showings, offers, and closing with more confidence, better timing, and fewer surprises."
+      title="First-Time Home Buyer Checklist in Ontario"
+      intro="Buying your first home in Ontario is exciting, but it can also feel like there are too many steps at once. This guide gives you a simple roadmap so you know what to prepare before showings, what happens when you make an offer, and how to stay organized from pre-approval to closing."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
-        { label: "First Time Home Buyer Checklist in Ontario" }
+        { label: "First-Time Home Buyer Checklist in Ontario" }
       ]}
       relatedLinks={[
         { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
@@ -87,37 +91,38 @@ export default function FirstTimeHomeBuyerOntarioPage() {
           description: "Keep every purchase record in one structured system."
         },
         {
-          href: "/guides/rental-application-ontario",
-          label: "Rental Application Ontario",
-          description: "Useful if you are leasing while preparing for a future purchase."
+          href: "/contact",
+          label: "Contact Us",
+          description: "Reach out if you want help exploring GTA neighborhoods or listings."
         }
       ]}
       articleSchema={{
-        title: "First Time Home Buyer Checklist in Ontario",
+        title: "First-Time Home Buyer Checklist in Ontario",
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <section className="not-prose rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-800">
-              <Home className="h-4 w-4" />
-              First-Time Buyer Roadmap
+              <Map className="h-4 w-4" />
+              Ontario Buyer Roadmap
             </div>
-            <h2 className="mt-4 font-heading text-3xl text-brand-900">Quick Checklist Before You Start Touring Homes</h2>
+            <h2 className="mt-4 font-heading text-3xl text-brand-900">Quick Ontario First-Time Buyer Roadmap</h2>
             <p className="mt-3 text-sm leading-7 text-brand-700 sm:text-base">
-              Use this shortlist as your Ontario home buying reset. It gives you the major checkpoints to complete
-              before the process starts moving quickly.
+              Use this roadmap as your quick overview before you get deep into showings, mortgage decisions, and offer
+              deadlines.
             </p>
           </div>
           <div className="rounded-3xl border border-brand-100 bg-white p-5">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">At a Glance</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Quick checklist</h3>
             <ul className="mt-4 space-y-3">
-              {quickChecklist.map((item) => (
+              {quickRoadmap.map((item, index) => (
                 <li key={item} className="flex items-start gap-3 text-sm leading-6 text-brand-700">
-                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-900 text-white">
-                    <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-900 text-[11px] font-semibold text-white">
+                    {index + 1}
                   </span>
                   <span>{item}</span>
                 </li>
@@ -128,6 +133,19 @@ export default function FirstTimeHomeBuyerOntarioPage() {
       </section>
 
       <div className="not-prose mt-10 grid gap-5">
+        <StepCard
+          step="Who this guide is for"
+          title="Who this guide is for"
+          icon={Users}
+          description="This checklist is helpful if you are buying your first home in Ontario, starting to compare GTA neighborhoods, preparing for mortgage pre-approval, or trying to understand what happens before and after an offer. It is written for regular buyers who want a clear, simple path without legal or real estate jargon."
+          bullets={[
+            "First-time buyers planning a move in Ontario",
+            "People comparing Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, or King",
+            "Buyers preparing for mortgage pre-approval conversations",
+            "Anyone who wants the buying process explained in plain language"
+          ]}
+        />
+
         <StepCard
           step="Step 1"
           title="Check your financial readiness"
@@ -140,25 +158,6 @@ export default function FirstTimeHomeBuyerOntarioPage() {
             "Keep recent pay stubs, tax returns, and bank statements ready"
           ]}
         />
-
-        <section className="rounded-[2rem] border border-brand-100 bg-brand-50/50 p-6 shadow-soft sm:p-8">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-900 shadow-soft">
-              <Landmark className="h-6 w-6" />
-            </span>
-            <div>
-              <h2 className="font-heading text-3xl text-brand-900">Know the goal of this guide</h2>
-              <p className="mt-3 text-sm leading-7 text-brand-700 sm:text-base">
-                This page is your Ontario first-time buyer roadmap. It is meant to help you understand the sequence of
-                decisions and milestones from planning to possession. If you need a strict paperwork checklist, the{" "}
-                <a href="/guides/documents-needed-buy-house-toronto" className="font-semibold text-brand-900 underline underline-offset-4">
-                  Toronto buyer documents guide
-                </a>{" "}
-                is the better companion page.
-              </p>
-            </div>
-          </div>
-        </section>
 
         <StepCard
           step="Step 2"
@@ -173,6 +172,16 @@ export default function FirstTimeHomeBuyerOntarioPage() {
           ]}
         />
 
+        <InlineCta
+          title="Ready to see what is available?"
+          description="Once your budget is clearer, you can start browsing active GTA listings in Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King."
+          primaryLink={{ href: "/listings", label: "Browse GTA Listings" }}
+          secondaryLink={{
+            href: "/guides/documents-needed-buy-house-toronto",
+            label: "Review Toronto Buyer Documents"
+          }}
+        />
+
         <section className="rounded-[2rem] bg-brand-900 px-6 py-7 text-white shadow-soft sm:px-8">
           <div className="flex items-start gap-4">
             <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10">
@@ -184,7 +193,14 @@ export default function FirstTimeHomeBuyerOntarioPage() {
               <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-100 sm:text-base">
                 Ontario homes can move quickly. Keep your lender documents, ID, down payment proof, and employment
                 records in one organized system before you tour seriously. When the right listing appears, speed and
-                clarity matter.
+                clarity matter. If you want the paperwork side explained in more detail, review the{" "}
+                <a
+                  href="/guides/documents-needed-buy-house-toronto"
+                  className="font-semibold text-white underline underline-offset-4"
+                >
+                  Toronto buyer documents guide
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -208,9 +224,9 @@ export default function FirstTimeHomeBuyerOntarioPage() {
           icon={Search}
           description="Once your budget is clear, compare listings by location, layout, commute, school access, and long-term fit. Keep notes from every showing so your search stays organized."
           bullets={[
-            "Track favorite properties and compare features",
-            "Note maintenance needs, building fees, or future repair concerns",
-            "Save listing sheets, photos, and showing notes in one place"
+            "Choose the cities or neighborhoods that fit your budget and commute",
+            "Track favorite properties and compare features side by side",
+            "Save showing notes so you remember what stood out later"
           ]}
         />
 
@@ -260,7 +276,15 @@ export default function FirstTimeHomeBuyerOntarioPage() {
               <p className="mt-3 text-sm leading-7 text-brand-700 sm:text-base">
                 First-time buyers often underestimate how many files pile up throughout the process. HomeScope GTA can
                 serve as a practical document hub for tracking approvals, signed agreements, inspection notes, receipts,
-                and closing paperwork in one place instead of across scattered email threads and downloads.
+                and closing paperwork in one place instead of across scattered email threads and downloads. First-time
+                buyers can also use the{" "}
+                <a
+                  href="/guides/organize-real-estate-documents-canada"
+                  className="font-semibold text-brand-900 underline underline-offset-4"
+                >
+                  document organization guide
+                </a>{" "}
+                to build a cleaner folder system from the start.
               </p>
               <ul className="mt-4 grid gap-3 text-sm text-brand-700 sm:grid-cols-2">
                 <li className="rounded-2xl bg-brand-50/60 px-4 py-3">Pre-approval letters and lender requests</li>
@@ -276,11 +300,11 @@ export default function FirstTimeHomeBuyerOntarioPage() {
       <FAQSection items={faqItems} />
 
       <CTASection
-        title="Start your Ontario home search with a clearer plan"
-        description="Browse GTA listings, stay ready with your financing documents, and use HomeScope GTA to keep every approval, note, and closing file in one organized system from day one."
+        title="Need help planning your first move?"
+        description="HomeScope GTA helps buyers explore listings, understand the process, and stay organized with important real estate documents."
         links={[
-          { href: "/listings", label: "Browse GTA Listings" },
-          { href: "/", label: "Explore HomeScope GTA", variant: "secondary" }
+          { href: "/listings", label: "Browse Listings" },
+          { href: "/contact", label: "Contact Us", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>
@@ -318,6 +342,42 @@ function StepCard({
             ))}
           </ul>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function InlineCta({
+  title,
+  description,
+  primaryLink,
+  secondaryLink
+}: {
+  title: string;
+  description: string;
+  primaryLink: { href: string; label: string };
+  secondaryLink?: { href: string; label: string };
+}) {
+  return (
+    <section className="rounded-[2rem] border border-brand-100 bg-brand-50/60 p-6 shadow-soft sm:p-8">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Next Step</p>
+      <h2 className="mt-2 font-heading text-3xl text-brand-900">{title}</h2>
+      <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-700 sm:text-base">{description}</p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <a
+          href={primaryLink.href}
+          className="inline-flex items-center justify-center rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+        >
+          {primaryLink.label}
+        </a>
+        {secondaryLink ? (
+          <a
+            href={secondaryLink.href}
+            className="inline-flex items-center justify-center rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+          >
+            {secondaryLink.label}
+          </a>
+        ) : null}
       </div>
     </section>
   );

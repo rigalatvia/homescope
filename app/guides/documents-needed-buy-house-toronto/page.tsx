@@ -5,8 +5,10 @@ import {
   FileText,
   FolderKanban,
   Landmark,
+  MapPinned,
   Scale,
-  ShieldCheck
+  ShieldCheck,
+  Users
 } from "lucide-react";
 import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
@@ -38,10 +40,10 @@ const faqItems = [
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Documents Needed to Buy a House in Toronto | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
+    absolute: "Documents Needed to Buy a House in Toronto | HomeScope GTA"
   },
   description:
-    "Complete document checklist for buying a house in Toronto, including ID, income records, mortgage paperwork, property documents, and closing files.",
+    "A clear Toronto buyer document checklist covering ID, income records, mortgage paperwork, property documents, legal files, and closing records.",
   alternates: {
     canonical: "/guides/documents-needed-buy-house-toronto"
   }
@@ -60,7 +62,7 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
   return (
     <GuidePageLayout
       title="Documents Needed to Buy a House in Toronto"
-      intro="Document preparation can speed up every stage of a Toronto home purchase. From mortgage qualification to legal closing, organized records help buyers respond quickly and avoid delays when timing matters."
+      intro="Buying a home in Toronto often means moving quickly once the right property appears. This guide focuses on the actual documents buyers may need for pre-approval, offers, lender follow-ups, legal review, and closing so you can stay organized without guessing what comes next."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
@@ -102,6 +104,19 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
 
       <div className="mt-10 grid gap-5">
         <GuideSectionCard
+          eyebrow="Who This Guide Is For"
+          title="Who this guide is for"
+          icon={Users}
+          description="This page is for Toronto buyers who want the paperwork side of the purchase explained clearly. It is especially useful if you are collecting lender documents, preparing to make your first offer, or trying to build a clean folder system before your search gets serious."
+          bullets={[
+            "First-time buyers moving from budget planning into document prep",
+            "Toronto buyers getting ready for mortgage or lawyer requests",
+            "People who want a clean checklist instead of scattered email attachments",
+            "Buyers who want to move faster when the right listing appears"
+          ]}
+        />
+
+        <GuideSectionCard
           eyebrow="What This Page Covers"
           title="This guide is about paperwork, not the full buying journey"
           icon={FileText}
@@ -114,6 +129,19 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
             "Legal and closing documents"
           ]}
         />
+
+        <section className="rounded-[2rem] border border-brand-100 bg-brand-50/60 p-6 shadow-soft sm:p-8">
+          <p className="text-sm leading-7 text-brand-700 sm:text-base">
+            If you are still early in the buying process, start with our{" "}
+            <a
+              href="/guides/first-time-home-buyer-ontario"
+              className="font-semibold text-brand-900 underline underline-offset-4"
+            >
+              First-Time Buyer Checklist Ontario
+            </a>{" "}
+            to understand the full path from budget planning to closing.
+          </p>
+        </section>
 
         <GuideSectionCard
           eyebrow="Foundation"
@@ -165,6 +193,23 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
             "Proof of down payment source"
           ]}
         />
+
+        <section className="rounded-[2rem] border border-brand-100 bg-brand-50/60 p-6 shadow-soft sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Next Step</p>
+          <h2 className="mt-2 font-heading text-3xl text-brand-900">Ready to match your paperwork to real listings?</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-brand-700 sm:text-base">
+            Once your approval letters and supporting documents are organized, you can start comparing active homes in
+            Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with a much clearer budget in mind.
+          </p>
+          <div className="mt-5">
+            <a
+              href="/listings"
+              className="inline-flex items-center justify-center rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+            >
+              Browse GTA Listings
+            </a>
+          </div>
+        </section>
 
         <GuideDarkHighlight
           title="Keep a lender-ready folder before the right listing appears"
@@ -234,6 +279,19 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
             "Offer documents and amendments",
             "Inspection and condo review materials",
             "Closing statements and long-term property records"
+          ]}
+        />
+
+        <GuideSectionCard
+          eyebrow="Organization"
+          title="Use this checklist with your broader buyer plan"
+          icon={MapPinned}
+          description="This page works best when you pair it with a broader buying roadmap and a document system you can maintain over time."
+          bullets={[
+            "Use the first-time buyer checklist to understand when each document usually appears",
+            "Use the document organization guide to build a cleaner long-term folder structure",
+            "Keep the latest signed versions separate from earlier drafts",
+            "Review this checklist again before offers and before closing"
           ]}
         />
       </div>

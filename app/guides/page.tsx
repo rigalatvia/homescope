@@ -174,12 +174,15 @@ export default function GuidesPage() {
                 <featuredGuide.icon className="h-6 w-6" />
               </div>
               <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-200">
-                Featured Guide
+                Featured Buyer Guide
               </p>
-              <h2 className="mt-2 font-heading text-3xl">{featuredGuide.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-brand-100">{featuredGuide.description}</p>
+              <h2 className="mt-2 font-heading text-3xl">First-Time Home Buyer Checklist Ontario</h2>
+              <p className="mt-3 text-sm leading-7 text-brand-100">
+                A clear, beginner-friendly roadmap for Ontario buyers covering budgeting, mortgage pre-approval, home
+                search, offers, conditions, closing, and document organization.
+              </p>
               <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold">
-                Read featured guide
+                Start Buyer Checklist
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </span>
             </Link>
