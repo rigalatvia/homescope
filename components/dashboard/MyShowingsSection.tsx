@@ -32,7 +32,7 @@ export function MyShowingsSection({ user }: MyShowingsSectionProps) {
         console.error("[dashboard] Failed to load user showings", loadError);
         if (!isActive) return;
         setShowings([]);
-        setError("Something went wrong loading your showing requests. Please try again.");
+        setError("Your showing requests are not available just yet. If you've already booked a showing, please check back shortly.");
       } finally {
         if (isActive) {
           setLoading(false);
@@ -75,7 +75,7 @@ export function MyShowingsSection({ user }: MyShowingsSectionProps) {
           ))}
         </div>
       ) : error ? (
-        <p className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+        <p className="mt-8 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-3 text-sm text-brand-700">{error}</p>
       ) : showings.length === 0 ? (
         <div className="mt-8">
           <EmptyState
