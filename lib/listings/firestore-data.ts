@@ -1,5 +1,7 @@
 import { unstable_cache } from "next/cache";
 import type { Listing, ListingFilters } from "@/types/listing";
+import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import { allowedMunicipalities } from "@/lib/mls/config";
 import type { MLSListingFirestoreDocument } from "@/lib/mls/types";
 import {
   getFilteredListingsPage as getFilteredMLSListingsPage,
@@ -99,6 +101,40 @@ export async function getFeaturedListings(): Promise<Listing[]> {
 export async function getListingsByAgentKey(agentKey: string, limit = 24): Promise<Listing[]> {
   const listings = await getMLSListingsByAgentKey(agentKey, limit);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
+}
+
+export async function getPublicListingsByIds(listingIds: string[]): Promise<Listing[]> {
+  const normalizedIds = Array.from(
+    new Set(listingIds.map((listingId) => listingId.trim()).filter((listingId) => listingId.length > 0))
+  );
+
+  if (normalizedIds.length === 0) {
+    return [];
+  }
+
+  const firestore = getFirebaseAdminFirestore();
+  const listingMap = new Map<string, Listing>();
+  const snapshots = await Promise.all(
+    chunkList(normalizedIds, 10).map((chunk) =>
+      firestore.collection("listings").where("listingId", "in", chunk).get()
+    )
+  );
+
+  for (const snapshot of snapshots) {
+    for (const doc of snapshot.docs) {
+      const listing = mapMLSListingToUIListing(doc.data() as MLSListingFirestoreDocument);
+      if (
+        listing.isPubliclyAdvertisable &&
+        allowedMunicipalities.includes(listing.city as (typeof allowedMunicipalities)[number])
+      ) {
+        listingMap.set(listing.id, listing);
+      }
+    }
+  }
+
+  return normalizedIds
+    .map((listingId) => listingMap.get(listingId))
+    .filter((listing): listing is Listing => Boolean(listing));
 }
 
 function mapMLSListingToUIListing(raw: MLSListingFirestoreDocument): Listing {
@@ -216,4 +252,15 @@ function parseTransactionType(raw: Pick<MLSListingFirestoreDocument, "transactio
   }
 
   return "sale";
+}
+
+function chunkList<TItem>(items: TItem[], chunkSize: number): TItem[][] {
+  const safeChunkSize = Math.max(1, chunkSize);
+  const chunks: TItem[][] = [];
+
+  for (let index = 0; index < items.length; index += safeChunkSize) {
+    chunks.push(items.slice(index, index + safeChunkSize));
+  }
+
+  return chunks;
 }

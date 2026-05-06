@@ -20,6 +20,12 @@ export function validateLeadInput(input: LeadSubmissionInput): string[] {
   if (!input.leadTransactionType || !["sale", "lease"].includes(input.leadTransactionType)) {
     errors.push("Listing transaction type is missing.");
   }
+  if (input.formType && !["showing", "contact"].includes(input.formType)) {
+    errors.push("Lead form type is invalid.");
+  }
+  if (input.status && !["pending", "confirmed"].includes(input.status)) {
+    errors.push("Lead status is invalid.");
+  }
 
   if (input.leadTransactionType === "lease" && input.isReadyToProvideDocs !== true) {
     errors.push("Please confirm you are ready to provide required lease documents.");

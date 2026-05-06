@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadCaptureModal } from "@/components/leads/lead-capture-modal";
+import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
 import { formatPrice } from "@/lib/utils/format";
 import { getPublicListingBySlug } from "@/lib/listings/service";
@@ -71,7 +72,10 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             <h1 className="mt-2 font-heading text-4xl text-brand-900">{listing.title}</h1>
             <p className="mt-2 text-2xl font-semibold text-brand-900">{formatPrice(listing.price)}</p>
             <p className="mt-1 text-brand-700">{fullAddress}</p>
-            <p className="mt-1 text-sm text-brand-600">MLS Number: {listing.mlsNumber}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <p className="text-sm text-brand-600">MLS Number: {listing.mlsNumber}</p>
+              <FavoriteButton listingId={listing.id} className="border-brand-300 text-sm" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft sm:grid-cols-[0.9fr_0.9fr_1fr_1fr_1.45fr] lg:gap-2 xl:gap-3">
@@ -120,6 +124,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
             listingAddress={fullAddress}
             listingCity={listing.city}
             listingUrl={listingUrl}
+            listingImageUrl={listing.images[0]}
             listingTransactionType={listing.transactionType}
           />
         </div>

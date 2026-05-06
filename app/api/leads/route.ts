@@ -17,7 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errors.join(" ") }, { status: 400 });
     }
 
-    const record = await storeLeadSubmission(payload);
+    const normalizedPayload: LeadSubmissionInput = {
+      ...payload,
+      formType: payload.formType ?? "showing",
+      status: payload.status ?? "pending",
+      userEmail: payload.userEmail ?? payload.email,
+      userName: payload.userName ?? payload.fullName
+    };
+
+    const record = await storeLeadSubmission(normalizedPayload);
     try {
       await upsertContactFromLead(record);
     } catch (contactsError) {

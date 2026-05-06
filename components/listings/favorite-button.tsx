@@ -1,48 +1,107 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Heart, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { SignInButton } from "@/components/auth/SignInButton";
+import { useAuth } from "@/hooks/useAuth";
+import { useSavedHomes } from "@/hooks/useSavedHomes";
 
 interface FavoriteButtonProps {
   listingId: string;
+  className?: string;
 }
 
-const STORAGE_KEY = "homescope-favorite-listings";
+export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
+  const { user, loading: authLoading } = useAuth();
+  const { isSaved, isPending, toggleSave } = useSavedHomes();
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-export function FavoriteButton({ listingId }: FavoriteButtonProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const saved = useMemo(() => isSaved(listingId), [isSaved, listingId]);
+  const pending = isPending(listingId);
 
-  useEffect(() => {
-    const current = getFavorites();
-    setIsFavorite(current.includes(listingId));
-  }, [listingId]);
+  const handleToggle = async () => {
+    if (authLoading) {
+      return;
+    }
 
-  const toggle = () => {
-    const current = getFavorites();
-    const next = current.includes(listingId) ? current.filter((id) => id !== listingId) : [...current, listingId];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setIsFavorite(next.includes(listingId));
+    if (!user) {
+      setErrorMessage("");
+      setShowPrompt(true);
+      return;
+    }
+
+    try {
+      await toggleSave(listingId);
+      setErrorMessage("");
+    } catch (error) {
+      console.error("[savedHomes] Failed to toggle saved home", error);
+      setErrorMessage("We could not update this saved home right now. Please try again.");
+    }
+  };
+
+  const handleSignedIn = async () => {
+    try {
+      await toggleSave(listingId);
+      setErrorMessage("");
+      setShowPrompt(false);
+    } catch (error) {
+      console.error("[savedHomes] Failed to save home after sign-in", error);
+      setErrorMessage("We could not save this home right now. Please try again.");
+    }
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-pressed={isFavorite}
-      className="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-semibold text-brand-800 transition hover:border-brand-400"
-    >
-      {isFavorite ? "Saved" : "Save"}
-    </button>
-  );
-}
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          void handleToggle();
+        }}
+        aria-pressed={saved}
+        disabled={authLoading || pending}
+        className={`inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-800 transition hover:border-brand-400 disabled:opacity-60 ${
+          className || ""
+        }`}
+      >
+        {pending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
+        )}
+        {saved ? "Saved" : "Save"}
+      </button>
 
-function getFavorites(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : [];
-  } catch {
-    return [];
-  }
+      {errorMessage ? <p className="mt-2 text-xs text-red-700">{errorMessage}</p> : null}
+
+      {showPrompt ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/45 p-4">
+          <div className="w-full max-w-sm rounded-[1.75rem] border border-brand-100 bg-white p-6 shadow-soft">
+            <p className="font-heading text-3xl text-brand-900">Sign in to save this home.</p>
+            <p className="mt-3 text-sm leading-7 text-brand-700">
+              Save homes you love and keep them ready in your HomeScope GTA dashboard.
+            </p>
+            {errorMessage ? (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</p>
+            ) : null}
+            <div className="mt-6 flex flex-col gap-3">
+              <SignInButton
+                label="Sign in with Google"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+                onSuccess={handleSignedIn}
+                onError={setErrorMessage}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPrompt(false)}
+                className="inline-flex items-center justify-center rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
 }

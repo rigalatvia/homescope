@@ -9,6 +9,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { ConsentBanner } from "@/components/analytics/consent-banner";
 import { MetaPixelScript } from "@/components/analytics/meta-pixel-script";
 import { SiteChatbot } from "@/components/chat/site-chatbot";
+import { AppProviders } from "@/components/providers/app-providers";
 
 const DEFAULT_GA_MEASUREMENT_ID = "G-1G84P57QZY";
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID;
@@ -89,15 +90,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </>
         ) : null}
 
-        <MetaPixelScript pixelId={META_PIXEL_ID} />
-        <Suspense fallback={null}>
-          <PageViewTracker />
-        </Suspense>
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
-        <ConsentBanner />
-        <SiteChatbot />
+        <AppProviders>
+          <MetaPixelScript pixelId={META_PIXEL_ID} />
+          <Suspense fallback={null}>
+            <PageViewTracker />
+          </Suspense>
+          <SiteHeader />
+          <main>{children}</main>
+          <SiteFooter />
+          <ConsentBanner />
+          <SiteChatbot />
+        </AppProviders>
       </body>
     </html>
   );

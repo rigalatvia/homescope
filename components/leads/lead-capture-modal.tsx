@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
@@ -12,6 +13,7 @@ interface LeadCaptureModalProps {
   listingAddress: string;
   listingCity: string;
   listingUrl: string;
+  listingImageUrl?: string;
   listingTransactionType: ListingTransactionType;
 }
 
@@ -36,9 +38,11 @@ export function LeadCaptureModal({
   listingAddress,
   listingCity,
   listingUrl,
+  listingImageUrl,
   listingTransactionType
 }: LeadCaptureModalProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -48,10 +52,25 @@ export function LeadCaptureModal({
 
   const heading = "Book a Private Showing";
 
+  useEffect(() => {
+    if (!user) return;
+
+    setForm((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.displayName || "",
+      email: prev.email || user.email || ""
+    }));
+  }, [user]);
+
   const open = () => {
     setSubmitState("idle");
     setErrorMessage("");
     setSuccessMessage("");
+    setForm((prev) => ({
+      ...prev,
+      fullName: user?.displayName || prev.fullName,
+      email: user?.email || prev.email
+    }));
     setIsOpen(true);
   };
 
@@ -90,12 +109,18 @@ export function LeadCaptureModal({
         body: JSON.stringify({
           ...form,
           intent: "showing_request",
+          formType: "showing",
+          status: "pending",
           listingId,
           listingMlsNumber,
           listingTitle,
           listingAddress,
           listingCity,
           listingUrl,
+          listingImageUrl,
+          userId: user?.uid,
+          userEmail: user?.email || form.email,
+          userName: user?.displayName || form.fullName,
           leadTransactionType: listingTransactionType
         })
       });

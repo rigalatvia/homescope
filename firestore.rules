@@ -10,6 +10,20 @@ service cloud.firestore {
       allow write: if false; // server-only sync writes
     }
 
+    match /savedHomes/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.listingId is string;
+
+      allow read, delete: if request.auth != null
+                          && resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.listingId == resource.data.listingId;
+    }
+
     // Private operational collections: server only
     match /listingSnapshots/{docId} {
       allow read, write: if false;
@@ -24,7 +38,9 @@ service cloud.firestore {
     }
 
     match /leads/{docId} {
-      allow read, write: if false; // through controlled backend endpoints only
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      allow write: if false; // through controlled backend endpoints only
     }
 
     match /contactMessages/{docId} {

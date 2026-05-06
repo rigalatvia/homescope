@@ -3,6 +3,7 @@ import {
   getFeaturedListings as getFeaturedListingsFromFirestore,
   getListingsByAgentKey as getListingsByAgentKeyFromFirestore,
   getPublicListingsPage as getPublicListingsPageFromFirestore,
+  getPublicListingsByIds as getPublicListingsByIdsFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
@@ -88,6 +89,10 @@ export async function getFeaturedListings(): Promise<Listing[]> {
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
   const listings = await getListingsByMunicipalityFromFirestore(city);
   return sortListingsWithFeaturedPriority(listings);
+}
+
+export async function getPublicListingsByIds(listingIds: string[]): Promise<Listing[]> {
+  return getPublicListingsByIdsFromFirestore(listingIds);
 }
 
 async function sortListingsWithFeaturedPriority(listings: Listing[]): Promise<Listing[]> {

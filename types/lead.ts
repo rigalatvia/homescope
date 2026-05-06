@@ -1,5 +1,7 @@
 export type LeadIntent = "showing_request" | "question";
 export type LeadTransactionType = "sale" | "lease";
+export type LeadFormType = "showing" | "contact";
+export type LeadStatus = "pending" | "confirmed";
 
 export interface LeadSubmissionInput {
   fullName: string;
@@ -15,7 +17,13 @@ export interface LeadSubmissionInput {
   listingAddress: string;
   listingCity: string;
   listingUrl: string;
+  listingImageUrl?: string;
   leadTransactionType: LeadTransactionType;
+  formType?: LeadFormType;
+  status?: LeadStatus;
+  userId?: string;
+  userEmail?: string;
+  userName?: string;
   isReadyToProvideDocs?: boolean;
   hasMortgagePreapproval?: boolean;
   website?: string;
