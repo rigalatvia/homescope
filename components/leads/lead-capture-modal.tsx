@@ -248,6 +248,7 @@ export function LeadCaptureModal({
                     value={form.preferredDateTime}
                     onChange={onChange}
                     required
+                    step={1800}
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
                 </FormField>

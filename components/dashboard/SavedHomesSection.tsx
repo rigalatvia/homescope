@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BedDouble, Bath, Ruler, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { AreaStatIcon, BathStatIcon, BedStatIcon } from "@/components/listings/property-stat-icons";
 import { formatPrice } from "@/lib/utils/format";
 import type { SavedHomeListing } from "@/lib/savedHomes";
 
@@ -128,9 +129,9 @@ function SavedHomeCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3 rounded-2xl border border-brand-100 bg-brand-50/50 px-3 py-3">
-          <SavedHomeStat icon={<BedDouble className="h-4 w-4" />} value={String(listing.bedrooms)} label="Beds" />
-          <SavedHomeStat icon={<Bath className="h-4 w-4" />} value={String(listing.bathrooms)} label="Baths" />
-          <SavedHomeStat icon={<Ruler className="h-4 w-4" />} value={listing.squareFootage || "N/A"} label="Sq. Ft." />
+          <SavedHomeStat icon={<BedStatIcon />} value={String(listing.bedrooms)} label="Beds" />
+          <SavedHomeStat icon={<BathStatIcon />} value={String(listing.bathrooms)} label="Baths" />
+          <SavedHomeStat icon={<AreaStatIcon />} value={listing.squareFootage || "N/A"} label="Sq. Ft." />
         </div>
 
         <div className="flex items-center justify-between gap-3">
@@ -165,12 +166,12 @@ function SavedHomeStat({
   label: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center gap-1 text-center">
-      <div className="flex items-center justify-center gap-2 text-brand-800">
-        <span className="shrink-0 text-brand-500">{icon}</span>
-        <span className="truncate text-base font-semibold text-brand-900">{value}</span>
-      </div>
-      <span className="text-xs text-brand-600">{label}</span>
+    <div className="flex min-w-0 flex-col items-center justify-start gap-2 text-center">
+      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-100 bg-white text-brand-500 shadow-sm">
+        {icon}
+      </span>
+      <span className="max-w-full truncate text-base font-semibold leading-none text-brand-900">{value}</span>
+      <span className="text-[11px] uppercase tracking-[0.14em] text-brand-600">{label}</span>
     </div>
   );
 }

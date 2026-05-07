@@ -4,7 +4,11 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Showing Request Submitted | HomeScope GTA",
   description:
-    "Thank you for your showing request. Check your email from info@homescopegta.ca and review next steps from HomeScope GTA."
+    "Thank you for your showing request. Check your email from info@homescopegta.ca and review next steps from HomeScope GTA.",
+  robots: {
+    index: false,
+    follow: false
+  }
 };
 
 export default function ShowingRequestThankYouPage({
