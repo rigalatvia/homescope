@@ -102,9 +102,14 @@ export function MyShowingsSection({ user }: MyShowingsSectionProps) {
                     <td className="px-5 py-4 align-top">
                       <ShowingPropertyCell showing={showing} />
                     </td>
-                    <td className="px-5 py-4 align-top text-sm text-brand-700">{formatPreferredDateTime(showing.preferredDateTime)}</td>
+                    <td className="px-5 py-4 align-top text-sm text-brand-700">
+                      <ShowingDateCell showing={showing} />
+                    </td>
                     <td className="px-5 py-4 align-top">
-                      <StatusBadge status={showing.status} />
+                      <div className="space-y-3">
+                        <StatusBadge status={showing.status} />
+                        <ShowingCalendarActions showing={showing} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -116,16 +121,37 @@ export function MyShowingsSection({ user }: MyShowingsSectionProps) {
             {showings.map((showing) => (
               <article key={showing.id} className="rounded-[1.75rem] border border-brand-100 bg-brand-50/50 p-4">
                 <ShowingPropertyCell showing={showing} />
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <p className="text-sm text-brand-700">{formatPreferredDateTime(showing.preferredDateTime)}</p>
+                <div className="mt-4 flex items-start justify-between gap-3">
+                  <ShowingDateCell showing={showing} />
                   <StatusBadge status={showing.status} />
                 </div>
+                <ShowingCalendarActions showing={showing} className="mt-4" />
               </article>
             ))}
           </div>
         </>
       )}
     </section>
+  );
+}
+
+function ShowingDateCell({ showing }: { showing: UserShowing }) {
+  const confirmedDateTime = showing.actualShowingDateTime?.trim();
+
+  if (showing.status === "confirmed" && confirmedDateTime) {
+    return (
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-brand-900">Confirmed showing</p>
+        <p className="text-sm text-brand-700">{formatPreferredDateTime(confirmedDateTime)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <p className="text-sm font-semibold text-brand-900">Requested time</p>
+      <p className="text-sm text-brand-700">{formatPreferredDateTime(showing.preferredDateTime)}</p>
+    </div>
   );
 }
 
@@ -154,6 +180,40 @@ function ShowingPropertyCell({ showing }: { showing: UserShowing }) {
     <Link href={safePathname(showing.listingUrl)} className="block transition hover:opacity-90">
       {content}
     </Link>
+  );
+}
+
+function ShowingCalendarActions({
+  showing,
+  className = ""
+}: {
+  showing: UserShowing;
+  className?: string;
+}) {
+  if (showing.status !== "confirmed" || !showing.actualShowingDateTime) {
+    return null;
+  }
+
+  const googleUrl = buildGoogleCalendarUrl(showing);
+
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`.trim()}>
+      <a
+        href={googleUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex rounded-full bg-brand-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-800"
+      >
+        Add to Google Calendar
+      </a>
+      <button
+        type="button"
+        onClick={() => downloadShowingIcs(showing)}
+        className="inline-flex rounded-full border border-brand-200 px-3 py-2 text-xs font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+      >
+        Download .ics
+      </button>
+    </div>
   );
 }
 
@@ -187,4 +247,74 @@ function safePathname(value: string): string {
   } catch {
     return value;
   }
+}
+
+function buildGoogleCalendarUrl(showing: UserShowing): string {
+  const start = new Date(showing.actualShowingDateTime as string);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  const title = showing.listingTitle
+    ? `Private showing: ${showing.listingTitle}`
+    : `Private showing: ${showing.listingAddress}`;
+  const location = [showing.listingAddress, showing.listingCity].filter(Boolean).join(", ");
+  const details = [showing.listingUrl, "Booked through HomeScope GTA"].filter(Boolean).join("\n\n");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${formatCalendarUtc(start)}/${formatCalendarUtc(end)}`,
+    details,
+    location
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function downloadShowingIcs(showing: UserShowing) {
+  const start = new Date(showing.actualShowingDateTime as string);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  const title = escapeIcsText(
+    showing.listingTitle ? `Private showing: ${showing.listingTitle}` : `Private showing: ${showing.listingAddress}`
+  );
+  const location = escapeIcsText([showing.listingAddress, showing.listingCity].filter(Boolean).join(", "));
+  const description = escapeIcsText([showing.listingUrl, "Booked through HomeScope GTA"].filter(Boolean).join("\n"));
+  const uid = `${showing.id}@homescopegta.ca`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//HomeScope GTA//Showing Calendar//EN",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${formatCalendarUtc(new Date())}`,
+    `DTSTART:${formatCalendarUtc(start)}`,
+    `DTEND:${formatCalendarUtc(end)}`,
+    `SUMMARY:${title}`,
+    `LOCATION:${location}`,
+    `DESCRIPTION:${description}`,
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${slugify(showing.listingAddress || showing.listingTitle || "showing")}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function formatCalendarUtc(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function escapeIcsText(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

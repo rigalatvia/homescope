@@ -13,6 +13,7 @@ export interface UserShowing {
   listingUrl: string;
   listingImageUrl?: string;
   preferredDateTime: string;
+  actualShowingDateTime?: string;
   status: ShowingStatus;
   createdAt: string;
   intent?: string;
@@ -39,6 +40,7 @@ export async function getUserShowings(userId: string): Promise<UserShowing[]> {
         listingUrl: valueOrEmpty(data.listingUrl),
         listingImageUrl: typeof data.listingImageUrl === "string" ? data.listingImageUrl : undefined,
         preferredDateTime: valueOrEmpty(data.preferredDateTime),
+        actualShowingDateTime: typeof data.actualShowingDateTime === "string" ? data.actualShowingDateTime : undefined,
         status: data.status === "confirmed" ? "confirmed" : "pending",
         createdAt: valueOrEmpty(data.createdAt),
         intent: typeof data.intent === "string" ? data.intent : undefined,

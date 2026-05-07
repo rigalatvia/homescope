@@ -24,12 +24,25 @@ const initialForm = {
   email: "",
   phone: "",
   agreesToTextMessages: false,
+  preferredDate: "",
+  preferredTime: "",
   preferredDateTime: "",
   message: "",
   isReadyToProvideDocs: false,
   hasMortgagePreapproval: false,
   website: ""
 };
+
+const HALF_HOUR_TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? 0 : 30;
+  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  const label = `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+
+  return { value, label };
+});
 
 export function LeadCaptureModal({
   listingId,
@@ -77,7 +90,29 @@ export function LeadCaptureModal({
   const close = () => setIsOpen(false);
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+    const { name, value } = event.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const onPreferredDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextDate = event.target.value;
+    setForm((prev) => ({
+      ...prev,
+      preferredDate: nextDate,
+      preferredDateTime: combinePreferredDateTime(nextDate, prev.preferredTime)
+    }));
+  };
+
+  const onPreferredTimeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextTime = event.target.value;
+    setForm((prev) => ({
+      ...prev,
+      preferredTime: nextTime,
+      preferredDateTime: combinePreferredDateTime(prev.preferredDate, nextTime)
+    }));
   };
 
   const onCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,13 +136,23 @@ export function LeadCaptureModal({
     setSubmitState("submitting");
     setErrorMessage("");
     setQualificationError("");
+    const preferredDateTime = combinePreferredDateTime(form.preferredDate, form.preferredTime);
+
+    if (!preferredDateTime) {
+      setSubmitState("idle");
+      setErrorMessage("Please choose both a date and a time for the showing.");
+      return;
+    }
+
+    const { preferredDate, preferredTime, ...formPayload } = form;
 
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          ...formPayload,
+          preferredDateTime,
           intent: "showing_request",
           formType: "showing",
           status: "pending",
@@ -240,17 +285,34 @@ export function LeadCaptureModal({
                   />
                   <span>I agree to receive text messages at this phone number about my showing request.</span>
                 </label>
-                <FormField label="Preferred Date/Time" htmlFor="preferredDateTime" required>
-                  <input
-                    id="preferredDateTime"
-                    name="preferredDateTime"
-                    type="datetime-local"
-                    value={form.preferredDateTime}
-                    onChange={onChange}
-                    required
-                    step={1800}
-                    className="w-full rounded-lg border border-brand-200 px-3 py-2"
-                  />
+                <FormField label="Preferred Date/Time" htmlFor="preferredDate" required>
+                  <div className="grid gap-3 sm:grid-cols-[1.1fr,0.9fr]">
+                    <input
+                      id="preferredDate"
+                      name="preferredDate"
+                      type="date"
+                      value={form.preferredDate}
+                      onChange={onPreferredDateChange}
+                      required
+                      className="w-full rounded-lg border border-brand-200 px-3 py-2"
+                    />
+                    <select
+                      id="preferredTime"
+                      name="preferredTime"
+                      value={form.preferredTime}
+                      onChange={onPreferredTimeChange}
+                      required
+                      className="w-full rounded-lg border border-brand-200 bg-white px-3 py-2"
+                    >
+                      <option value="">Select time</option>
+                      {HALF_HOUR_TIME_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="mt-2 text-xs text-brand-600">Please choose a time on the hour or half hour.</p>
                 </FormField>
                 </div>
                 <FormField label="Message" htmlFor="message" required>
@@ -360,6 +422,14 @@ export function LeadCaptureModal({
       )}
     </>
   );
+}
+
+function combinePreferredDateTime(date: string, time: string): string {
+  if (!date || !time) {
+    return "";
+  }
+
+  return `${date}T${time}`;
 }
 
 function FormField({

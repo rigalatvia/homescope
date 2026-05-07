@@ -13,11 +13,25 @@ export const metadata: Metadata = {
   }
 };
 
+const HALF_HOUR_TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? 0 : 30;
+  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  const label = `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+
+  return { value, label };
+});
+
 async function updateShowingStatus(formData: FormData) {
   "use server";
 
   const leadId = String(formData.get("leadId") || "").trim();
   const nextStatus = String(formData.get("status") || "").trim() as LeadStatus;
+  const showingDate = String(formData.get("showingDate") || "").trim();
+  const showingTime = String(formData.get("showingTime") || "").trim();
+  const actualShowingDateTime = combineDateAndTime(showingDate, showingTime);
 
   if (!leadId || !["pending", "confirmed"].includes(nextStatus)) {
     return;
@@ -42,6 +56,7 @@ async function updateShowingStatus(formData: FormData) {
   await docRef.set(
     {
       status: nextStatus,
+      actualShowingDateTime: actualShowingDateTime || null,
       statusUpdatedAt: new Date().toISOString()
     },
     { merge: true }
@@ -97,6 +112,9 @@ export default async function AdminLeadsPage() {
               {leads.map((lead) => {
                 const showingLead = isShowingLead(lead);
                 const status = normalizeLeadStatus(lead);
+                const actualShowingDateTime = typeof lead.actualShowingDateTime === "string" ? lead.actualShowingDateTime : "";
+                const showingDate = getDateInputValue(actualShowingDateTime);
+                const showingTime = getTimeInputValue(actualShowingDateTime);
 
                 return (
                   <tr key={lead.id} className="border-t border-brand-100 align-top">
@@ -125,12 +143,41 @@ export default async function AdminLeadsPage() {
                         <p className="text-xs text-brand-600">MLS: {lead.listingMlsNumber || "-"}</p>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-brand-700">{formatLeadDate(lead.preferredDateTime)}</td>
+                    <td className="px-3 py-3 text-brand-700">
+                      <div className="space-y-1">
+                        <p>{formatLeadDate(lead.preferredDateTime)}</p>
+                        {actualShowingDateTime ? (
+                          <p className="text-xs font-semibold text-brand-900">
+                            Confirmed for {formatLeadDate(actualShowingDateTime)}
+                          </p>
+                        ) : null}
+                      </div>
+                    </td>
                     <td className="px-3 py-3">
                       {showingLead ? (
-                        <form action={updateShowingStatus} className="flex min-w-[200px] flex-col gap-2">
+                        <form action={updateShowingStatus} className="flex min-w-[260px] flex-col gap-2">
                           <input type="hidden" name="leadId" value={lead.id} />
                           <StatusBadge status={status} />
+                          <div className="grid gap-2 sm:grid-cols-[1.15fr,0.95fr]">
+                            <input
+                              type="date"
+                              name="showingDate"
+                              defaultValue={showingDate}
+                              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-brand-900"
+                            />
+                            <select
+                              name="showingTime"
+                              defaultValue={showingTime}
+                              className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-brand-900"
+                            >
+                              <option value="">Select time</option>
+                              {HALF_HOUR_TIME_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                           <div className="flex items-center gap-2">
                             <select
                               name="status"
@@ -147,6 +194,10 @@ export default async function AdminLeadsPage() {
                               Update
                             </button>
                           </div>
+                          <p className="text-xs text-brand-600">
+                            Set the actual showing time here. Calendar actions appear for the user only after a showing
+                            is confirmed with a real time.
+                          </p>
                         </form>
                       ) : (
                         <span className="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
@@ -185,6 +236,26 @@ function formatLeadDate(value?: string): string {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(date);
+}
+
+function getDateInputValue(value?: string): string {
+  if (!value) return "";
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}/);
+  return match ? match[1] : "";
+}
+
+function getTimeInputValue(value?: string): string {
+  if (!value) return "";
+  const match = value.match(/^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2})/);
+  return match ? match[1] : "";
+}
+
+function combineDateAndTime(date: string, time: string): string {
+  if (!date || !time) {
+    return "";
+  }
+
+  return `${date}T${time}`;
 }
 
 function MetricCard({ label, value }: { label: string; value: number }) {

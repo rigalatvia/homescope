@@ -9,6 +9,7 @@ export interface LeadSubmissionInput {
   phone: string;
   agreesToTextMessages?: boolean;
   preferredDateTime: string;
+  actualShowingDateTime?: string;
   message: string;
   intent: LeadIntent;
   listingId: string;
@@ -33,6 +34,7 @@ export interface LeadSubmissionRecord extends LeadSubmissionInput {
   id: string;
   createdAt: string;
   source: "website";
+  statusUpdatedAt?: string;
   emailStatus?: "pending" | "sent" | "failed";
   emailSentAt?: string | null;
   emailDeliveryStatus?: "sent" | "failed" | "mock";
