@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin/authorize-request";
 import { updateCrmTemplateImage } from "@/lib/crm/templates-store";
 import { getFirebaseAdminStorage } from "@/lib/firebase/admin";
+import { resolveFirebaseStorageBucketName } from "@/lib/firebase/storage-bucket";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -43,7 +44,8 @@ export async function POST(request: Request) {
 
     const contentType = file.type || "application/octet-stream";
     const bytes = Buffer.from(await file.arrayBuffer());
-    const bucketName = await getServerConfigValue("FIREBASE_STORAGE_BUCKET");
+    await getServerConfigValue("FIREBASE_STORAGE_BUCKET");
+    const bucketName = resolveFirebaseStorageBucketName();
 
     if (bucketName) {
       const fileName = sanitizeFileName(file.name);
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
     if (bytes.length > MAX_EMBEDDED_IMAGE_BYTES) {
       return NextResponse.json(
         {
-          error: "Image upload needs FIREBASE_STORAGE_BUCKET for files over 250 KB."
+          error: "Large image uploads need Firebase Storage configured. Images under 250 KB can still be embedded."
         },
         { status: 400 }
       );
