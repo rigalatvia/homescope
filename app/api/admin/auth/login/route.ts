@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { getAdminAuthCookieOptions, ADMIN_AUTH_COOKIE } from "@/lib/admin/auth";
+import { getAdminAuthCookieOptions, getLegacyAdminAuthCookieOptions, ADMIN_AUTH_COOKIE } from "@/lib/admin/auth";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 export async function POST(request: Request) {
@@ -24,6 +24,10 @@ export async function POST(request: Request) {
       { status: 200 }
     );
 
+    response.cookies.set(ADMIN_AUTH_COOKIE, "", {
+      ...getLegacyAdminAuthCookieOptions(),
+      maxAge: 0
+    });
     response.cookies.set(ADMIN_AUTH_COOKIE, expectedToken, getAdminAuthCookieOptions());
     return response;
   } catch (error) {

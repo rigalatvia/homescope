@@ -1,12 +1,24 @@
-﻿export const ADMIN_AUTH_COOKIE = "homescope_admin_token";
+export const ADMIN_AUTH_COOKIE = "homescope_admin_token";
 
-export function getAdminAuthCookieOptions() {
+function getBaseAdminAuthCookieOptions() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
-    path: "/admin",
     maxAge: 60 * 60 * 12
   };
 }
 
+export function getAdminAuthCookieOptions() {
+  return {
+    ...getBaseAdminAuthCookieOptions(),
+    path: "/"
+  };
+}
+
+export function getLegacyAdminAuthCookieOptions() {
+  return {
+    ...getBaseAdminAuthCookieOptions(),
+    path: "/admin"
+  };
+}
