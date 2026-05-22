@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import type { CrmContactRecord } from "@/types/crm";
+import type { CrmContactRecord, CrmContactUpdateInput } from "@/types/crm";
 
 const CRM_CONTACTS_COLLECTION = "crmContacts";
 
@@ -99,6 +99,10 @@ function normalizePhone(phone: string): string {
   return phone.trim();
 }
 
+function sanitizeText(value: string): string {
+  return value.trim();
+}
+
 function collapseWhitespace(value: string): string {
   return value
     .split("\n")
@@ -160,6 +164,49 @@ function buildContactId(email: string): string {
 
 function sanitizeNotes(notes: string): string {
   return collapseWhitespace(notes.trim());
+}
+
+function sanitizeTags(tags: string[]): string[] {
+  return Array.from(
+    new Set(
+      tags
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+    )
+  );
+}
+
+function sanitizeConsentStatus(value: unknown): CrmContactRecord["emailConsentStatus"] {
+  return value === "subscribed" || value === "unsubscribed" ? value : "unknown";
+}
+
+function buildStoredContactRecord(id: string, data: Partial<CrmContactRecord>): CrmContactRecord {
+  const firstName = sanitizeText(data.firstName ?? "");
+  const lastName = sanitizeText(data.lastName ?? "");
+  const email = normalizeEmail(data.email ?? "");
+  const birthday = parseBirthday(data.birthdayRaw ?? "");
+  const fullName = buildFullName(firstName, lastName) || sanitizeText(data.fullName ?? "") || email;
+
+  return {
+    id,
+    firstName,
+    lastName,
+    fullName,
+    email,
+    phone: normalizePhone(data.phone ?? ""),
+    birthdayRaw: birthday.birthdayRaw,
+    birthdayMonth: birthday.birthdayMonth,
+    birthdayDay: birthday.birthdayDay,
+    birthdayYear: birthday.birthdayYear,
+    notes: sanitizeNotes(data.notes ?? ""),
+    tags: sanitizeTags(Array.isArray(data.tags) ? data.tags : []),
+    city: sanitizeText(data.city ?? ""),
+    source: data.source === "manual" || data.source === "website" ? data.source : "csv-import",
+    emailConsentStatus: sanitizeConsentStatus(data.emailConsentStatus),
+    isActive: data.isActive !== false,
+    createdAt: sanitizeText(data.createdAt ?? ""),
+    updatedAt: sanitizeText(data.updatedAt ?? "")
+  };
 }
 
 function mapImportedRow(row: ImportedCsvRow, timestamp: string): CrmContactRecord | null {
@@ -231,35 +278,48 @@ export async function listCrmContacts(limitCount = 500): Promise<CrmContactRecor
   const snapshot = await firestore.collection(CRM_CONTACTS_COLLECTION).limit(limitCount).get();
 
   return snapshot.docs
-    .map((doc) => {
-      const data = doc.data() as Partial<CrmContactRecord>;
-      const source: CrmContactRecord["source"] =
-        data.source === "manual" || data.source === "website" ? data.source : "csv-import";
-      const emailConsentStatus: CrmContactRecord["emailConsentStatus"] =
-        data.emailConsentStatus === "subscribed" || data.emailConsentStatus === "unsubscribed"
-          ? data.emailConsentStatus
-          : "unknown";
-
-      return {
-        id: doc.id,
-        firstName: data.firstName ?? "",
-        lastName: data.lastName ?? "",
-        fullName: data.fullName ?? buildFullName(data.firstName ?? "", data.lastName ?? ""),
-        email: data.email ?? "",
-        phone: data.phone ?? "",
-        birthdayRaw: data.birthdayRaw ?? "",
-        birthdayMonth: typeof data.birthdayMonth === "number" ? data.birthdayMonth : null,
-        birthdayDay: typeof data.birthdayDay === "number" ? data.birthdayDay : null,
-        birthdayYear: typeof data.birthdayYear === "number" ? data.birthdayYear : null,
-        notes: data.notes ?? "",
-        tags: Array.isArray(data.tags) ? data.tags.filter((item): item is string => typeof item === "string") : [],
-        city: data.city ?? "",
-        source,
-        emailConsentStatus,
-        isActive: data.isActive !== false,
-        createdAt: data.createdAt ?? "",
-        updatedAt: data.updatedAt ?? ""
-      };
-    })
+    .map((doc) => buildStoredContactRecord(doc.id, doc.data() as Partial<CrmContactRecord>))
     .sort((left, right) => left.fullName.localeCompare(right.fullName, "en", { sensitivity: "base" }));
+}
+
+export async function saveCrmContact(input: CrmContactUpdateInput): Promise<CrmContactRecord> {
+  const firestore = getFirebaseAdminFirestore();
+  const contactId = sanitizeText(input.id);
+
+  if (!contactId) {
+    throw new Error("Contact id is required.");
+  }
+
+  const docRef = firestore.collection(CRM_CONTACTS_COLLECTION).doc(contactId);
+  const existingSnapshot = await docRef.get();
+  const existing = existingSnapshot.exists ? (existingSnapshot.data() as Partial<CrmContactRecord>) : null;
+  const now = new Date().toISOString();
+
+  const record = buildStoredContactRecord(contactId, {
+    ...existing,
+    id: contactId,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    birthdayRaw: input.birthdayRaw,
+    notes: input.notes,
+    tags: input.tags,
+    city: input.city,
+    emailConsentStatus: input.emailConsentStatus,
+    isActive: input.isActive,
+    source: existing?.source ?? "manual",
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now
+  });
+
+  await docRef.set(
+    {
+      ...record,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  return record;
 }

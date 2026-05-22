@@ -23,6 +23,20 @@ export interface CrmContactRecord {
   updatedAt: string;
 }
 
+export interface CrmContactUpdateInput {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthdayRaw: string;
+  notes: string;
+  tags: string[];
+  city: string;
+  emailConsentStatus: CrmContactRecord["emailConsentStatus"];
+  isActive: boolean;
+}
+
 export interface CrmTemplateRecord {
   id: string;
   kind: CrmTemplateKind;

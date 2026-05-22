@@ -17,9 +17,9 @@ export default async function AdminCrmPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-brand-100 bg-white p-6 shadow-soft">
+      <div className="rounded-[32px] border border-brand-100 bg-white p-7 shadow-soft lg:p-8">
         <h1 className="font-heading text-4xl text-brand-900">CRM Manager</h1>
-        <p className="mt-2 max-w-3xl text-brand-700">
+        <p className="mt-3 max-w-5xl text-sm leading-7 text-brand-700">
           Manage Yan&apos;s contact list, keep birthdays in the CRM, and update the birthday or holiday email card templates with new text and images.
         </p>
       </div>

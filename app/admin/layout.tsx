@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <section className="site-container py-10 sm:py-12">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto w-full max-w-[1600px] space-y-6">
         <div className="rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
           <div className="flex flex-wrap items-center gap-2">
             {adminLinks.map((link) => (
