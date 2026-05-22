@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/crm", label: "CRM" },
   { href: "/admin/sync", label: "Sync" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/contacts", label: "Contacts" },
