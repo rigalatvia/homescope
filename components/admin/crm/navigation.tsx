@@ -13,6 +13,11 @@ const crmLinks = [
     href: "/admin/crm/templates",
     label: "Templates",
     description: "Manage birthday and holiday card designs."
+  },
+  {
+    href: "/admin/crm/campaigns",
+    label: "Campaigns",
+    description: "Review the daily birthday and holiday send activity."
   }
 ];
 
@@ -21,7 +26,7 @@ export function CrmNavigation() {
 
   return (
     <div className="rounded-3xl border border-brand-100 bg-white p-3 shadow-soft">
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
         {crmLinks.map((link) => {
           const isActive = link.href === "/admin/crm" ? pathname === link.href : pathname.startsWith(link.href);
 

@@ -34,6 +34,7 @@ function createEmptyTemplate(): CrmTemplateRecord {
     id: "",
     kind: "holiday",
     name: "",
+    sendDate: "",
     subject: "",
     previewText: "",
     headline: "",
@@ -60,6 +61,15 @@ function formatTemplateUpdatedAt(value: string): string {
 
 function formatTemplateKind(kind: CrmTemplateRecord["kind"]): string {
   return kind === "birthday" ? "Birthday" : "Holiday";
+}
+
+function formatTemplateSendDate(template: CrmTemplateRecord): string {
+  if (template.kind !== "holiday" || !template.sendDate) return "";
+  const date = new Date(`${template.sendDate}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return template.sendDate;
+  return new Intl.DateTimeFormat("en-CA", {
+    dateStyle: "medium"
+  }).format(date);
 }
 
 export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) {
@@ -255,6 +265,11 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
                 >
                   <p className="font-semibold">{template.name}</p>
                   <p className={`mt-1 text-xs ${isSelected ? "text-white/80" : "text-brand-600"}`}>{formatTemplateKind(template.kind)}</p>
+                  {template.kind === "holiday" && template.sendDate ? (
+                    <p className={`mt-1 text-xs ${isSelected ? "text-white/80" : "text-brand-500"}`}>
+                      Sends on {formatTemplateSendDate(template)}
+                    </p>
+                  ) : null}
                 </button>
               );
             })}
@@ -272,6 +287,17 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
             <CrmField label="Template Name" value={draftTemplate.name} onChange={(value) => updateDraft("name", value)} />
             <CrmField label="Email Subject" value={draftTemplate.subject} onChange={(value) => updateDraft("subject", value)} />
           </div>
+
+          {draftTemplate.kind === "holiday" ? (
+            <CrmField
+              label="Holiday Send Date"
+              type="date"
+              value={draftTemplate.sendDate}
+              onChange={(value) => updateDraft("sendDate", value)}
+            />
+          ) : (
+            <CrmMessage tone="info">Birthday cards use each contact&apos;s saved birthday, so this template does not need a separate send date.</CrmMessage>
+          )}
 
           <CrmField label="Preview Text" value={draftTemplate.previewText} onChange={(value) => updateDraft("previewText", value)} />
 
@@ -330,6 +356,9 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">Template Status</p>
               <p className="mt-2 text-sm text-brand-700">Last updated: {formatTemplateUpdatedAt(draftTemplate.updatedAt)}</p>
+              {draftTemplate.kind === "holiday" && draftTemplate.sendDate ? (
+                <p className="mt-1 text-sm text-brand-700">Scheduled send date: {formatTemplateSendDate(draftTemplate)}</p>
+              ) : null}
             </div>
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
               {draftTemplate.enabled ? "Active" : "Paused"}

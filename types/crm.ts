@@ -41,6 +41,7 @@ export interface CrmTemplateRecord {
   id: string;
   kind: CrmTemplateKind;
   name: string;
+  sendDate: string;
   subject: string;
   previewText: string;
   headline: string;
@@ -58,6 +59,7 @@ export interface CrmTemplateUpdateInput {
   id: string;
   kind: CrmTemplateKind;
   name: string;
+  sendDate: string;
   subject: string;
   previewText: string;
   headline: string;
@@ -73,4 +75,36 @@ export interface CrmTemplateImageUpdate {
   imageUrl: string;
   imageStoragePath?: string;
   imageStorageMode: CrmImageStorageMode;
+}
+
+export interface CrmCampaignSendLogRecord {
+  id: string;
+  templateId: string;
+  templateName: string;
+  templateKind: CrmTemplateKind;
+  contactId: string;
+  recipientEmail: string;
+  recipientName: string;
+  sendDateKey: string;
+  status: "sent" | "failed";
+  provider: string;
+  mode: "mock" | "live";
+  subjectUsed: string;
+  sentAt: string;
+  error: string | null;
+}
+
+export interface CrmCampaignSchedulerStatus {
+  lastRunAt: string | null;
+  lastRunDate: string | null;
+  lastRunStatus: "success" | "failed" | null;
+  birthdaysDue: number;
+  holidaysDue: number;
+  contactsEligible: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  sentBirthday: number;
+  sentHoliday: number;
+  lastErrors: string[];
 }

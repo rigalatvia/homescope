@@ -35,9 +35,13 @@ export function buildCrmTemplateEmail(
   const imageHtml = template.imageUrl
     ? `<img src="${template.imageUrl}" alt="${escapeHtml(template.name)}" style="display:block; width:100%; max-width:600px; height:auto; border:0;" />`
     : "";
+  const hiddenPreviewText = escapeHtml(template.previewText || template.subject || template.headline);
+  const previewPadding = "&nbsp;".repeat(24);
 
   const text = [
     template.subject,
+    "",
+    template.previewText,
     "",
     greeting,
     "",
@@ -50,11 +54,13 @@ export function buildCrmTemplateEmail(
 
   const html = `
     <div style="margin:0; padding:24px; background:#f5f1e8; font-family:Georgia, 'Times New Roman', serif;">
+      <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all; color:transparent;">
+        ${hiddenPreviewText}${previewPadding}
+      </div>
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:24px; overflow:hidden;">
         ${imageHtml ? `<tr><td>${imageHtml}</td></tr>` : ""}
         <tr>
           <td style="padding:36px 40px;">
-            <p style="margin:0 0 18px; font-size:14px; line-height:1.6; color:#64748b; font-family:Arial, sans-serif;">${escapeHtml(template.previewText)}</p>
             <p style="margin:0 0 14px; font-size:17px; line-height:1.7; color:#334155; font-family:Arial, sans-serif;">${escapeHtml(greeting)}</p>
             <h1 style="margin:0 0 18px; font-size:40px; line-height:1.1; color:#102a43; font-weight:600;">${escapeHtml(template.headline)}</h1>
             ${formatParagraphs(template.body)}
@@ -72,10 +78,11 @@ export function buildCrmTemplateEmail(
   };
 }
 
-export async function sendCrmTemplateTestEmail(input: {
+export async function sendCrmTemplateEmail(input: {
   template: CrmTemplateRecord;
   to: string;
   recipientName?: string;
+  replyTo?: string;
 }): Promise<{
   mode: "mock" | "live";
   provider: string;
@@ -88,6 +95,20 @@ export async function sendCrmTemplateTestEmail(input: {
     to: input.to,
     subject: email.subject,
     text: email.text,
-    html: email.html
+    html: email.html,
+    replyTo: input.replyTo
   });
+}
+
+export async function sendCrmTemplateTestEmail(input: {
+  template: CrmTemplateRecord;
+  to: string;
+  recipientName?: string;
+}): Promise<{
+  mode: "mock" | "live";
+  provider: string;
+  recipientUsed: string;
+  subjectUsed: string;
+}> {
+  return sendCrmTemplateEmail(input);
 }

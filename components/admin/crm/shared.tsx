@@ -29,7 +29,7 @@ export function CrmField({
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: "text" | "email";
+  type?: "text" | "email" | "date";
 }) {
   return (
     <label className="block text-sm font-semibold text-brand-900">

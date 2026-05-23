@@ -26,6 +26,7 @@ export async function PUT(request: Request) {
       id: body.id.trim(),
       kind: body.kind,
       name: typeof body.name === "string" ? body.name : "",
+      sendDate: typeof body.sendDate === "string" ? body.sendDate : "",
       subject: typeof body.subject === "string" ? body.subject : "",
       previewText: typeof body.previewText === "string" ? body.previewText : "",
       headline: typeof body.headline === "string" ? body.headline : "",

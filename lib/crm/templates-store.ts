@@ -18,15 +18,25 @@ function sanitizeMultilineText(value: unknown): string {
     .trim();
 }
 
+function sanitizeDate(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : "";
+}
+
 function sanitizeBoolean(value: unknown): boolean {
   return value === true;
 }
 
 function normalizeTemplateRecord(input: Partial<CrmTemplateRecord>, fallback: CrmTemplateRecord): CrmTemplateRecord {
+  const kind = input.kind === "birthday" ? "birthday" : fallback.kind;
+  const sendDate = kind === "holiday" ? sanitizeDate(input.sendDate) || fallback.sendDate : "";
+
   return {
     id: fallback.id,
-    kind: input.kind === "birthday" ? "birthday" : fallback.kind,
+    kind,
     name: sanitizeText(input.name) || fallback.name,
+    sendDate,
     subject: sanitizeText(input.subject) || fallback.subject,
     previewText: sanitizeText(input.previewText) || fallback.previewText,
     headline: sanitizeText(input.headline) || fallback.headline,
@@ -64,6 +74,7 @@ export async function listCrmTemplates(): Promise<CrmTemplateRecord[]> {
       id: doc.id,
       kind: data.kind === "birthday" ? "birthday" : "holiday",
       name: sanitizeText(data.name) || doc.id,
+      sendDate: data.kind === "birthday" ? "" : sanitizeDate(data.sendDate),
       subject: sanitizeText(data.subject),
       previewText: sanitizeText(data.previewText),
       headline: sanitizeText(data.headline),
@@ -140,6 +151,7 @@ export async function updateCrmTemplateImage(templateId: string, image: CrmTempl
     id: templateId,
     kind: existing.kind,
     name: existing.name,
+    sendDate: existing.sendDate,
     subject: existing.subject,
     previewText: existing.previewText,
     headline: existing.headline,
