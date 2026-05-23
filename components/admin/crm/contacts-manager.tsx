@@ -84,8 +84,8 @@ function formatContactUpdatedAt(value: string): string {
 export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps) {
   const sortedInitialContacts = useMemo(() => sortContacts(initialContacts), [initialContacts]);
   const [contacts, setContacts] = useState(sortedInitialContacts);
-  const [selectedContactId, setSelectedContactId] = useState(sortedInitialContacts[0]?.id ?? "");
-  const [contactDraft, setContactDraft] = useState<CrmContactRecord>(sortedInitialContacts[0] ?? createEmptyContact());
+  const [selectedContactId, setSelectedContactId] = useState("");
+  const [contactDraft, setContactDraft] = useState<CrmContactRecord>(createEmptyContact());
   const [searchQuery, setSearchQuery] = useState("");
   const [contactsMessage, setContactsMessage] = useState("");
   const [contactsError, setContactsError] = useState("");
@@ -109,8 +109,13 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   }, [contacts, searchQuery]);
 
   function applySelectedContact(nextContacts: CrmContactRecord[], preferredId?: string) {
-    const fallbackId = preferredId && nextContacts.some((contact) => contact.id === preferredId) ? preferredId : nextContacts[0]?.id ?? "";
-    const nextSelected = nextContacts.find((contact) => contact.id === fallbackId) ?? createEmptyContact();
+    if (!preferredId || !nextContacts.some((contact) => contact.id === preferredId)) {
+      setSelectedContactId("");
+      setContactDraft(createEmptyContact());
+      return;
+    }
+
+    const nextSelected = nextContacts.find((contact) => contact.id === preferredId) ?? createEmptyContact();
     setSelectedContactId(nextSelected.id);
     setContactDraft(nextSelected);
   }
@@ -295,25 +300,25 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
               placeholder="Search by name, email, phone, city, tag, or notes"
               className="mt-2 w-full rounded-2xl border border-brand-200 bg-white px-4 py-3 text-sm text-brand-900 outline-none ring-brand-500 focus:ring-2"
             />
+            <p className="mt-2 text-xs text-brand-600">Click any contact row to open it in the editor.</p>
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-brand-100">
             <div className="overflow-x-auto">
-              <table className="min-w-[860px] w-full text-left text-sm">
+              <table className="min-w-[680px] w-full text-left text-sm">
                 <thead className="bg-brand-50 text-brand-800">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Name</th>
                     <th className="px-4 py-3 font-semibold">Email</th>
                     <th className="px-4 py-3 font-semibold">Birthday</th>
-                    <th className="px-4 py-3 font-semibold">Phone</th>
-                    <th className="px-4 py-3 font-semibold">Notes</th>
-                    <th className="px-4 py-3 font-semibold">Action</th>
+                    <th className="px-4 py-3 font-semibold">City</th>
+                    <th className="px-4 py-3 font-semibold text-right">Edit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredContacts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-brand-700">
+                      <td colSpan={5} className="px-4 py-8 text-brand-700">
                         No CRM contacts found.
                       </td>
                     </tr>
@@ -324,22 +329,32 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                       return (
                         <tr
                           key={contact.id}
+                          onClick={() => selectContact(contact.id)}
                           className={`border-t border-brand-100 align-top transition ${
                             isSelected ? "bg-brand-50/80" : "bg-white hover:bg-brand-50/40"
                           }`}
                         >
-                          <td className="px-4 py-3 text-brand-900">
-                            <p className="font-semibold">{contact.fullName || "-"}</p>
-                            <p className="mt-1 text-xs text-brand-600">{contact.city || "No city yet"}</p>
+                          <td className="cursor-pointer px-4 py-3 text-brand-900">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-semibold">{contact.fullName || "-"}</p>
+                                <p className="mt-1 text-xs text-brand-600">{isSelected ? "Open in editor" : "Click to edit"}</p>
+                              </div>
+                              {isSelected ? (
+                                <span className="rounded-full bg-brand-900 px-2.5 py-1 text-[11px] font-semibold text-white">Editing</span>
+                              ) : null}
+                            </div>
                           </td>
-                          <td className="px-4 py-3 text-brand-700">{contact.email || "-"}</td>
-                          <td className="px-4 py-3 text-brand-700">{formatBirthday(contact)}</td>
-                          <td className="px-4 py-3 text-brand-700">{contact.phone || "-"}</td>
-                          <td className="max-w-sm whitespace-pre-line px-4 py-3 text-brand-700">{contact.notes || "-"}</td>
-                          <td className="px-4 py-3">
+                          <td className="cursor-pointer px-4 py-3 text-brand-700">{contact.email || "-"}</td>
+                          <td className="cursor-pointer px-4 py-3 text-brand-700">{formatBirthday(contact)}</td>
+                          <td className="cursor-pointer px-4 py-3 text-brand-700">{contact.city || "-"}</td>
+                          <td className="px-4 py-3 text-right">
                             <button
                               type="button"
-                              onClick={() => selectContact(contact.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                selectContact(contact.id);
+                              }}
                               className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
                                 isSelected
                                   ? "bg-brand-900 text-white"

@@ -6,7 +6,6 @@ import type { CrmTemplateRecord } from "@/types/crm";
 
 interface CrmTemplateStudioProps {
   initialTemplates: CrmTemplateRecord[];
-  hasStorageBucket: boolean;
 }
 
 interface TemplateResponse {
@@ -57,7 +56,7 @@ function formatTemplateKind(kind: CrmTemplateRecord["kind"]): string {
   return kind === "birthday" ? "Birthday" : "Holiday";
 }
 
-export function CrmTemplateStudio({ initialTemplates, hasStorageBucket }: CrmTemplateStudioProps) {
+export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [templatesMessage, setTemplatesMessage] = useState("");
   const [templatesError, setTemplatesError] = useState("");
@@ -171,11 +170,9 @@ export function CrmTemplateStudio({ initialTemplates, hasStorageBucket }: CrmTem
         <CrmMetricCard label="Templates With Images" value={String(templatesWithImagesCount)} detail="Saved cards that already include artwork." />
       </div>
 
-      {!hasStorageBucket ? (
-        <CrmMessage tone="info">
-          Firebase Storage is not fully configured for this environment yet. Small images under 250 KB can still be embedded directly, but larger uploads will need the storage bucket available.
-        </CrmMessage>
-      ) : null}
+      <CrmMessage tone="info">
+        Template images now use Firebase Storage for full-size uploads. If Storage setup is still incomplete, small images under 600 KB can still be saved directly as a temporary fallback.
+      </CrmMessage>
 
       <div className="grid gap-6 2xl:grid-cols-[260px_minmax(0,1.1fr)_minmax(320px,0.85fr)]">
         <section className="space-y-3 rounded-[32px] border border-brand-100 bg-white p-6 shadow-soft 2xl:sticky 2xl:top-24 2xl:h-fit">
@@ -232,13 +229,15 @@ export function CrmTemplateStudio({ initialTemplates, hasStorageBucket }: CrmTem
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-brand-900">Card Image</p>
-                <p className="mt-1 text-xs leading-5 text-brand-700">Upload a holiday or birthday image. Wide landscape images work best in email.</p>
+                <p className="mt-1 text-xs leading-5 text-brand-700">
+                  Upload a holiday or birthday image. Wide landscape images work best in email, and keeping files around 1 to 2 MB usually gives a good balance of quality and load speed.
+                </p>
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
                 {draftTemplate.imageStorageMode === "storage"
                   ? "Stored in Firebase Storage"
                   : draftTemplate.imageStorageMode === "embedded"
-                    ? "Stored in Firestore"
+                    ? "Stored in CRM collection"
                     : "No image yet"}
               </span>
             </div>

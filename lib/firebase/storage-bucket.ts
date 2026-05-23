@@ -20,10 +20,32 @@ function readBucketFromFirebaseConfig(): string | null {
   }
 }
 
+function buildRelatedBucketCandidate(bucketName: string): string | null {
+  if (bucketName.endsWith(".firebasestorage.app")) {
+    return bucketName.replace(/\.firebasestorage\.app$/, ".appspot.com");
+  }
+
+  if (bucketName.endsWith(".appspot.com")) {
+    return bucketName.replace(/\.appspot\.com$/, ".firebasestorage.app");
+  }
+
+  return null;
+}
+
 export function resolveFirebaseStorageBucketName(): string | null {
-  return (
-    sanitizeBucketName(process.env.FIREBASE_STORAGE_BUCKET) ||
-    sanitizeBucketName(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) ||
+  return resolveFirebaseStorageBucketCandidates()[0] ?? null;
+}
+
+export function resolveFirebaseStorageBucketCandidates(): string[] {
+  const configured = [
+    sanitizeBucketName(process.env.FIREBASE_STORAGE_BUCKET),
+    sanitizeBucketName(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
     readBucketFromFirebaseConfig()
-  );
+  ].filter((value): value is string => Boolean(value));
+
+  const related = configured
+    .map((bucketName) => buildRelatedBucketCandidate(bucketName))
+    .filter((value): value is string => Boolean(value));
+
+  return Array.from(new Set([...configured, ...related]));
 }

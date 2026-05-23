@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin/authorize-request";
 import { updateCrmTemplateImage } from "@/lib/crm/templates-store";
 import { getFirebaseAdminStorage } from "@/lib/firebase/admin";
-import { resolveFirebaseStorageBucketName } from "@/lib/firebase/storage-bucket";
-import { getServerConfigValue } from "@/lib/server/secret-manager";
+import { resolveFirebaseStorageBucketCandidates } from "@/lib/firebase/storage-bucket";
 
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-const MAX_EMBEDDED_IMAGE_BYTES = 250 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_EMBEDDED_IMAGE_BYTES = 600 * 1024;
 
 function sanitizeFileName(fileName: string): string {
   const cleaned = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -15,6 +14,10 @@ function sanitizeFileName(fileName: string): string {
 
 function buildEmbeddedImageUrl(contentType: string, bytes: Buffer): string {
   return `data:${contentType};base64,${bytes.toString("base64")}`;
+}
+
+function isMissingBucketError(error: unknown): boolean {
+  return error instanceof Error && error.message.toLowerCase().includes("specified bucket does not exist");
 }
 
 export async function POST(request: Request) {
@@ -39,50 +42,73 @@ export async function POST(request: Request) {
     }
 
     if (file.size > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: "Image file is too large. Please keep it under 4 MB." }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "Image file is too large. Please keep it under 5 MB."
+        },
+        { status: 400 }
+      );
     }
 
     const contentType = file.type || "application/octet-stream";
     const bytes = Buffer.from(await file.arrayBuffer());
-    await getServerConfigValue("FIREBASE_STORAGE_BUCKET");
-    const bucketName = resolveFirebaseStorageBucketName();
+    const bucketCandidates = resolveFirebaseStorageBucketCandidates();
 
-    if (bucketName) {
+    if (bucketCandidates.length > 0) {
       const fileName = sanitizeFileName(file.name);
       const storagePath = `crm/templates/${templateId.trim()}/${Date.now()}-${fileName}`;
-      const bucket = getFirebaseAdminStorage().bucket(bucketName);
-      const storageFile = bucket.file(storagePath);
+      const storage = getFirebaseAdminStorage();
 
-      await storageFile.save(bytes, {
-        resumable: false,
-        contentType,
-        metadata: {
-          cacheControl: "public, max-age=31536000"
+      for (const bucketName of bucketCandidates) {
+        try {
+          const bucket = storage.bucket(bucketName);
+          const [exists] = await bucket.exists();
+          if (!exists) {
+            continue;
+          }
+
+          const storageFile = bucket.file(storagePath);
+
+          await storageFile.save(bytes, {
+            resumable: false,
+            contentType,
+            metadata: {
+              cacheControl: "public, max-age=31536000"
+            }
+          });
+
+          const [imageUrl] = await storageFile.getSignedUrl({
+            action: "read",
+            expires: "2100-01-01"
+          });
+
+          const template = await updateCrmTemplateImage(templateId.trim(), {
+            imageUrl,
+            imageStoragePath: storagePath,
+            imageStorageMode: "storage"
+          });
+
+          return NextResponse.json({
+            success: true,
+            template,
+            storageMode: "storage"
+          });
+        } catch (error) {
+          if (isMissingBucketError(error)) {
+            continue;
+          }
+
+          throw error;
         }
-      });
-
-      const [imageUrl] = await storageFile.getSignedUrl({
-        action: "read",
-        expires: "2100-01-01"
-      });
-
-      const template = await updateCrmTemplateImage(templateId.trim(), {
-        imageUrl,
-        imageStoragePath: storagePath,
-        imageStorageMode: "storage"
-      });
-
-      return NextResponse.json({
-        success: true,
-        template,
-        storageMode: "storage"
-      });
+      }
     }
 
     if (bytes.length > MAX_EMBEDDED_IMAGE_BYTES) {
       return NextResponse.json(
         {
-          error: "Large image uploads need Firebase Storage configured. Images under 250 KB can still be embedded."
+          error:
+            "Firebase Storage is not ready yet for this project. Finish the Storage setup in Firebase Console, or use an image under 600 KB as a temporary fallback."
         },
         { status: 400 }
       );
