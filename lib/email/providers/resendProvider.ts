@@ -1,4 +1,4 @@
-import type { ContactEmailPayload, EmailProvider, LeadEmailPayload } from "@/lib/email/types";
+import type { ContactEmailPayload, EmailProvider, GenericEmailPayload, LeadEmailPayload } from "@/lib/email/types";
 
 export class ResendEmailProvider implements EmailProvider {
   readonly name = "resend";
@@ -8,15 +8,19 @@ export class ResendEmailProvider implements EmailProvider {
     private readonly fromEmail: string
   ) {}
 
+  async sendMessage(payload: GenericEmailPayload): Promise<void> {
+    await this.send(payload.to, payload.subject, payload.html, payload.text, payload.replyTo);
+  }
+
   async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
-    await this.send(payload.to, payload.subject, payload.html, payload.text);
+    await this.sendMessage(payload);
   }
 
   async sendContactNotification(payload: ContactEmailPayload): Promise<void> {
-    await this.send(payload.to, payload.subject, payload.html, payload.text);
+    await this.sendMessage(payload);
   }
 
-  private async send(to: string, subject: string, html: string, text: string): Promise<void> {
+  private async send(to: string, subject: string, html: string, text: string, replyTo?: string): Promise<void> {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -28,7 +32,8 @@ export class ResendEmailProvider implements EmailProvider {
         to,
         subject,
         html,
-        text
+        text,
+        reply_to: replyTo
       })
     });
 

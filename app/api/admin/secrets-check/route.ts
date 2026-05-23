@@ -13,6 +13,8 @@ const DEFAULT_KEYS = [
   "DDF_SCOPE",
   "EMAIL_PROVIDER",
   "EMAIL_ENABLED",
+  "EMAIL_USER",
+  "EMAIL_PASS",
   "RESEND_API_KEY",
   "FROM_EMAIL"
 ] as const;
@@ -71,4 +73,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

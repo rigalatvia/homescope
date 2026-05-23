@@ -12,6 +12,12 @@ interface TemplateResponse {
   success?: boolean;
   template?: CrmTemplateRecord;
   storageMode?: string;
+  result?: {
+    mode: "mock" | "live";
+    provider: string;
+    recipientUsed: string;
+    subjectUsed: string;
+  };
   error?: string;
 }
 
@@ -62,7 +68,10 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
   const [templatesError, setTemplatesError] = useState("");
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [draftTemplate, setDraftTemplate] = useState<CrmTemplateRecord>(initialTemplates[0] ?? createEmptyTemplate());
+  const [testRecipientEmail, setTestRecipientEmail] = useState("");
+  const [testRecipientName, setTestRecipientName] = useState("");
 
   const enabledTemplatesCount = templates.filter((template) => template.enabled).length;
   const templatesWithImagesCount = templates.filter((template) => Boolean(template.imageUrl)).length;
@@ -160,6 +169,53 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
     updateDraft("imageStorageMode", "none");
     setTemplatesMessage("Image removed from the draft. Save the template to keep the change.");
     setTemplatesError("");
+  }
+
+  async function handleSendTestEmail() {
+    if (!draftTemplate.id) {
+      setTemplatesError("Choose a template first.");
+      setTemplatesMessage("");
+      return;
+    }
+
+    if (!testRecipientEmail.trim()) {
+      setTemplatesError("Enter an email address for the test send.");
+      setTemplatesMessage("");
+      return;
+    }
+
+    setIsSendingTestEmail(true);
+    setTemplatesError("");
+    setTemplatesMessage("");
+
+    try {
+      const response = await fetch("/api/admin/crm/templates/test-send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          templateId: draftTemplate.id,
+          to: testRecipientEmail,
+          recipientName: testRecipientName
+        })
+      });
+      const payload = (await response.json()) as TemplateResponse;
+
+      if (!response.ok || !payload.success || !payload.result) {
+        throw new Error(getFriendlyAdminError(response, "Could not send test email.", payload.error));
+      }
+
+      setTemplatesMessage(
+        payload.result.mode === "live"
+          ? `Test card sent to ${payload.result.recipientUsed} using ${payload.result.provider}.`
+          : `Test email used mock mode. Finish Gmail setup, then try again.`
+      );
+    } catch (error) {
+      setTemplatesError(error instanceof Error ? error.message : "Could not send test email.");
+    } finally {
+      setIsSendingTestEmail(false);
+    }
   }
 
   return (
@@ -293,6 +349,22 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
           <div className="space-y-3">
             {templatesMessage ? <CrmMessage tone="success">{templatesMessage}</CrmMessage> : null}
             {templatesError ? <CrmMessage tone="error">{templatesError}</CrmMessage> : null}
+          </div>
+
+          <div className="rounded-[28px] border border-brand-100 bg-white p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Send Test Card</p>
+            <div className="mt-4 space-y-4">
+              <CrmField label="Recipient Email" type="email" value={testRecipientEmail} onChange={setTestRecipientEmail} />
+              <CrmField label="Recipient Name" value={testRecipientName} onChange={setTestRecipientName} placeholder="Optional" />
+              <button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={isSendingTestEmail}
+                className="w-full rounded-full border border-brand-300 px-5 py-3 text-sm font-semibold text-brand-900 disabled:opacity-60"
+              >
+                {isSendingTestEmail ? "Sending..." : "Send Test Email"}
+              </button>
+            </div>
           </div>
 
           <button

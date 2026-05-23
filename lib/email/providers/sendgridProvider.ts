@@ -1,4 +1,4 @@
-import type { ContactEmailPayload, EmailProvider, LeadEmailPayload } from "@/lib/email/types";
+import type { ContactEmailPayload, EmailProvider, GenericEmailPayload, LeadEmailPayload } from "@/lib/email/types";
 
 export class SendGridEmailProvider implements EmailProvider {
   readonly name = "sendgrid";
@@ -8,12 +8,16 @@ export class SendGridEmailProvider implements EmailProvider {
     private readonly fromEmail: string
   ) {}
 
-  async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
+  async sendMessage(payload: GenericEmailPayload): Promise<void> {
     await this.send(payload.to, payload.subject, payload.text, payload.html);
   }
 
+  async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
+    await this.sendMessage(payload);
+  }
+
   async sendContactNotification(payload: ContactEmailPayload): Promise<void> {
-    await this.send(payload.to, payload.subject, payload.text, payload.html);
+    await this.sendMessage(payload);
   }
 
   private async send(to: string, subject: string, text: string, html: string): Promise<void> {

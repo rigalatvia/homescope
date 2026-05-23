@@ -1,6 +1,14 @@
 import type { LeadSubmissionRecord } from "@/types/lead";
 import type { ContactSubmissionRecord } from "@/types/contact";
 
+export interface GenericEmailPayload {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+}
+
 export interface LeadEmailPayload {
   to: string;
   subject: string;
@@ -19,6 +27,7 @@ export interface ContactEmailPayload {
 
 export interface EmailProvider {
   readonly name: string;
+  sendMessage(payload: GenericEmailPayload): Promise<void>;
   sendLeadNotification(payload: LeadEmailPayload): Promise<void>;
   sendContactNotification(payload: ContactEmailPayload): Promise<void>;
 }

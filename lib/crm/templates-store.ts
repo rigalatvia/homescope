@@ -84,6 +84,11 @@ export async function listCrmTemplates(): Promise<CrmTemplateRecord[]> {
   return CRM_TEMPLATE_DEFAULTS.map((template) => savedTemplates.get(template.id) ?? template);
 }
 
+export async function getCrmTemplateById(templateId: string): Promise<CrmTemplateRecord | null> {
+  const templates = await listCrmTemplates();
+  return templates.find((template) => template.id === templateId) ?? null;
+}
+
 export async function saveCrmTemplate(input: CrmTemplateUpdateInput): Promise<CrmTemplateRecord> {
   const firestore = getFirebaseAdminFirestore();
   const defaults = getDefaultCrmTemplateMap();

@@ -1,26 +1,22 @@
-import type { ContactEmailPayload, EmailProvider, LeadEmailPayload } from "@/lib/email/types";
+import type { ContactEmailPayload, EmailProvider, GenericEmailPayload, LeadEmailPayload } from "@/lib/email/types";
 
 export class MockEmailProvider implements EmailProvider {
   readonly name = "mock";
 
-  async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
-    console.info("[leads][email] Mock provider captured payload", {
+  async sendMessage(payload: GenericEmailPayload): Promise<void> {
+    console.info("[email] Mock provider captured payload", {
       provider: this.name,
       to: payload.to,
-      subject: payload.subject,
-      leadId: payload.lead.id,
-      listingId: payload.lead.listingId
+      subject: payload.subject
     });
-    console.log("[leads][email] Full mock payload", payload);
+    console.log("[email] Full mock payload", payload);
+  }
+
+  async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
+    await this.sendMessage(payload);
   }
 
   async sendContactNotification(payload: ContactEmailPayload): Promise<void> {
-    console.info("[contact][email] Mock provider captured payload", {
-      provider: this.name,
-      to: payload.to,
-      subject: payload.subject,
-      contactId: payload.contact.id
-    });
-    console.log("[contact][email] Full mock payload", payload);
+    await this.sendMessage(payload);
   }
 }
