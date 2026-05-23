@@ -172,12 +172,12 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
 
   const [templates, contacts] = await Promise.all([listCrmTemplates(), listCrmContacts(5000)]);
 
-  const birthdayTemplate = templates.find((template) => template.id === "birthday" && template.enabled);
+  const birthdayTemplates = templates.filter((template) => template.kind === "birthday" && template.enabled);
   const dueHolidayTemplates = templates.filter(
     (template) => template.kind === "holiday" && template.enabled && template.sendDate === runDate
   );
   const eligibleContacts = contacts.filter(isEligibleContact);
-  const birthdayContacts = birthdayTemplate
+  const birthdayContacts = birthdayTemplates.length > 0
     ? eligibleContacts.filter(
         (contact) =>
           contact.birthdayMonth != null &&
@@ -200,10 +200,10 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
   };
 
   try {
-    if (birthdayTemplate) {
+    for (const template of birthdayTemplates) {
       for (const contact of birthdayContacts) {
         const result = await sendTemplateToContact({
-          template: birthdayTemplate,
+          template,
           contact,
           sendDateKey: runDate
         });
@@ -215,7 +215,7 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
           summary.skipped += 1;
         } else {
           summary.failed += 1;
-          if (result.error) summary.errors.push(`[birthday][${contact.email}] ${result.error}`);
+          if (result.error) summary.errors.push(`[${template.id}][${contact.email}] ${result.error}`);
         }
       }
     }

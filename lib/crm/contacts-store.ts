@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import type { CrmContactRecord, CrmContactUpdateInput } from "@/types/crm";
+import type { CrmContactCreateInput, CrmContactRecord, CrmContactUpdateInput } from "@/types/crm";
 
 const CRM_CONTACTS_COLLECTION = "crmContacts";
 
@@ -160,6 +160,10 @@ function buildFullName(firstName: string, lastName: string): string {
 
 function buildContactId(email: string): string {
   return normalizeEmail(email);
+}
+
+function buildManualContactId(): string {
+  return `manual-${crypto.randomUUID()}`;
 }
 
 function sanitizeNotes(notes: string): string {
@@ -322,4 +326,59 @@ export async function saveCrmContact(input: CrmContactUpdateInput): Promise<CrmC
   );
 
   return record;
+}
+
+export async function createCrmContact(input: CrmContactCreateInput): Promise<CrmContactRecord> {
+  const firestore = getFirebaseAdminFirestore();
+  const normalizedEmail = normalizeEmail(input.email);
+  const preferredId = normalizedEmail || buildManualContactId();
+  const docRef = firestore.collection(CRM_CONTACTS_COLLECTION).doc(preferredId);
+  const existingSnapshot = await docRef.get();
+
+  if (existingSnapshot.exists) {
+    throw new Error(
+      normalizedEmail
+        ? "A contact with this email already exists. Open that contact and update it instead."
+        : "Could not create the contact because this id already exists. Please try again."
+    );
+  }
+
+  const now = new Date().toISOString();
+  const record = buildStoredContactRecord(preferredId, {
+    id: preferredId,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    birthdayRaw: input.birthdayRaw,
+    notes: input.notes,
+    tags: input.tags,
+    city: input.city,
+    emailConsentStatus: input.emailConsentStatus,
+    isActive: input.isActive,
+    source: "manual",
+    createdAt: now,
+    updatedAt: now
+  });
+
+  await docRef.set(
+    {
+      ...record,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: false }
+  );
+
+  return record;
+}
+
+export async function deleteCrmContact(contactId: string): Promise<void> {
+  const firestore = getFirebaseAdminFirestore();
+  const normalizedId = sanitizeText(contactId);
+
+  if (!normalizedId) {
+    throw new Error("Contact id is required.");
+  }
+
+  await firestore.collection(CRM_CONTACTS_COLLECTION).doc(normalizedId).delete();
 }

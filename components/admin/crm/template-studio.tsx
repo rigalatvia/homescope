@@ -77,6 +77,8 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
   const [templatesMessage, setTemplatesMessage] = useState("");
   const [templatesError, setTemplatesError] = useState("");
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState<CrmTemplateRecord["kind"] | "">("");
+  const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [draftTemplate, setDraftTemplate] = useState<CrmTemplateRecord>(initialTemplates[0] ?? createEmptyTemplate());
@@ -102,11 +104,94 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
   }
 
   function upsertTemplate(nextTemplate: CrmTemplateRecord) {
-    setTemplates((current) => current.map((template) => (template.id === nextTemplate.id ? nextTemplate : template)));
+    setTemplates((current) => {
+      const exists = current.some((template) => template.id === nextTemplate.id);
+      return exists
+        ? current.map((template) => (template.id === nextTemplate.id ? nextTemplate : template))
+        : [...current, nextTemplate];
+    });
     setDraftTemplate(nextTemplate);
   }
 
+  function removeTemplate(templateId: string) {
+    const nextTemplates = templates.filter((template) => template.id !== templateId);
+    setTemplates(nextTemplates);
+    setDraftTemplate(nextTemplates[0] ?? createEmptyTemplate());
+  }
+
+  async function handleCreateTemplate(kind: CrmTemplateRecord["kind"]) {
+    setIsCreatingTemplate(kind);
+    setTemplatesError("");
+    setTemplatesMessage("");
+
+    try {
+      const response = await fetch("/api/admin/crm/templates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ kind })
+      });
+      const payload = (await response.json()) as TemplateResponse;
+
+      if (!response.ok || !payload.success || !payload.template) {
+        throw new Error(getFriendlyAdminError(response, "Could not create card.", payload.error));
+      }
+
+      upsertTemplate(payload.template);
+      setTemplatesMessage(`${formatTemplateKind(kind)} card created. You can rename it anytime.`);
+    } catch (error) {
+      setTemplatesError(error instanceof Error ? error.message : "Could not create card.");
+    } finally {
+      setIsCreatingTemplate("");
+    }
+  }
+
+  async function handleDeleteTemplate() {
+    if (!draftTemplate.id) {
+      setTemplatesError("Choose a card first.");
+      setTemplatesMessage("");
+      return;
+    }
+
+    if (!window.confirm(`Delete "${draftTemplate.name}" from the card library?`)) {
+      return;
+    }
+
+    setIsDeletingTemplate(true);
+    setTemplatesError("");
+    setTemplatesMessage("");
+
+    try {
+      const response = await fetch("/api/admin/crm/templates", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id: draftTemplate.id })
+      });
+      const payload = (await response.json()) as TemplateResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(getFriendlyAdminError(response, "Could not delete card.", payload.error));
+      }
+
+      removeTemplate(draftTemplate.id);
+      setTemplatesMessage("Card deleted.");
+    } catch (error) {
+      setTemplatesError(error instanceof Error ? error.message : "Could not delete card.");
+    } finally {
+      setIsDeletingTemplate(false);
+    }
+  }
+
   async function handleSaveTemplate() {
+    if (!draftTemplate.id) {
+      setTemplatesError("Create or choose a card first.");
+      setTemplatesMessage("");
+      return;
+    }
+
     setIsSavingTemplate(true);
     setTemplatesError("");
     setTemplatesMessage("");
@@ -241,11 +326,30 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
       </CrmMessage>
 
       <div className="grid gap-6 2xl:grid-cols-[260px_minmax(0,1.1fr)_minmax(320px,0.85fr)]">
-        <section className="space-y-3 rounded-[32px] border border-brand-100 bg-white p-6 shadow-soft 2xl:sticky 2xl:top-24 2xl:h-fit">
+        <section className="space-y-4 rounded-[32px] border border-brand-100 bg-white p-6 shadow-soft 2xl:sticky 2xl:top-24 2xl:h-fit">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">Template Library</p>
             <h2 className="mt-2 font-heading text-3xl text-brand-900">Choose a card</h2>
             <p className="mt-3 text-sm leading-6 text-brand-700">Contacts and templates are now separated, so this page only focuses on design.</p>
+          </div>
+
+          <div className="grid gap-3">
+            <button
+              type="button"
+              onClick={() => handleCreateTemplate("birthday")}
+              disabled={Boolean(isCreatingTemplate)}
+              className="rounded-full bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {isCreatingTemplate === "birthday" ? "Creating Birthday Card..." : "New Birthday Card"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCreateTemplate("holiday")}
+              disabled={Boolean(isCreatingTemplate)}
+              className="rounded-full border border-brand-300 px-4 py-2.5 text-sm font-semibold text-brand-900 disabled:opacity-60"
+            >
+              {isCreatingTemplate === "holiday" ? "Creating Holiday Card..." : "New Holiday Card"}
+            </button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
@@ -279,76 +383,81 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
         <section className="space-y-5 rounded-[32px] border border-brand-100 bg-white p-6 shadow-soft lg:p-8">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">Template Editor</p>
-            <h3 className="mt-2 font-heading text-3xl text-brand-900">{draftTemplate.name}</h3>
+            <h3 className="mt-2 font-heading text-3xl text-brand-900">{draftTemplate.name || "Select or create a card"}</h3>
             <p className="mt-3 text-sm leading-6 text-brand-700">Update the subject line, card copy, signature, and image for this template.</p>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <CrmField label="Template Name" value={draftTemplate.name} onChange={(value) => updateDraft("name", value)} />
-            <CrmField label="Email Subject" value={draftTemplate.subject} onChange={(value) => updateDraft("subject", value)} />
-          </div>
+          {draftTemplate.id ? (
+            <>
+              <div className="grid gap-4 xl:grid-cols-2">
+                <CrmField label="Template Name" value={draftTemplate.name} onChange={(value) => updateDraft("name", value)} />
+                <CrmField label="Email Subject" value={draftTemplate.subject} onChange={(value) => updateDraft("subject", value)} />
+              </div>
 
-          {draftTemplate.kind === "holiday" ? (
-            <CrmField
-              label="Holiday Send Date"
-              type="date"
-              value={draftTemplate.sendDate}
-              onChange={(value) => updateDraft("sendDate", value)}
-            />
+              {draftTemplate.kind === "holiday" ? (
+                <CrmField
+                  label="Holiday Send Date"
+                  type="date"
+                  value={draftTemplate.sendDate}
+                  onChange={(value) => updateDraft("sendDate", value)}
+                />
+              ) : (
+                <CrmMessage tone="info">Birthday cards use each contact&apos;s saved birthday, so this template does not need a separate send date.</CrmMessage>
+              )}
+
+              <CrmField label="Preview Text" value={draftTemplate.previewText} onChange={(value) => updateDraft("previewText", value)} />
+              <CrmField label="Headline" value={draftTemplate.headline} onChange={(value) => updateDraft("headline", value)} />
+              <CrmTextAreaField label="Message Body" value={draftTemplate.body} onChange={(value) => updateDraft("body", value)} rows={8} />
+              <CrmTextAreaField label="Signature" value={draftTemplate.signature} onChange={(value) => updateDraft("signature", value)} rows={4} />
+
+              <div className="rounded-3xl border border-brand-100 bg-brand-50/60 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-900">Card Image</p>
+                    <p className="mt-1 text-xs leading-5 text-brand-700">
+                      Upload a holiday or birthday image. Wide landscape images work best in email, and keeping files around 1 to 2 MB usually gives a good balance of quality and load speed.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
+                    {draftTemplate.imageStorageMode === "storage"
+                      ? "Stored in Firebase Storage"
+                      : draftTemplate.imageStorageMode === "embedded"
+                        ? "Stored in CRM collection"
+                        : "No image yet"}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <label className="rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">
+                    {isUploadingImage ? "Uploading..." : "Upload Image"}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploadingImage} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="rounded-full border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-900"
+                  >
+                    Remove Image
+                  </button>
+                </div>
+
+                {draftTemplate.imageUrl ? (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-brand-100 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={draftTemplate.imageUrl} alt={draftTemplate.name} className="h-64 w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-10 text-center text-sm text-brand-600">
+                    No image uploaded yet.
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            <CrmMessage tone="info">Birthday cards use each contact&apos;s saved birthday, so this template does not need a separate send date.</CrmMessage>
+            <div className="rounded-3xl border border-dashed border-brand-200 bg-brand-50/50 px-6 py-16 text-center text-sm text-brand-700">
+              Pick a card from the library or create a new birthday or holiday card to start editing.
+            </div>
           )}
-
-          <CrmField label="Preview Text" value={draftTemplate.previewText} onChange={(value) => updateDraft("previewText", value)} />
-
-          <CrmField label="Headline" value={draftTemplate.headline} onChange={(value) => updateDraft("headline", value)} />
-
-          <CrmTextAreaField label="Message Body" value={draftTemplate.body} onChange={(value) => updateDraft("body", value)} rows={8} />
-
-          <CrmTextAreaField label="Signature" value={draftTemplate.signature} onChange={(value) => updateDraft("signature", value)} rows={4} />
-
-          <div className="rounded-3xl border border-brand-100 bg-brand-50/60 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-brand-900">Card Image</p>
-                <p className="mt-1 text-xs leading-5 text-brand-700">
-                  Upload a holiday or birthday image. Wide landscape images work best in email, and keeping files around 1 to 2 MB usually gives a good balance of quality and load speed.
-                </p>
-              </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
-                {draftTemplate.imageStorageMode === "storage"
-                  ? "Stored in Firebase Storage"
-                  : draftTemplate.imageStorageMode === "embedded"
-                    ? "Stored in CRM collection"
-                    : "No image yet"}
-              </span>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <label className="rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white">
-                {isUploadingImage ? "Uploading..." : "Upload Image"}
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploadingImage} />
-              </label>
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="rounded-full border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-900"
-              >
-                Remove Image
-              </button>
-            </div>
-
-            {draftTemplate.imageUrl ? (
-              <div className="mt-4 overflow-hidden rounded-2xl border border-brand-100 bg-white">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={draftTemplate.imageUrl} alt={draftTemplate.name} className="h-64 w-full object-cover" />
-              </div>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-brand-200 bg-white px-4 py-10 text-center text-sm text-brand-600">
-                No image uploaded yet.
-              </div>
-            )}
-          </div>
         </section>
 
         <aside className="h-fit space-y-5 rounded-[32px] border border-brand-100 bg-[#fcfcfa] p-6 shadow-soft 2xl:sticky 2xl:top-24">
@@ -360,64 +469,82 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
                 <p className="mt-1 text-sm text-brand-700">Scheduled send date: {formatTemplateSendDate(draftTemplate)}</p>
               ) : null}
             </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
-              {draftTemplate.enabled ? "Active" : "Paused"}
-            </span>
+            {draftTemplate.id ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
+                {draftTemplate.enabled ? "Active" : "Paused"}
+              </span>
+            ) : null}
           </div>
 
-          <label className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand-900">
-            <input
-              type="checkbox"
-              checked={draftTemplate.enabled}
-              onChange={(event) => updateDraft("enabled", event.target.checked)}
-              className="h-4 w-4 rounded border-brand-300"
-            />
-            Template is active and ready to use.
-          </label>
+          {draftTemplate.id ? (
+            <label className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand-900">
+              <input
+                type="checkbox"
+                checked={draftTemplate.enabled}
+                onChange={(event) => updateDraft("enabled", event.target.checked)}
+                className="h-4 w-4 rounded border-brand-300"
+              />
+              Template is active and ready to use.
+            </label>
+          ) : null}
 
           <div className="space-y-3">
             {templatesMessage ? <CrmMessage tone="success">{templatesMessage}</CrmMessage> : null}
             {templatesError ? <CrmMessage tone="error">{templatesError}</CrmMessage> : null}
           </div>
 
-          <div className="rounded-[28px] border border-brand-100 bg-white p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Send Test Card</p>
-            <div className="mt-4 space-y-4">
-              <CrmField label="Recipient Email" type="email" value={testRecipientEmail} onChange={setTestRecipientEmail} />
-              <CrmField label="Recipient Name" value={testRecipientName} onChange={setTestRecipientName} placeholder="Optional" />
-              <button
-                type="button"
-                onClick={handleSendTestEmail}
-                disabled={isSendingTestEmail}
-                className="w-full rounded-full border border-brand-300 px-5 py-3 text-sm font-semibold text-brand-900 disabled:opacity-60"
-              >
-                {isSendingTestEmail ? "Sending..." : "Send Test Email"}
-              </button>
-            </div>
-          </div>
+          {draftTemplate.id ? (
+            <>
+              <div className="rounded-[28px] border border-brand-100 bg-white p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Send Test Card</p>
+                <div className="mt-4 space-y-4">
+                  <CrmField label="Recipient Email" type="email" value={testRecipientEmail} onChange={setTestRecipientEmail} />
+                  <CrmField label="Recipient Name" value={testRecipientName} onChange={setTestRecipientName} placeholder="Optional" />
+                  <button
+                    type="button"
+                    onClick={handleSendTestEmail}
+                    disabled={isSendingTestEmail}
+                    className="w-full rounded-full border border-brand-300 px-5 py-3 text-sm font-semibold text-brand-900 disabled:opacity-60"
+                  >
+                    {isSendingTestEmail ? "Sending..." : "Send Test Email"}
+                  </button>
+                </div>
+              </div>
 
-          <button
-            type="button"
-            onClick={handleSaveTemplate}
-            disabled={isSavingTemplate}
-            className="w-full rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {isSavingTemplate ? "Saving..." : "Save Template"}
-          </button>
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handleSaveTemplate}
+                  disabled={isSavingTemplate}
+                  className="w-full rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {isSavingTemplate ? "Saving..." : "Save Template"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteTemplate}
+                  disabled={isDeletingTemplate}
+                  className="w-full rounded-full border border-red-200 px-5 py-3 text-sm font-semibold text-red-700 disabled:opacity-60"
+                >
+                  {isDeletingTemplate ? "Deleting..." : "Delete Card"}
+                </button>
+              </div>
 
-          <div className="rounded-[28px] border border-brand-100 bg-[#fffdf7] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Preview</p>
-            {draftTemplate.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={draftTemplate.imageUrl} alt={`${draftTemplate.name} preview`} className="mt-4 h-56 w-full rounded-2xl object-cover" />
-            ) : null}
-            <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm font-semibold text-brand-600">{draftTemplate.subject}</p>
-              <h3 className="mt-2 font-heading text-3xl text-brand-900">{draftTemplate.headline}</h3>
-              <p className="mt-4 whitespace-pre-line text-sm leading-7 text-brand-800">{draftTemplate.body}</p>
-              <p className="mt-6 whitespace-pre-line text-sm font-semibold text-brand-900">{draftTemplate.signature}</p>
-            </div>
-          </div>
+              <div className="rounded-[28px] border border-brand-100 bg-[#fffdf7] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Preview</p>
+                {draftTemplate.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={draftTemplate.imageUrl} alt={`${draftTemplate.name} preview`} className="mt-4 h-56 w-full rounded-2xl object-cover" />
+                ) : null}
+                <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-brand-600">{draftTemplate.subject}</p>
+                  <h3 className="mt-2 font-heading text-3xl text-brand-900">{draftTemplate.headline}</h3>
+                  <p className="mt-4 whitespace-pre-line text-sm leading-7 text-brand-800">{draftTemplate.body}</p>
+                  <p className="mt-6 whitespace-pre-line text-sm font-semibold text-brand-900">{draftTemplate.signature}</p>
+                </div>
+              </div>
+            </>
+          ) : null}
         </aside>
       </div>
     </div>

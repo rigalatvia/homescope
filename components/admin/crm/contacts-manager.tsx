@@ -21,6 +21,11 @@ interface ContactResponse {
   error?: string;
 }
 
+interface ContactDeleteResponse {
+  success?: boolean;
+  error?: string;
+}
+
 function getFriendlyAdminError(response: Response, fallbackMessage: string, apiMessage?: string): string {
   if (response.status === 401) {
     return "Your admin session needs to be refreshed. Sign out, sign back in, then try again.";
@@ -85,6 +90,7 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   const sortedInitialContacts = useMemo(() => sortContacts(initialContacts), [initialContacts]);
   const [contacts, setContacts] = useState(sortedInitialContacts);
   const [selectedContactId, setSelectedContactId] = useState("");
+  const [isCreatingContact, setIsCreatingContact] = useState(false);
   const [contactDraft, setContactDraft] = useState<CrmContactRecord>(createEmptyContact());
   const [searchQuery, setSearchQuery] = useState("");
   const [contactsMessage, setContactsMessage] = useState("");
@@ -93,6 +99,7 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   const [contactSaveError, setContactSaveError] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [isSavingContact, setIsSavingContact] = useState(false);
+  const [isDeletingContact, setIsDeletingContact] = useState(false);
 
   const birthdaysRecordedCount = contacts.filter((contact) => contact.birthdayMonth && contact.birthdayDay).length;
   const activeContactsCount = contacts.filter((contact) => contact.isActive).length;
@@ -111,12 +118,14 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   function applySelectedContact(nextContacts: CrmContactRecord[], preferredId?: string) {
     if (!preferredId || !nextContacts.some((contact) => contact.id === preferredId)) {
       setSelectedContactId("");
+      setIsCreatingContact(false);
       setContactDraft(createEmptyContact());
       return;
     }
 
     const nextSelected = nextContacts.find((contact) => contact.id === preferredId) ?? createEmptyContact();
     setSelectedContactId(nextSelected.id);
+    setIsCreatingContact(false);
     setContactDraft(nextSelected);
   }
 
@@ -124,7 +133,16 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
     const contact = contacts.find((item) => item.id === contactId);
     if (!contact) return;
     setSelectedContactId(contact.id);
+    setIsCreatingContact(false);
     setContactDraft(contact);
+    setContactSaveMessage("");
+    setContactSaveError("");
+  }
+
+  function startNewContact() {
+    setSelectedContactId("");
+    setIsCreatingContact(true);
+    setContactDraft(createEmptyContact());
     setContactSaveMessage("");
     setContactSaveError("");
   }
@@ -137,9 +155,18 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   }
 
   function upsertContact(nextContact: CrmContactRecord) {
-    const nextContacts = sortContacts(contacts.map((contact) => (contact.id === nextContact.id ? nextContact : contact)));
+    const exists = contacts.some((contact) => contact.id === nextContact.id);
+    const nextContacts = sortContacts(
+      exists ? contacts.map((contact) => (contact.id === nextContact.id ? nextContact : contact)) : [...contacts, nextContact]
+    );
     setContacts(nextContacts);
     applySelectedContact(nextContacts, nextContact.id);
+  }
+
+  function removeContact(contactId: string) {
+    const nextContacts = contacts.filter((contact) => contact.id !== contactId);
+    setContacts(nextContacts);
+    applySelectedContact(nextContacts);
   }
 
   async function handleImport(event: React.FormEvent<HTMLFormElement>) {
@@ -185,8 +212,6 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
   }
 
   async function handleSaveContact() {
-    if (!contactDraft.id) return;
-
     setIsSavingContact(true);
     setContactSaveMessage("");
     setContactSaveError("");
@@ -207,28 +232,83 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
       };
 
       const response = await fetch("/api/admin/crm/contacts", {
-        method: "PUT",
+        method: isCreatingContact ? "POST" : "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(
+          isCreatingContact
+            ? {
+                firstName: contactDraft.firstName,
+                lastName: contactDraft.lastName,
+                email: contactDraft.email,
+                phone: contactDraft.phone,
+                birthdayRaw: contactDraft.birthdayRaw,
+                notes: contactDraft.notes,
+                tags: contactDraft.tags,
+                city: contactDraft.city,
+                emailConsentStatus: contactDraft.emailConsentStatus,
+                isActive: contactDraft.isActive
+              }
+            : requestBody
+        )
       });
       const payload = (await response.json()) as ContactResponse;
 
       if (!response.ok || !payload.success || !payload.contact) {
-        throw new Error(getFriendlyAdminError(response, "Could not save contact.", payload.error));
+        throw new Error(getFriendlyAdminError(response, isCreatingContact ? "Could not create contact." : "Could not save contact.", payload.error));
       }
 
       upsertContact(payload.contact);
-      setContactSaveMessage("Contact saved.");
+      setContactSaveMessage(isCreatingContact ? "Contact created." : "Contact saved.");
     } catch (error) {
-      setContactSaveError(error instanceof Error ? error.message : "Could not save contact.");
+      setContactSaveError(error instanceof Error ? error.message : isCreatingContact ? "Could not create contact." : "Could not save contact.");
     } finally {
       setIsSavingContact(false);
     }
   }
 
+  async function handleDeleteContact() {
+    if (!contactDraft.id || isCreatingContact) return;
+    if (!window.confirm(`Delete ${getContactDisplayName(contactDraft)} from the CRM?`)) {
+      return;
+    }
+
+    setIsDeletingContact(true);
+    setContactSaveMessage("");
+    setContactSaveError("");
+
+    try {
+      const response = await fetch("/api/admin/crm/contacts", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id: contactDraft.id })
+      });
+      const payload = (await response.json()) as ContactDeleteResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(getFriendlyAdminError(response, "Could not delete contact.", payload.error));
+      }
+
+      removeContact(contactDraft.id);
+      setContactsMessage("Contact deleted.");
+    } catch (error) {
+      setContactSaveError(error instanceof Error ? error.message : "Could not delete contact.");
+    } finally {
+      setIsDeletingContact(false);
+    }
+  }
+
   function handleResetContact() {
+    if (isCreatingContact) {
+      setContactDraft(createEmptyContact());
+      setContactSaveMessage("");
+      setContactSaveError("");
+      return;
+    }
+
     const savedContact = contacts.find((contact) => contact.id === selectedContactId);
     setContactDraft(savedContact ?? createEmptyContact());
     setContactSaveMessage("");
@@ -253,6 +333,13 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                 This page is now dedicated just to contact management, so the table and editor have room to breathe.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={startNewContact}
+              className="rounded-full border border-brand-300 px-5 py-2.5 text-sm font-semibold text-brand-900"
+            >
+              New Contact
+            </button>
           </div>
 
           <div className="rounded-3xl border border-brand-100 bg-brand-50/60 p-5">
@@ -378,14 +465,16 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Contact Editor</p>
-              <h3 className="mt-2 font-heading text-2xl text-brand-900">{getContactDisplayName(contactDraft)}</h3>
+              <h3 className="mt-2 font-heading text-2xl text-brand-900">
+                {isCreatingContact ? "New Contact" : getContactDisplayName(contactDraft)}
+              </h3>
             </div>
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
-              {contactDraft.source || "manual"}
+              {isCreatingContact ? "manual" : contactDraft.source || "manual"}
             </span>
           </div>
 
-          {contactDraft.id ? (
+          {isCreatingContact || contactDraft.id ? (
             <div className="mt-6 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <CrmField label="First Name" value={contactDraft.firstName} onChange={(value) => updateContactDraft("firstName", value)} />
@@ -450,8 +539,8 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
               </div>
 
               <div className="grid gap-2 rounded-2xl border border-brand-100 bg-white p-4 text-xs text-brand-600">
-                <p>Created: {formatContactUpdatedAt(contactDraft.createdAt)}</p>
-                <p>Updated: {formatContactUpdatedAt(contactDraft.updatedAt)}</p>
+                <p>Created: {isCreatingContact ? "Not saved yet" : formatContactUpdatedAt(contactDraft.createdAt)}</p>
+                <p>Updated: {isCreatingContact ? "Not saved yet" : formatContactUpdatedAt(contactDraft.updatedAt)}</p>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -461,7 +550,7 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                   disabled={isSavingContact}
                   className="rounded-full bg-brand-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  {isSavingContact ? "Saving..." : "Save Contact"}
+                  {isSavingContact ? "Saving..." : isCreatingContact ? "Create Contact" : "Save Contact"}
                 </button>
                 <button
                   type="button"
@@ -470,6 +559,16 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                 >
                   Reset
                 </button>
+                {!isCreatingContact && contactDraft.id ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteContact}
+                    disabled={isDeletingContact}
+                    className="rounded-full border border-red-200 px-5 py-2.5 text-sm font-semibold text-red-700 disabled:opacity-60"
+                  >
+                    {isDeletingContact ? "Deleting..." : "Delete Contact"}
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : (

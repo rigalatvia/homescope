@@ -37,6 +37,19 @@ export interface CrmContactUpdateInput {
   isActive: boolean;
 }
 
+export interface CrmContactCreateInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthdayRaw: string;
+  notes: string;
+  tags: string[];
+  city: string;
+  emailConsentStatus: CrmContactRecord["emailConsentStatus"];
+  isActive: boolean;
+}
+
 export interface CrmTemplateRecord {
   id: string;
   kind: CrmTemplateKind;
@@ -69,6 +82,11 @@ export interface CrmTemplateUpdateInput {
   imageStoragePath?: string;
   imageStorageMode?: CrmImageStorageMode;
   enabled: boolean;
+}
+
+export interface CrmTemplateCreateInput {
+  kind: CrmTemplateKind;
+  name?: string;
 }
 
 export interface CrmTemplateImageUpdate {

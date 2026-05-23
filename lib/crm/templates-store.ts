@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { CRM_TEMPLATE_DEFAULTS, getDefaultCrmTemplateMap } from "@/lib/crm/constants";
-import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import type { CrmTemplateImageUpdate, CrmTemplateRecord, CrmTemplateUpdateInput } from "@/types/crm";
+import { getFirebaseAdminStorage, getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import type { CrmTemplateCreateInput, CrmTemplateImageUpdate, CrmTemplateRecord, CrmTemplateUpdateInput } from "@/types/crm";
 
 const CRM_TEMPLATES_COLLECTION = "crmTemplates";
 
@@ -26,6 +26,62 @@ function sanitizeDate(value: unknown): string {
 
 function sanitizeBoolean(value: unknown): boolean {
   return value === true;
+}
+
+function sanitizeTemplateId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+function buildCustomTemplateFallback(
+  id: string,
+  kind: CrmTemplateRecord["kind"],
+  name?: string
+): CrmTemplateRecord {
+  const now = new Date().toISOString();
+  const safeName = sanitizeText(name ?? "") || (kind === "birthday" ? "New Birthday Card" : "New Holiday Card");
+
+  if (kind === "birthday") {
+    return {
+      id,
+      kind: "birthday",
+      name: safeName,
+      sendDate: "",
+      subject: "Happy Birthday from Yan",
+      previewText: "Sending warm birthday wishes from Yan.",
+      headline: "Happy Birthday!",
+      body: "Wishing you a beautiful birthday filled with joy, health, and happy moments.",
+      signature: "Warm wishes,\nYan Ginzburg",
+      imageUrl: "",
+      imageStoragePath: "",
+      imageStorageMode: "none",
+      enabled: false,
+      createdAt: now,
+      updatedAt: now
+    };
+  }
+
+  return {
+    id,
+    kind: "holiday",
+    name: safeName,
+    sendDate: "",
+    subject: `Warm wishes from Yan`,
+    previewText: "Sharing warm wishes from Yan.",
+    headline: "Warm wishes!",
+    body: "Wishing you a wonderful day filled with peace, warmth, and happy moments.",
+    signature: "Warm wishes,\nYan Ginzburg",
+    imageUrl: "",
+    imageStoragePath: "",
+    imageStorageMode: "none",
+    enabled: false,
+    createdAt: now,
+    updatedAt: now
+  };
 }
 
 function normalizeTemplateRecord(input: Partial<CrmTemplateRecord>, fallback: CrmTemplateRecord): CrmTemplateRecord {
@@ -59,40 +115,34 @@ export async function listCrmTemplates(): Promise<CrmTemplateRecord[]> {
   const snapshot = await firestore.collection(CRM_TEMPLATES_COLLECTION).get();
   const defaults = getDefaultCrmTemplateMap();
   const savedTemplates = new Map<string, CrmTemplateRecord>();
+  const deletedTemplateIds = new Set<string>();
 
   for (const doc of snapshot.docs) {
     const existingDefault = defaults.get(doc.id);
     const data = doc.data() as Partial<CrmTemplateRecord>;
+
+    if (sanitizeText((data as { deletedAt?: string }).deletedAt ?? "")) {
+      deletedTemplateIds.add(doc.id);
+      continue;
+    }
 
     if (existingDefault) {
       savedTemplates.set(doc.id, normalizeTemplateRecord(data, existingDefault));
       continue;
     }
 
-    const now = new Date().toISOString();
-    savedTemplates.set(doc.id, {
-      id: doc.id,
-      kind: data.kind === "birthday" ? "birthday" : "holiday",
-      name: sanitizeText(data.name) || doc.id,
-      sendDate: data.kind === "birthday" ? "" : sanitizeDate(data.sendDate),
-      subject: sanitizeText(data.subject),
-      previewText: sanitizeText(data.previewText),
-      headline: sanitizeText(data.headline),
-      body: sanitizeMultilineText(data.body),
-      signature: sanitizeMultilineText(data.signature),
-      imageUrl: sanitizeText(data.imageUrl),
-      imageStoragePath: sanitizeText(data.imageStoragePath),
-      imageStorageMode:
-        data.imageStorageMode === "embedded" || data.imageStorageMode === "storage" || data.imageStorageMode === "none"
-          ? data.imageStorageMode
-          : "none",
-      enabled: sanitizeBoolean(data.enabled),
-      createdAt: sanitizeText(data.createdAt) || now,
-      updatedAt: sanitizeText(data.updatedAt) || now
-    });
+    const fallback = buildCustomTemplateFallback(doc.id, data.kind === "birthday" ? "birthday" : "holiday", sanitizeText(data.name) || doc.id);
+    savedTemplates.set(doc.id, normalizeTemplateRecord(data, fallback));
   }
 
-  return CRM_TEMPLATE_DEFAULTS.map((template) => savedTemplates.get(template.id) ?? template);
+  const defaultTemplates = CRM_TEMPLATE_DEFAULTS.filter((template) => !deletedTemplateIds.has(template.id)).map(
+    (template) => savedTemplates.get(template.id) ?? template
+  );
+  const customTemplates = Array.from(savedTemplates.values())
+    .filter((template) => !defaults.has(template.id))
+    .sort((left, right) => left.name.localeCompare(right.name, "en", { sensitivity: "base" }));
+
+  return [...defaultTemplates, ...customTemplates];
 }
 
 export async function getCrmTemplateById(templateId: string): Promise<CrmTemplateRecord | null> {
@@ -103,16 +153,23 @@ export async function getCrmTemplateById(templateId: string): Promise<CrmTemplat
 export async function saveCrmTemplate(input: CrmTemplateUpdateInput): Promise<CrmTemplateRecord> {
   const firestore = getFirebaseAdminFirestore();
   const defaults = getDefaultCrmTemplateMap();
-  const fallback = defaults.get(input.id);
+  const templateId = sanitizeText(input.id);
 
-  if (!fallback) {
-    throw new Error("Unsupported template id.");
+  if (!templateId) {
+    throw new Error("Template id is required.");
   }
 
-  const docRef = firestore.collection(CRM_TEMPLATES_COLLECTION).doc(input.id);
+  const docRef = firestore.collection(CRM_TEMPLATES_COLLECTION).doc(templateId);
   const existingSnapshot = await docRef.get();
   const existing = existingSnapshot.exists ? (existingSnapshot.data() as Partial<CrmTemplateRecord>) : null;
   const now = new Date().toISOString();
+  const fallback =
+    defaults.get(templateId) ??
+    buildCustomTemplateFallback(
+      templateId,
+      input.kind === "birthday" ? "birthday" : existing?.kind === "birthday" ? "birthday" : "holiday",
+      input.name || existing?.name || templateId
+    );
 
   const merged = normalizeTemplateRecord(
     {
@@ -137,15 +194,12 @@ export async function saveCrmTemplate(input: CrmTemplateUpdateInput): Promise<Cr
 }
 
 export async function updateCrmTemplateImage(templateId: string, image: CrmTemplateImageUpdate): Promise<CrmTemplateRecord> {
-  const templates = getDefaultCrmTemplateMap();
-  const fallback = templates.get(templateId);
-
-  if (!fallback) {
-    throw new Error("Unsupported template id.");
-  }
-
   const existingTemplates = await listCrmTemplates();
-  const existing = existingTemplates.find((template) => template.id === templateId) ?? fallback;
+  const existing = existingTemplates.find((template) => template.id === templateId);
+
+  if (!existing) {
+    throw new Error("Template not found.");
+  }
 
   return saveCrmTemplate({
     id: templateId,
@@ -162,4 +216,67 @@ export async function updateCrmTemplateImage(templateId: string, image: CrmTempl
     imageStorageMode: image.imageStorageMode,
     enabled: existing.enabled
   });
+}
+
+export async function createCrmTemplate(input: CrmTemplateCreateInput): Promise<CrmTemplateRecord> {
+  const firestore = getFirebaseAdminFirestore();
+  const baseSlug = sanitizeTemplateId(input.name || `${input.kind}-card`) || `${input.kind}-card`;
+  let templateId = baseSlug;
+  let attempt = 1;
+
+  while (true) {
+    const snapshot = await firestore.collection(CRM_TEMPLATES_COLLECTION).doc(templateId).get();
+    if (!snapshot.exists) {
+      break;
+    }
+
+    templateId = `${baseSlug}-${attempt}`;
+    attempt += 1;
+  }
+
+  const template = buildCustomTemplateFallback(templateId, input.kind, input.name);
+
+  await firestore.collection(CRM_TEMPLATES_COLLECTION).doc(templateId).set(
+    {
+      ...template,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: false }
+  );
+
+  return template;
+}
+
+export async function deleteCrmTemplate(templateId: string): Promise<void> {
+  const normalizedId = sanitizeText(templateId);
+
+  if (!normalizedId) {
+    throw new Error("Template id is required.");
+  }
+
+  const firestore = getFirebaseAdminFirestore();
+  const existing = await getCrmTemplateById(normalizedId);
+  const now = new Date().toISOString();
+
+  if (existing?.imageStorageMode === "storage" && existing.imageStoragePath) {
+    try {
+      const storage = getFirebaseAdminStorage();
+      await storage.bucket().file(existing.imageStoragePath).delete({ ignoreNotFound: true });
+    } catch (error) {
+      console.warn("[crm][templates] Failed deleting storage image while removing template", {
+        templateId: normalizedId,
+        error
+      });
+    }
+  }
+
+  await firestore.collection(CRM_TEMPLATES_COLLECTION).doc(normalizedId).set(
+    {
+      id: normalizedId,
+      deletedAt: now,
+      updatedAt: now,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: false }
+  );
 }

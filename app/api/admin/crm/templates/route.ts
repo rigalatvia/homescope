@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin/authorize-request";
-import { saveCrmTemplate } from "@/lib/crm/templates-store";
-import type { CrmTemplateUpdateInput } from "@/types/crm";
+import { createCrmTemplate, deleteCrmTemplate, saveCrmTemplate } from "@/lib/crm/templates-store";
+import type { CrmTemplateCreateInput, CrmTemplateUpdateInput } from "@/types/crm";
 
 function isValidTemplateKind(value: unknown): value is CrmTemplateUpdateInput["kind"] {
   return value === "birthday" || value === "holiday";
@@ -48,5 +48,53 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error("[admin][crm] Failed saving template", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not save template." }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const authError = await authorizeAdminRequest();
+  if (authError) return authError;
+
+  try {
+    const body = (await request.json()) as Partial<CrmTemplateCreateInput>;
+
+    if (!isValidTemplateKind(body.kind)) {
+      return NextResponse.json({ error: "Template type is invalid." }, { status: 400 });
+    }
+
+    const template = await createCrmTemplate({
+      kind: body.kind,
+      name: typeof body.name === "string" ? body.name : ""
+    });
+
+    return NextResponse.json({
+      success: true,
+      template
+    });
+  } catch (error) {
+    console.error("[admin][crm] Failed creating template", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not create template." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const authError = await authorizeAdminRequest();
+  if (authError) return authError;
+
+  try {
+    const body = (await request.json()) as { id?: string };
+
+    if (typeof body.id !== "string" || !body.id.trim()) {
+      return NextResponse.json({ error: "Template id is required." }, { status: 400 });
+    }
+
+    await deleteCrmTemplate(body.id);
+
+    return NextResponse.json({
+      success: true
+    });
+  } catch (error) {
+    console.error("[admin][crm] Failed deleting template", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not delete template." }, { status: 500 });
   }
 }
