@@ -269,7 +269,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
           Accept: "application/json",
           Authorization: `Bearer ${token}`
         }
-      });
+      }, since ? "incremental listings request" : "listings request");
 
       if (response.status === 401) {
         this.accessToken = null;
@@ -280,7 +280,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
             Accept: "application/json",
             Authorization: `Bearer ${refreshedToken}`
           }
-        });
+        }, since ? "incremental listings retry after token refresh" : "listings retry after token refresh");
         if (!retryResponse.ok) {
           throw new Error(`DDF listings request failed after token refresh (${retryResponse.status}).`);
         }
@@ -320,7 +320,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         Accept: "application/json"
       },
       body: body.toString()
-    });
+    }, "token request");
 
     if (!response.ok) {
       throw new Error(`DDF token request failed (${response.status}).`);
@@ -336,11 +336,16 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     return token;
   }
 
-  private async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  private async fetchWithTimeout(url: string, init: RequestInit, operationLabel: string): Promise<Response> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.config.requestTimeoutMs);
     try {
       return await fetch(url, { ...init, signal: controller.signal, cache: "no-store" });
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw new Error(`DDF ${operationLabel} timed out after ${this.config.requestTimeoutMs}ms.`);
+      }
+      throw error;
     } finally {
       clearTimeout(timeout);
     }
@@ -579,7 +584,11 @@ function shouldRetryDdfError(error: unknown): boolean {
     logSyncWarn("DDF auth token expired; retrying with refresh.");
     return true;
   }
-  return /429|5\d\d|timeout|network|fetch/i.test(message);
+  return /429|5\d\d|timeout|network|fetch|abort|aborted/i.test(message);
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }
 
 function inferTransactionType(record: JsonObject): string {

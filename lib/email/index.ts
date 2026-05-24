@@ -8,10 +8,22 @@ import { getSiteSettings } from "@/lib/settings/site-settings";
 import type { ContactSubmissionRecord } from "@/types/contact";
 import type { LeadSubmissionRecord } from "@/types/lead";
 
+const DEFAULT_FROM_NAME = "HomeScope GTA";
+
 interface EmailProviderSelection {
   provider: EmailProvider;
   mode: EmailSendResult["mode"];
   reason: string;
+}
+
+function buildDisplayFromAddress(fromEmail: string, fromName = DEFAULT_FROM_NAME): string {
+  const trimmedEmail = fromEmail.trim();
+  const trimmedName = fromName.trim();
+
+  if (!trimmedEmail) return trimmedName;
+  if (!trimmedName) return trimmedEmail;
+
+  return `${trimmedName} <${trimmedEmail}>`;
 }
 
 async function getProviderSelection(): Promise<EmailProviderSelection> {
@@ -41,8 +53,10 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
       };
     }
 
+    const senderAddress = buildDisplayFromAddress(fromEmail || emailUser);
+
     return {
-      provider: new GmailEmailProvider(emailUser, emailPass, fromEmail || emailUser),
+      provider: new GmailEmailProvider(emailUser, emailPass, senderAddress),
       mode: "live",
       reason: "Gmail provider configured."
     };
