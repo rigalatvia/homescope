@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { sendLeadNotification } from "@/lib/email";
 import { upsertContactFromLead } from "@/lib/leads/contacts-store";
-import { storeLeadSubmission } from "@/lib/leads/store";
+import { storeLeadSubmission, updateLeadEmailDeliveryStatus } from "@/lib/leads/store";
 import { validateLeadInput } from "@/lib/leads/validation";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
+import { getDefaultSiteSettings } from "@/lib/settings/site-settings";
 import type { LeadSubmissionInput } from "@/types/lead";
 
 export async function POST(request: Request) {
   await ensureServerSecretsLoaded();
+  const defaultSettings = getDefaultSiteSettings();
 
   try {
     const payload = (await request.json()) as LeadSubmissionInput;
@@ -35,16 +38,46 @@ export async function POST(request: Request) {
       });
     }
 
-    console.info("[leads] Submission saved. Email will be handled by Firestore trigger.", {
-      leadId: record.id
-    });
+    try {
+      const emailResult = await sendLeadNotification(record);
+      const emailDeliveryStatus = emailResult.mode === "live" ? "sent" : "mock";
+
+      await updateLeadEmailDeliveryStatus(record.id, {
+        emailDeliveryStatus,
+        emailRecipientUsed: emailResult.recipientUsed,
+        subjectUsed: emailResult.subjectUsed,
+        emailProviderUsed: emailResult.provider,
+        emailMode: emailResult.mode
+      });
+
+      console.info("[leads] Submission processed", {
+        leadId: record.id,
+        emailMode: emailResult.mode,
+        provider: emailResult.provider,
+        emailDeliveryStatus
+      });
+    } catch (emailError) {
+      await updateLeadEmailDeliveryStatus(record.id, {
+        emailDeliveryStatus: "failed",
+        emailRecipientUsed: "",
+        subjectUsed: defaultSettings.leadEmailSubject,
+        emailProviderUsed: "unknown",
+        emailMode: "live",
+        emailError: emailError instanceof Error ? emailError.message : "Unknown email error"
+      });
+
+      console.error("[leads] Submission saved but email send failed", {
+        leadId: record.id,
+        error: emailError
+      });
+    }
 
     return NextResponse.json(
       {
         success: true,
         id: record.id,
         message:
-          "Your request was received successfully. Please expect an email from info@homescopegta.ca and check your junk folder if you do not see it in the next few hours."
+          "Your request was received successfully. Yan will review it and follow up with you soon."
       },
       { status: 201 }
     );
