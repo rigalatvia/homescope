@@ -1,10 +1,38 @@
 import { NextResponse } from "next/server";
 import { runIncrementalSync } from "@/lib/mls/sync/runIncrementalSync";
+import { runStaleCleanup } from "@/lib/mls/sync/runStaleCleanup";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import type { MLSSyncResult } from "@/lib/mls/types";
 
 const SETTINGS_COLLECTION = "settings";
 const SCHEDULER_STATUS_DOC_ID = "mlsSchedulerStatus";
+
+function buildScheduledCounts(results: Array<MLSSyncResult | null>) {
+  return results.reduce(
+    (totals, result) => {
+      if (!result) return totals;
+
+      totals.fetched += result.stats.fetched;
+      totals.filtered += result.stats.filtered;
+      totals.created += result.stats.created;
+      totals.updated += result.stats.updated;
+      totals.deleted += result.stats.archived;
+      totals.archived += result.stats.archived;
+      totals.failed += result.stats.failed;
+      return totals;
+    },
+    {
+      fetched: 0,
+      filtered: 0,
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      archived: 0,
+      failed: 0
+    }
+  );
+}
 
 export async function POST(request: Request) {
   const schedulerToken = await getServerConfigValue("MLS_SCHEDULER_TOKEN");
@@ -19,24 +47,20 @@ export async function POST(request: Request) {
   }
 
   const firestore = getFirebaseAdminFirestore();
+  let incrementalResult: MLSSyncResult | null = null;
+  let cleanupResult: MLSSyncResult | null = null;
 
   try {
-    const result = await runIncrementalSync({ connectorKind: "ddf-treb" });
+    incrementalResult = await runIncrementalSync({ connectorKind: "ddf-treb" });
+    cleanupResult = await runStaleCleanup("ddf-treb");
+    const counts = buildScheduledCounts([incrementalResult, cleanupResult]);
 
     await firestore.collection(SETTINGS_COLLECTION).doc(SCHEDULER_STATUS_DOC_ID).set(
       {
         lastRunAt: new Date().toISOString(),
-        lastRunMode: "incremental",
+        lastRunMode: "incremental+cleanup",
         lastRunStatus: "success",
-        lastRunCounts: {
-          fetched: result.stats.fetched,
-          filtered: result.stats.filtered,
-          created: result.stats.created,
-          updated: result.stats.updated,
-          deleted: result.stats.archived,
-          archived: result.stats.archived,
-          failed: result.stats.failed
-        },
+        lastRunCounts: counts,
         lastError: null
       },
       { merge: true }
@@ -46,27 +70,24 @@ export async function POST(request: Request) {
       {
         success: true,
         schedule: "daily_3am",
-        counts: {
-          fetched: result.stats.fetched,
-          filtered: result.stats.filtered,
-          created: result.stats.created,
-          updated: result.stats.updated,
-          deleted: result.stats.archived,
-          archived: result.stats.archived,
-          failed: result.stats.failed
+        counts,
+        result: {
+          incremental: incrementalResult,
+          cleanup: cleanupResult
         },
-        result
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("[mls-sync] Scheduled trigger failed", error);
+    const counts = buildScheduledCounts([incrementalResult, cleanupResult]);
 
     await firestore.collection(SETTINGS_COLLECTION).doc(SCHEDULER_STATUS_DOC_ID).set(
       {
         lastRunAt: new Date().toISOString(),
-        lastRunMode: "incremental",
+        lastRunMode: "incremental+cleanup",
         lastRunStatus: "failed",
+        lastRunCounts: counts,
         lastError: error instanceof Error ? error.message : "Unknown scheduler error"
       },
       { merge: true }

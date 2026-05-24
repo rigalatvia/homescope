@@ -17,9 +17,12 @@ import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSig
 import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
+import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 
 export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+  await ensureServerSecretsLoaded();
+
   const startedAt = new Date().toISOString();
   const notes: string[] = [];
   const stats: MLSSyncStats = {

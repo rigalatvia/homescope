@@ -19,6 +19,7 @@ export async function scheduledMLS3HourSync(): Promise<void> {
 
 export async function scheduledMLSIncrementalSync(): Promise<void> {
   await runIncrementalSync({ connectorKind: scheduledConnector });
+  await runStaleCleanup(scheduledConnector);
 }
 
 export async function scheduledMLSStaleCleanup(): Promise<void> {

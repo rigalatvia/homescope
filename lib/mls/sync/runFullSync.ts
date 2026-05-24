@@ -25,8 +25,11 @@ import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSig
 import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
+import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 
 export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+  await ensureServerSecretsLoaded();
+
   const startedAt = new Date().toISOString();
   const connector = createMLSConnector(connectorKind);
   const notes: string[] = [];

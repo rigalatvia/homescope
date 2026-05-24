@@ -581,7 +581,7 @@ export function MlsSyncPanel() {
           </div>
 
           <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
-            <p className="text-sm font-semibold text-brand-900">Nightly Incremental Status</p>
+            <p className="text-sm font-semibold text-brand-900">Nightly Incremental + Cleanup Status</p>
             <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-brand-800 sm:grid-cols-2">
               <p>Last Run At: {listingsStats.schedulerLastRunAt ? new Date(listingsStats.schedulerLastRunAt).toLocaleString() : "No run recorded yet"}</p>
               <p>Status: {listingsStats.schedulerLastRunStatus ?? "-"}</p>
