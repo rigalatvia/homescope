@@ -201,6 +201,23 @@ export async function getServerConfigValue(key: string): Promise<string | null> 
   return value ? value.trim() : null;
 }
 
+export async function getServerSecretValue(key: string): Promise<string | null> {
+  const projectId = await getProjectId();
+  if (!projectId) {
+    console.warn("[secrets] Secret-only lookup skipped because no project id was found.", { key });
+    return null;
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+    const value = await readAndSetSecret(projectId, key, accessToken);
+    return value ? value.trim() : null;
+  } catch (error) {
+    console.warn("[secrets] Secret-only lookup failed", { key, error });
+    return null;
+  }
+}
+
 export async function resolveServerConfigValue(key: string): Promise<ServerConfigResolution> {
   const existing = process.env[key];
   if (existing && existing.trim()) {

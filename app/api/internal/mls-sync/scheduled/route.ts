@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { runIncrementalSync } from "@/lib/mls/sync/runIncrementalSync";
 import { runStaleCleanup } from "@/lib/mls/sync/runStaleCleanup";
-import { getServerConfigValue } from "@/lib/server/secret-manager";
+import { getServerSecretValue } from "@/lib/server/secret-manager";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import type { MLSSyncResult } from "@/lib/mls/types";
 
@@ -37,7 +37,7 @@ function buildScheduledCounts(results: Array<MLSSyncResult | null>) {
 }
 
 export async function POST(request: Request) {
-  const schedulerToken = await getServerConfigValue("MLS_SCHEDULER_TOKEN");
+  const schedulerToken = await getServerSecretValue("MLS_SCHEDULER_TOKEN");
   const requestToken = request.headers.get("x-scheduler-token");
 
   if (!schedulerToken) {
