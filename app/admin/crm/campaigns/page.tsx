@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { CrmMetricCard } from "@/components/admin/crm/shared";
 import { getCrmCampaignSchedulerStatus, listRecentCrmCampaignLogs } from "@/lib/crm/campaigns-store";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Admin CRM Campaigns",
   description: "Review automated birthday and holiday CRM sends.",
