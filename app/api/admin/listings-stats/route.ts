@@ -19,19 +19,34 @@ export async function GET(request: Request) {
 
   try {
     const firestore = getFirebaseAdminFirestore();
-    const [totalAgg, visibleAgg, fullCursorSnap, incCursorSnap, cleanupCursorSnap, schedulerSnap] = await Promise.all([
+    const [totalAgg, visibleAgg, fullCursorSnap, incCursorSnap, cleanupCursorSnap, schedulerSnap, manualSyncSnap] = await Promise.all([
       firestore.collection(LISTINGS_COLLECTION).count().get(),
       firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true).count().get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsFullSyncCursor").get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsIncrementalCursor").get(),
       firestore.collection(SETTINGS_COLLECTION).doc("mlsCleanupCursor").get(),
-      firestore.collection(SETTINGS_COLLECTION).doc("mlsSchedulerStatus").get()
+      firestore.collection(SETTINGS_COLLECTION).doc("mlsSchedulerStatus").get(),
+      firestore.collection(SETTINGS_COLLECTION).doc("mlsManualSyncStatus").get()
     ]);
 
     const fullCursor = (fullCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
     const incrementalCursor = (incCursorSnap.data() ?? {}) as { sinceIso?: string; updatedAt?: string };
     const cleanupCursor = (cleanupCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
     const scheduler = (schedulerSnap.data() ?? {}) as {
+      lastRunAt?: string;
+      lastRunMode?: string;
+      lastRunStatus?: string;
+      lastRunCounts?: {
+        updated?: number;
+        created?: number;
+        deleted?: number;
+        archived?: number;
+        fetched?: number;
+        filtered?: number;
+      };
+      lastError?: string | null;
+    };
+    const manualSync = (manualSyncSnap.data() ?? {}) as {
       lastRunAt?: string;
       lastRunMode?: string;
       lastRunStatus?: string;
@@ -66,7 +81,16 @@ export async function GET(request: Request) {
         schedulerLastRunDeleted: Number(scheduler.lastRunCounts?.deleted ?? scheduler.lastRunCounts?.archived ?? 0),
         schedulerLastRunFetched: Number(scheduler.lastRunCounts?.fetched ?? 0),
         schedulerLastRunFiltered: Number(scheduler.lastRunCounts?.filtered ?? 0),
-        schedulerLastError: scheduler.lastError ?? null
+        schedulerLastError: scheduler.lastError ?? null,
+        manualLastRunAt: manualSync.lastRunAt ?? null,
+        manualLastRunMode: manualSync.lastRunMode ?? null,
+        manualLastRunStatus: manualSync.lastRunStatus ?? null,
+        manualLastRunUpdated: Number(manualSync.lastRunCounts?.updated ?? 0),
+        manualLastRunCreated: Number(manualSync.lastRunCounts?.created ?? 0),
+        manualLastRunDeleted: Number(manualSync.lastRunCounts?.deleted ?? manualSync.lastRunCounts?.archived ?? 0),
+        manualLastRunFetched: Number(manualSync.lastRunCounts?.fetched ?? 0),
+        manualLastRunFiltered: Number(manualSync.lastRunCounts?.filtered ?? 0),
+        manualLastError: manualSync.lastError ?? null
       }
     });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { MLSConnectorKind, MLSSyncMode } from "@/lib/mls/types";
 import { runMLSSync } from "@/lib/mls/sync/runSync";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
+import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import {
   getDefaultFullSyncStartPage,
   setFullSyncNextCursor,
@@ -9,6 +10,11 @@ import {
   setFullSyncSweepStartedAt
 } from "@/lib/mls/sync/fullSyncCursor";
 import { requestMLSSyncStop } from "@/lib/mls/sync/stopSignal";
+
+export const maxDuration = 300;
+
+const SETTINGS_COLLECTION = "settings";
+const MANUAL_STATUS_DOC_ID = "mlsManualSyncStatus";
 
 interface ManualSyncBody {
   mode?: MLSSyncMode;
@@ -20,6 +26,8 @@ interface ManualSyncBody {
 export async function POST(request: Request) {
   const adminToken = await getServerConfigValue("MLS_SYNC_ADMIN_TOKEN");
   const requestToken = request.headers.get("x-admin-sync-token");
+  const firestore = getFirebaseAdminFirestore();
+  let attemptedMode: MLSSyncMode = "full";
 
   if (!adminToken) {
     return NextResponse.json({ error: "MLS sync admin token is not configured." }, { status: 503 });
@@ -32,6 +40,7 @@ export async function POST(request: Request) {
   try {
     const body = ((await request.json()) as ManualSyncBody) || {};
     const mode: MLSSyncMode = body.mode || "full";
+    attemptedMode = mode;
     if (mode === "full" && body.resetCursorToFirstPage === true) {
       await setFullSyncStartPage(getDefaultFullSyncStartPage());
       await setFullSyncNextCursor(null);
@@ -41,6 +50,25 @@ export async function POST(request: Request) {
       connectorKind: body.connectorKind,
       sinceIso: body.sinceIso
     });
+
+    await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(
+      {
+        lastRunAt: new Date().toISOString(),
+        lastRunMode: mode,
+        lastRunStatus: "success",
+        lastRunCounts: {
+          fetched: result.stats.fetched,
+          filtered: result.stats.filtered,
+          created: result.stats.created,
+          updated: result.stats.updated,
+          deleted: result.stats.archived,
+          archived: result.stats.archived,
+          failed: result.stats.failed
+        },
+        lastError: null
+      },
+      { merge: true }
+    );
 
     return NextResponse.json(
       {
@@ -61,6 +89,15 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[mls-sync] Manual trigger failed", error);
     const detail = error instanceof Error ? error.message : "Unknown sync error";
+    await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(
+      {
+        lastRunAt: new Date().toISOString(),
+        lastRunMode: attemptedMode,
+        lastRunStatus: "failed",
+        lastError: detail
+      },
+      { merge: true }
+    );
     return NextResponse.json({ error: "MLS sync failed.", detail }, { status: 500 });
   }
 }

@@ -5,6 +5,8 @@ import { getServerConfigValue } from "@/lib/server/secret-manager";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import type { MLSSyncResult } from "@/lib/mls/types";
 
+export const maxDuration = 300;
+
 const SETTINGS_COLLECTION = "settings";
 const SCHEDULER_STATUS_DOC_ID = "mlsSchedulerStatus";
 

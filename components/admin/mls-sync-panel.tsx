@@ -72,6 +72,15 @@ interface ListingsStatsResponse {
     schedulerLastRunFetched: number;
     schedulerLastRunFiltered: number;
     schedulerLastError: string | null;
+    manualLastRunAt: string | null;
+    manualLastRunMode: string | null;
+    manualLastRunStatus: string | null;
+    manualLastRunUpdated: number;
+    manualLastRunCreated: number;
+    manualLastRunDeleted: number;
+    manualLastRunFetched: number;
+    manualLastRunFiltered: number;
+    manualLastError: string | null;
   };
   error?: string;
 }
@@ -577,6 +586,22 @@ export function MlsSyncPanel() {
               <p>
                 Cleanup Cursor Updated: {listingsStats.cleanupCursorUpdatedAt ? new Date(listingsStats.cleanupCursorUpdatedAt).toLocaleString() : "-"}
               </p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/70 p-4">
+            <p className="text-sm font-semibold text-brand-900">Last Manual Run</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-brand-800 sm:grid-cols-2">
+              <p>Last Run At: {listingsStats.manualLastRunAt ? new Date(listingsStats.manualLastRunAt).toLocaleString() : "No manual run recorded yet"}</p>
+              <p>Status: {listingsStats.manualLastRunStatus ?? "-"}</p>
+              <p>Mode: {listingsStats.manualLastRunMode ?? "-"}</p>
+              <p>Updated Records: {listingsStats.manualLastRunUpdated}</p>
+              <p>Created Records: {listingsStats.manualLastRunCreated}</p>
+              <p>Deleted Records: {listingsStats.manualLastRunDeleted}</p>
+              <p>
+                Fetched/Filtered: {listingsStats.manualLastRunFetched}/{listingsStats.manualLastRunFiltered}
+              </p>
+              {listingsStats.manualLastError ? <p className="text-red-700 sm:col-span-2">Last Error: {listingsStats.manualLastError}</p> : null}
             </div>
           </div>
 
