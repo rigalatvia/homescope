@@ -465,6 +465,25 @@ export function MlsSyncPanel() {
           />
         </label>
 
+        <div className="flex flex-wrap items-center gap-3 text-xs text-brand-700">
+          <p>Leave this blank to use the saved incremental cursor. Filling it in overrides the cursor and can make the run much longer.</p>
+          {sinceIso.trim() ? (
+            <button
+              type="button"
+              onClick={() => setSinceIso("")}
+              className="rounded-full border border-brand-300 px-3 py-1.5 font-semibold text-brand-900"
+            >
+              Use Saved Cursor
+            </button>
+          ) : null}
+        </div>
+
+        {sinceIso.trim() ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            This manual run will start from <span className="font-mono">{sinceIso.trim()}</span> instead of the saved cursor. That can replay a large backlog and may take much longer than the nightly job.
+          </p>
+        ) : null}
+
         <div className="grid gap-3 sm:grid-cols-4">
           <button
             type="button"
