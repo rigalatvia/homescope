@@ -60,7 +60,9 @@ interface ListingsStatsResponse {
     fullSyncNextPage: number;
     fullSyncCursorUpdatedAt: string | null;
     incrementalSinceIso: string | null;
+    incrementalNextPage: number;
     incrementalCursorUpdatedAt: string | null;
+    incrementalSweepStartedAt: string | null;
     cleanupNextPage: number;
     cleanupCursorUpdatedAt: string | null;
     schedulerLastRunAt: string | null;
@@ -92,8 +94,20 @@ async function parseApiResponse<T>(response: Response): Promise<T | null> {
   try {
     return JSON.parse(raw) as T;
   } catch {
-    throw new Error(raw);
+    throw new Error(summarizeNonJsonResponse(raw, response.status));
   }
+}
+
+function summarizeNonJsonResponse(raw: string, status: number): string {
+  const trimmed = raw.trim();
+  if (/<!doctype html>|<html/i.test(trimmed)) {
+    if (/Internal Server Error/i.test(trimmed)) {
+      return `The server returned an HTML Internal Server Error page (HTTP ${status}). This usually means the request hit a platform or upstream failure before JSON could be returned.`;
+    }
+    return `The server returned an unexpected HTML response (HTTP ${status}) instead of JSON.`;
+  }
+
+  return trimmed;
 }
 
 function mergeSyncCounts(current: SyncCounts | null, incoming: SyncCounts | null | undefined): SyncCounts | null {
@@ -598,8 +612,12 @@ export function MlsSyncPanel() {
               <p>
                 Incremental Since: {listingsStats.incrementalSinceIso ? new Date(listingsStats.incrementalSinceIso).toLocaleString() : "-"}
               </p>
+              <p>Incremental Next Page: {listingsStats.incrementalNextPage}</p>
               <p>
                 Incremental Cursor Updated: {listingsStats.incrementalCursorUpdatedAt ? new Date(listingsStats.incrementalCursorUpdatedAt).toLocaleString() : "-"}
+              </p>
+              <p>
+                Incremental Sweep Started: {listingsStats.incrementalSweepStartedAt ? new Date(listingsStats.incrementalSweepStartedAt).toLocaleString() : "-"}
               </p>
               <p>Cleanup Next Page: {listingsStats.cleanupNextPage}</p>
               <p>

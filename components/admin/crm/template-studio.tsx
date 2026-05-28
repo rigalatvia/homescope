@@ -412,12 +412,12 @@ export function CrmTemplateStudio({ initialTemplates }: CrmTemplateStudioProps) 
 
               <div className="rounded-3xl border border-brand-100 bg-brand-50/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-brand-900">Card Image</p>
-                    <p className="mt-1 text-xs leading-5 text-brand-700">
-                      Upload a holiday or birthday image. Wide landscape images work best in email, and keeping files around 1 to 2 MB usually gives a good balance of quality and load speed.
-                    </p>
-                  </div>
+                    <div>
+                      <p className="text-sm font-semibold text-brand-900">Card Image</p>
+                      <p className="mt-1 text-xs leading-5 text-brand-700">
+                        Upload a holiday or birthday image. Wide landscape images work best in email. Preferred size: 1200 x 630 px. Keeping files around 1 to 2 MB usually gives a good balance of quality and load speed.
+                      </p>
+                    </div>
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
                     {draftTemplate.imageStorageMode === "storage"
                       ? "Stored in Firebase Storage"

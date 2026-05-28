@@ -30,6 +30,13 @@ export class PlaceholderApprovedFeedConnector implements MLSFeedConnector {
     return [];
   }
 
+  async fetchUpdatedListingsPage(_since?: Date, _options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    return {
+      items: [],
+      nextCursor: null
+    };
+  }
+
   async healthCheck(): Promise<MLSConnectorHealth> {
     return {
       ok: true,

@@ -31,6 +31,23 @@ export class MockMLSFeedConnector implements MLSFeedConnector {
     return paginate(filtered, options);
   }
 
+  async fetchUpdatedListingsPage(since?: Date, options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    const source = !since
+      ? mockMLSFeedListings.slice(0, 2)
+      : mockMLSFeedListings.filter((item) => (item.sourceUpdatedAt ?? "") >= since.toISOString());
+    const items = paginate(source, options);
+    if (!options?.pageSize) {
+      return { items, nextCursor: null };
+    }
+
+    const page = options.page ?? 1;
+    const hasMore = page * options.pageSize < source.length;
+    return {
+      items,
+      nextCursor: hasMore ? String(page + 1) : null
+    };
+  }
+
   async healthCheck(): Promise<MLSConnectorHealth> {
     return {
       ok: true,

@@ -127,6 +127,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     return responseItems.map((item, index) => this.mapDdfRecordToRawListing(item, index));
   }
 
+  async fetchUpdatedListingsPage(since?: Date, options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
+    const page = await this.fetchPage(since, options, undefined, true);
+    return {
+      items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
+      nextCursor: page.nextCursor
+    };
+  }
+
   async healthCheck(): Promise<MLSConnectorHealth> {
     try {
       const rows = await this.fetchPaginated(undefined, { page: 1, pageSize: 1 });

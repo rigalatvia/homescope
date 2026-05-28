@@ -8,5 +8,6 @@ export interface MLSFeedConnector {
   fetchActiveListingsPage?(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>>;
   fetchNonActiveListingsPage?(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>>;
   fetchUpdatedListings(since?: Date, options?: MLSFetchOptions): Promise<RawMLSFeedListing[]>;
+  fetchUpdatedListingsPage?(since?: Date, options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>>;
   healthCheck(): Promise<MLSConnectorHealth>;
 }

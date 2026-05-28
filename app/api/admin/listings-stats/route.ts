@@ -30,7 +30,13 @@ export async function GET(request: Request) {
     ]);
 
     const fullCursor = (fullCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
-    const incrementalCursor = (incCursorSnap.data() ?? {}) as { sinceIso?: string; updatedAt?: string };
+    const incrementalCursor = (incCursorSnap.data() ?? {}) as {
+      sinceIso?: string;
+      nextPage?: number;
+      nextCursor?: string | null;
+      sweepStartedAt?: string | null;
+      updatedAt?: string;
+    };
     const cleanupCursor = (cleanupCursorSnap.data() ?? {}) as { nextPage?: number; updatedAt?: string };
     const scheduler = (schedulerSnap.data() ?? {}) as {
       lastRunAt?: string;
@@ -70,7 +76,9 @@ export async function GET(request: Request) {
         fullSyncNextPage: Number(fullCursor.nextPage ?? 1),
         fullSyncCursorUpdatedAt: fullCursor.updatedAt ?? null,
         incrementalSinceIso: incrementalCursor.sinceIso ?? null,
+        incrementalNextPage: Number(incrementalCursor.nextPage ?? 1),
         incrementalCursorUpdatedAt: incrementalCursor.updatedAt ?? null,
+        incrementalSweepStartedAt: incrementalCursor.sweepStartedAt ?? null,
         cleanupNextPage: Number(cleanupCursor.nextPage ?? 1),
         cleanupCursorUpdatedAt: cleanupCursor.updatedAt ?? null,
         schedulerLastRunAt: scheduler.lastRunAt ?? null,
