@@ -94,6 +94,7 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
     if (filters.schoolSlug) {
       const school = schools.find((item) => item.slug === filters.schoolSlug);
       if (!school) return false;
+      if (school.latitude == null || school.longitude == null) return false;
       if (listing.latitude == null || listing.longitude == null) return false;
       const radiusKm = filters.schoolRadiusKm ?? 3;
       const distanceKm = calculateDistanceKm(school.latitude, school.longitude, listing.latitude, listing.longitude);

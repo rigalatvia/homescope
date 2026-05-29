@@ -14,10 +14,11 @@ export interface School {
   name: string;
   board: string;
   municipality: string;
+  sourceCity?: string;
   level: SchoolLevel;
   address?: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   grades?: string;
   programs: string[];
   ranking?: SchoolRanking;

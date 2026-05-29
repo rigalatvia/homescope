@@ -34,9 +34,10 @@ export default async function SchoolsPage({
   const radiusKm = parseRadiusKm(toString(searchParams.radiusKm));
 
   const municipalities = SITE_CONFIG.primaryMarkets;
-  const schoolResults = getSchools({ query, municipality, level });
+  const schoolResults = await getSchools({ query, municipality, level });
   const selectedSchool =
-    (selectedSlug ? getSchoolBySlug(selectedSlug) : undefined) ?? (schoolResults.length === 1 ? schoolResults[0] : undefined);
+    (selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined) ??
+    (schoolResults.length === 1 ? schoolResults[0] : undefined);
   const nearbyListings = selectedSchool ? await getNearbyListingsForSchool(selectedSchool, radiusKm) : [];
 
   return (
@@ -49,7 +50,7 @@ export default async function SchoolsPage({
           </p>
           <h1 className="mt-4 font-heading text-4xl text-brand-900">Find homes around the schools that matter.</h1>
           <p className="mt-3 text-brand-700">
-            Search by school, city, board, or program. This first version uses school locations and official board links;
+            Search the official school directory for our six markets. Schools with coordinates can show nearby listings;
             catchment polygons can be added school-by-school as boundaries are digitized.
           </p>
         </div>
@@ -220,11 +221,18 @@ export default async function SchoolsPage({
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h2 className="font-heading text-2xl text-brand-900">Nearby listings</h2>
-                  <p className="text-sm text-brand-700">
-                    {nearbyListings.length} listing(s) within {radiusKm} km of {selectedSchool.name}
-                  </p>
+                  {selectedSchool.latitude != null && selectedSchool.longitude != null ? (
+                    <p className="text-sm text-brand-700">
+                      {nearbyListings.length} listing(s) within {radiusKm} km of {selectedSchool.name}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-brand-700">
+                      This school has official directory details but still needs geocoding before nearby listings can be matched.
+                    </p>
+                  )}
                 </div>
-                <form className="flex items-end gap-2">
+                {selectedSchool.latitude != null && selectedSchool.longitude != null ? (
+                  <form className="flex items-end gap-2">
                   <input type="hidden" name="school" value={selectedSchool.slug} />
                   {query ? <input type="hidden" name="q" value={query} /> : null}
                   {municipality ? <input type="hidden" name="municipality" value={municipality} /> : null}
@@ -248,10 +256,18 @@ export default async function SchoolsPage({
                   >
                     Apply
                   </button>
-                </form>
+                  </form>
+                ) : null}
               </div>
 
-              {nearbyListings.length === 0 ? (
+              {selectedSchool.latitude == null || selectedSchool.longitude == null ? (
+                <div className="rounded-xl border border-brand-100 bg-white p-8 text-center shadow-soft">
+                  <h3 className="font-heading text-2xl text-brand-900">Geocoding needed</h3>
+                  <p className="mt-2 text-brand-700">
+                    The school is in the directory. Add latitude and longitude to enable radius-based home matching.
+                  </p>
+                </div>
+              ) : nearbyListings.length === 0 ? (
                 <div className="rounded-xl border border-brand-100 bg-white p-8 text-center shadow-soft">
                   <h3 className="font-heading text-2xl text-brand-900">No nearby listings yet</h3>
                   <p className="mt-2 text-brand-700">
@@ -271,10 +287,10 @@ export default async function SchoolsPage({
             </div>
           ) : (
             <div className="rounded-xl border border-brand-100 bg-white p-10 text-center shadow-soft">
-              <h2 className="font-heading text-3xl text-brand-900">Choose a school to see nearby homes</h2>
+              <h2 className="font-heading text-3xl text-brand-900">Choose a school to see details</h2>
               <p className="mt-2 text-brand-700">
-                Start with Moraine Hills P.S., Bayview S.S., or another seeded school. More boards and boundary
-                polygons can be added as official data is prepared.
+                Search the official school directory, then use board links to verify boundaries. Nearby homes appear for
+                schools after latitude and longitude are added.
               </p>
             </div>
           )}

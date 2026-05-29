@@ -37,6 +37,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /schools/{docId} {
+      allow read, write: if false; // server-rendered and imported through controlled backend endpoints only
+    }
+
     match /leads/{docId} {
       allow read: if request.auth != null
                   && resource.data.userId == request.auth.uid;

@@ -74,7 +74,10 @@ export default async function ListingsPage({
     pageSize: toString(searchParams.pageSize)
   });
 
-  const [results, schools] = await Promise.all([getPublicListings(filters), Promise.resolve(getSchools())]);
+  const [results, schools] = await Promise.all([
+    getPublicListings(filters),
+    getSchools().then((schools) => schools.filter((school) => school.latitude != null && school.longitude != null))
+  ]);
 
   return (
     <section className="site-container py-12">

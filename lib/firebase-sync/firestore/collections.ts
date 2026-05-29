@@ -4,6 +4,7 @@ export const COLLECTIONS = {
   leads: "leads",
   contactMessages: "contactMessages",
   syncJobs: "syncJobs",
+  schools: "schools",
   settings: "settings"
 } as const;
 
