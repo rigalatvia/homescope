@@ -151,6 +151,7 @@ function canUseIndexedSearch(filters: ListingFilters): boolean {
   if (filters.maxLatitude != null) return false;
   if (filters.minLongitude != null) return false;
   if (filters.maxLongitude != null) return false;
+  if (filters.schoolSlug) return false;
   if ((filters.minPrice != null || filters.maxPrice != null) && filters.sort === "newest") return false;
   return true;
 }

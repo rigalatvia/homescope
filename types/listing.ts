@@ -49,6 +49,8 @@ export interface ListingFilters {
   maxLatitude?: number;
   minLongitude?: number;
   maxLongitude?: number;
+  schoolSlug?: string;
+  schoolRadiusKm?: number;
   page?: number;
   pageSize?: number;
 }

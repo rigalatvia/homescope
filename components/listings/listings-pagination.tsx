@@ -56,6 +56,8 @@ function buildUrl(page: number, filters: ListingFilters): string {
   if (filters.maxLatitude != null) params.set("maxLatitude", String(filters.maxLatitude));
   if (filters.minLongitude != null) params.set("minLongitude", String(filters.minLongitude));
   if (filters.maxLongitude != null) params.set("maxLongitude", String(filters.maxLongitude));
+  if (filters.schoolSlug) params.set("schoolSlug", filters.schoolSlug);
+  if (filters.schoolRadiusKm != null) params.set("schoolRadiusKm", String(filters.schoolRadiusKm));
   params.set("page", String(page));
   return `/listings?${params.toString()}`;
 }

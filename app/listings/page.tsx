@@ -7,6 +7,7 @@ import { ListingsPagination } from "@/components/listings/listings-pagination";
 import { SearchTracker } from "@/components/listings/search-tracker";
 import { parseListingFilters } from "@/lib/listings/filters";
 import { getPublicListings } from "@/lib/listings/service";
+import { getSchools } from "@/lib/schools/service";
 
 const ListingsMapSearch = dynamic(
   () => import("@/components/listings/listings-map-search").then((module) => module.ListingsMapSearch),
@@ -67,11 +68,13 @@ export default async function ListingsPage({
     maxLatitude: toString(searchParams.maxLatitude),
     minLongitude: toString(searchParams.minLongitude),
     maxLongitude: toString(searchParams.maxLongitude),
+    schoolSlug: toString(searchParams.schoolSlug),
+    schoolRadiusKm: toString(searchParams.schoolRadiusKm),
     page: toString(searchParams.page),
     pageSize: toString(searchParams.pageSize)
   });
 
-  const results = await getPublicListings(filters);
+  const [results, schools] = await Promise.all([getPublicListings(filters), Promise.resolve(getSchools())]);
 
   return (
     <section className="site-container py-12">
@@ -82,7 +85,7 @@ export default async function ListingsPage({
       </p>
 
       <div className="mt-6">
-        <ListingFilters filters={filters} />
+        <ListingFilters filters={filters} schools={schools} />
       </div>
       <div className="mt-4">
         <ListingsMapSearch

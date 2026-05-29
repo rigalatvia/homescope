@@ -1,5 +1,7 @@
 import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
 import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
+import { schools } from "@/data/schools";
+import { calculateDistanceKm } from "@/lib/schools/geo";
 
 export const DEFAULT_TRANSACTION_TYPE: NonNullable<ListingFilters["transactionType"]> = "sale";
 export const DEFAULT_MIN_PRICE = 500000;
@@ -20,6 +22,8 @@ export function parseListingFilters(params: {
   maxLatitude?: string;
   minLongitude?: string;
   maxLongitude?: string;
+  schoolSlug?: string;
+  schoolRadiusKm?: string;
   page?: string;
   pageSize?: string;
 }): ListingFilters {
@@ -43,6 +47,8 @@ export function parseListingFilters(params: {
     maxLatitude: parseNumber(params.maxLatitude),
     minLongitude: parseNumber(params.minLongitude),
     maxLongitude: parseNumber(params.maxLongitude),
+    schoolSlug: parseQuery(params.schoolSlug),
+    schoolRadiusKm: parseSchoolRadiusKm(params.schoolRadiusKm),
     page: parseNumber(params.page) || 1,
     pageSize: parseNumber(params.pageSize) || DEFAULT_LISTINGS_PAGE_SIZE
   };
@@ -84,6 +90,14 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
       if (filters.maxLatitude != null && listing.latitude > filters.maxLatitude) return false;
       if (filters.minLongitude != null && listing.longitude < filters.minLongitude) return false;
       if (filters.maxLongitude != null && listing.longitude > filters.maxLongitude) return false;
+    }
+    if (filters.schoolSlug) {
+      const school = schools.find((item) => item.slug === filters.schoolSlug);
+      if (!school) return false;
+      if (listing.latitude == null || listing.longitude == null) return false;
+      const radiusKm = filters.schoolRadiusKm ?? 3;
+      const distanceKm = calculateDistanceKm(school.latitude, school.longitude, listing.latitude, listing.longitude);
+      if (distanceKm > radiusKm) return false;
     }
     return true;
   });
@@ -133,6 +147,13 @@ function parseQuery(value?: string): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   return trimmed || undefined;
+}
+
+function parseSchoolRadiusKm(value?: string): number | undefined {
+  const parsed = parseNumber(value);
+  if (parsed == null) return undefined;
+  if ([1, 3, 5, 10].includes(parsed)) return parsed;
+  return 3;
 }
 
 function normalizeMls(value: string): string {

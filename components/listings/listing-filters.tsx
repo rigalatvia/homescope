@@ -7,6 +7,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
 import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
+import type { School } from "@/types/school";
 
 const PROPERTY_TYPES: PropertyType[] = ["Condo", "Freehold"];
 const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
@@ -20,9 +21,10 @@ const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
 
 interface ListingFiltersProps {
   filters: ListingFilters;
+  schools?: School[];
 }
 
-export function ListingFilters({ filters }: ListingFiltersProps) {
+export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
@@ -44,7 +46,9 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     filters.minLatitude ?? "",
     filters.maxLatitude ?? "",
     filters.minLongitude ?? "",
-    filters.maxLongitude ?? ""
+    filters.maxLongitude ?? "",
+    filters.schoolSlug || "",
+    filters.schoolRadiusKm ?? ""
   ].join("|");
   const clearFiltersUrl = `/listings?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
 
@@ -73,6 +77,8 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     const maxLatitude = readFormValue(formData, "maxLatitude");
     const minLongitude = readFormValue(formData, "minLongitude");
     const maxLongitude = readFormValue(formData, "maxLongitude");
+    const schoolSlug = readFormValue(formData, "schoolSlug");
+    const schoolRadiusKm = readFormValue(formData, "schoolRadiusKm") || "3";
 
     if (city) params.set("city", city);
     if (transactionType) params.set("transactionType", transactionType);
@@ -88,6 +94,10 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
     if (maxLatitude) params.set("maxLatitude", maxLatitude);
     if (minLongitude) params.set("minLongitude", minLongitude);
     if (maxLongitude) params.set("maxLongitude", maxLongitude);
+    if (schoolSlug) {
+      params.set("schoolSlug", schoolSlug);
+      params.set("schoolRadiusKm", schoolRadiusKm);
+    }
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
@@ -240,6 +250,36 @@ export function ListingFilters({ filters }: ListingFiltersProps) {
         </FilterLabel>
         </div>
 
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
+          <FilterLabel label="School">
+            <select
+              name="schoolSlug"
+              defaultValue={filters.schoolSlug || ""}
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            >
+              <option value="">Any school</option>
+              {schools.map((school) => (
+                <option key={school.id} value={school.slug}>
+                  {school.name} - {school.municipality} ({school.level})
+                </option>
+              ))}
+            </select>
+          </FilterLabel>
+
+          <FilterLabel label="School Radius">
+            <select
+              name="schoolRadiusKm"
+              defaultValue={String(filters.schoolRadiusKm ?? 3)}
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            >
+              <option value="1">1 km</option>
+              <option value="3">3 km</option>
+              <option value="5">5 km</option>
+              <option value="10">10 km</option>
+            </select>
+          </FilterLabel>
+        </div>
+
         <input type="hidden" name="minLatitude" defaultValue={filters.minLatitude ?? ""} />
         <input type="hidden" name="maxLatitude" defaultValue={filters.maxLatitude ?? ""} />
         <input type="hidden" name="minLongitude" defaultValue={filters.minLongitude ?? ""} />
@@ -323,9 +363,21 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
     });
   }
   if (filters.propertyType) chips.push({ label: `Type: ${filters.propertyType}` });
+  if (filters.schoolSlug) {
+    chips.push({ label: `School: ${formatSchoolSlug(filters.schoolSlug)}` });
+    chips.push({ label: `School radius: ${filters.schoolRadiusKm ?? 3} km` });
+  }
   if (hasMapBounds(filters)) chips.push({ label: "Map Area Applied" });
 
   return chips;
+}
+
+function formatSchoolSlug(value: string): string {
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.toUpperCase() === "PS" || part.toUpperCase() === "SS" ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatCountSelection(value?: number, mode?: "exact" | "atLeast"): string {

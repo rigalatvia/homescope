@@ -56,6 +56,9 @@ export function SiteHeader() {
             <Link href="/listings" className="transition hover:text-brand-900">
               Listings
             </Link>
+            <Link href="/schools" className="transition hover:text-brand-900">
+              Schools
+            </Link>
             <div className="relative">
               <button
                 type="button"
@@ -120,6 +123,9 @@ export function SiteHeader() {
         <nav aria-label="Mobile navigation" className="flex flex-wrap items-center gap-4 text-sm font-semibold text-brand-700">
           <Link href="/listings" className="transition hover:text-brand-900">
             Listings
+          </Link>
+          <Link href="/schools" className="transition hover:text-brand-900">
+            Schools
           </Link>
           <details ref={mobileGuidesRef} className="group relative">
             <summary className="cursor-pointer list-none transition hover:text-brand-900">Guides</summary>
