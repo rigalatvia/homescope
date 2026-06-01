@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { importSeedSchoolsToFirestore } from "@/lib/schools/firestore-data";
+import { revalidateTag } from "next/cache";
+import { importSeedSchoolsToFirestore, SCHOOLS_CACHE_TAG } from "@/lib/schools/firestore-data";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 
 export const maxDuration = 300;
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await importSeedSchoolsToFirestore();
+    revalidateTag(SCHOOLS_CACHE_TAG);
 
     return NextResponse.json({
       success: true,

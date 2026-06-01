@@ -10,11 +10,12 @@ export type SchoolFirestoreDocument = School & {
 };
 
 const SCHOOL_DATA_VERSION = "ontario-public-schools-may-2026";
+export const SCHOOLS_CACHE_TAG = "schools";
 
 const getCachedSchoolsFromFirestore = unstable_cache(
   async () => getSchoolsFromFirestore(),
   ["firestore-schools"],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: [SCHOOLS_CACHE_TAG] }
 );
 
 export async function getSchoolDirectory(): Promise<School[]> {
@@ -97,6 +98,14 @@ function sanitizeSchoolDocument(data: FirebaseFirestore.DocumentData, docId: str
     grades: typeof data.grades === "string" ? data.grades : undefined,
     programs: Array.isArray(data.programs) ? data.programs.filter((item): item is string => typeof item === "string") : [],
     ranking: typeof data.ranking === "object" && data.ranking != null ? data.ranking : undefined,
+    geocodeProvider: typeof data.geocodeProvider === "string" ? data.geocodeProvider : undefined,
+    geocodedAt: typeof data.geocodedAt === "string" ? data.geocodedAt : undefined,
+    geocodeAttemptedAt: typeof data.geocodeAttemptedAt === "string" ? data.geocodeAttemptedAt : undefined,
+    geocodeStatus: typeof data.geocodeStatus === "string" ? data.geocodeStatus : undefined,
+    geocodeFormattedAddress: typeof data.geocodeFormattedAddress === "string" ? data.geocodeFormattedAddress : undefined,
+    geocodePlaceId: typeof data.geocodePlaceId === "string" ? data.geocodePlaceId : undefined,
+    geocodeLocationType: typeof data.geocodeLocationType === "string" ? data.geocodeLocationType : undefined,
+    geocodePartialMatch: typeof data.geocodePartialMatch === "boolean" ? data.geocodePartialMatch : undefined,
     boundaryMapUrl: typeof data.boundaryMapUrl === "string" ? data.boundaryMapUrl : undefined,
     boundaryDirectoryUrl: typeof data.boundaryDirectoryUrl === "string" ? data.boundaryDirectoryUrl : undefined,
     locatorUrl: typeof data.locatorUrl === "string" ? data.locatorUrl : undefined,

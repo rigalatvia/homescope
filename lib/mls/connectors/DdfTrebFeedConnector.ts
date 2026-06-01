@@ -70,21 +70,21 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   async fetchActiveListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
     let page: { items: JsonObject[]; nextCursor: string | null };
     try {
-      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), true);
+      page = await this.fetchPage(undefined, options, buildDefaultResidentialFilter(), true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown current-feed error";
-      logSyncWarn("DDF current listings endpoint rejected active cleanup query; retrying via replication endpoint", {
+      const message = error instanceof Error ? error.message : "Unknown cleanup feed error";
+      logSyncWarn("DDF current listings endpoint rejected cleanup query; retrying via replication endpoint", {
         page: options?.page ?? 1,
         message
       });
-      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), false);
+      page = await this.fetchPage(undefined, options, buildDefaultResidentialFilter(), false);
     }
     const isInitialRequest = !(typeof options?.cursor === "string" && options.cursor.trim());
     if (isInitialRequest && page.items.length === 0 && !page.nextCursor) {
-      logSyncInfo("DDF current listings endpoint returned no active rows; retrying via replication endpoint", {
+      logSyncInfo("DDF current listings endpoint returned no cleanup rows; retrying via replication endpoint", {
         page: options?.page ?? 1
       });
-      page = await this.fetchPage(undefined, options, buildActiveResidentialFilter(), false);
+      page = await this.fetchPage(undefined, options, buildDefaultResidentialFilter(), false);
     }
     return {
       items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
@@ -241,8 +241,9 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   ): string {
     // Use the replication feed for both full and incremental syncs so we can
     // receive non-active transitions/tombstones, not just current active rows.
-    // Only force the current listings endpoint in the narrow cleanup probe that
-    // checks whether the standard property feed exposes non-active rows.
+    // Cleanup may force the current listings endpoint while still avoiding a
+    // redundant StandardStatus filter; the feed surface already decides which
+    // listing statuses it exposes.
     const baseUrl = forceCurrentListingsEndpoint ? this.config.listingsUrl : this.config.replicationUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
@@ -626,9 +627,4 @@ function buildDefaultResidentialFilter(): string {
 function buildNonActiveResidentialFilter(): string {
   const residentialFilter = buildDefaultResidentialFilter();
   return `${residentialFilter} and (StandardStatus ne 'Active')`;
-}
-
-function buildActiveResidentialFilter(): string {
-  const residentialFilter = buildDefaultResidentialFilter();
-  return `${residentialFilter} and (StandardStatus eq 'Active')`;
 }

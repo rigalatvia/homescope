@@ -22,6 +22,14 @@ export interface School {
   grades?: string;
   programs: string[];
   ranking?: SchoolRanking;
+  geocodeProvider?: string;
+  geocodedAt?: string;
+  geocodeAttemptedAt?: string;
+  geocodeStatus?: string;
+  geocodeFormattedAddress?: string;
+  geocodePlaceId?: string;
+  geocodeLocationType?: string;
+  geocodePartialMatch?: boolean;
   boundaryMapUrl?: string;
   boundaryDirectoryUrl?: string;
   locatorUrl?: string;
