@@ -74,9 +74,12 @@ export async function importSeedSchoolsToFirestore(): Promise<{
 
 async function getSchoolsFromFirestore(): Promise<School[]> {
   const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(COLLECTIONS.schools).orderBy("municipality").orderBy("name").get();
+  const snapshot = await firestore.collection(COLLECTIONS.schools).get();
 
-  return snapshot.docs.map((doc) => sanitizeSchoolDocument(doc.data(), doc.id)).filter((school): school is School => Boolean(school));
+  return snapshot.docs
+    .map((doc) => sanitizeSchoolDocument(doc.data(), doc.id))
+    .filter((school): school is School => Boolean(school))
+    .sort((a, b) => a.municipality.localeCompare(b.municipality) || a.name.localeCompare(b.name));
 }
 
 function sanitizeSchoolDocument(data: FirebaseFirestore.DocumentData, docId: string): School | null {

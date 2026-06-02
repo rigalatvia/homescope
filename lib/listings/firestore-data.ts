@@ -63,7 +63,7 @@ export async function getPublicListingsPage(filters: ListingFilters): Promise<{
     mlsNumber: filters.mlsNumber?.trim().toUpperCase(),
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
-    sort: filters.sort,
+    sort: toIndexedListingSort(filters.sort),
     page: filters.page,
     pageSize: filters.pageSize
   });
@@ -79,6 +79,10 @@ export async function getPublicListingsPage(filters: ListingFilters): Promise<{
 
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function toIndexedListingSort(sort: ListingFilters["sort"]): "price_asc" | "price_desc" | "newest" | undefined {
+  return sort === "distance" ? undefined : sort;
 }
 
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {

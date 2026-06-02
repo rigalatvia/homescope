@@ -1,6 +1,5 @@
 import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
 import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
-import { schools } from "@/data/schools";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 
 export const DEFAULT_TRANSACTION_TYPE: NonNullable<ListingFilters["transactionType"]> = "sale";
@@ -33,7 +32,7 @@ export function parseListingFilters(params: {
   return {
     city: params.city || undefined,
     transactionType: parseTransactionType(params.transactionType) ?? DEFAULT_TRANSACTION_TYPE,
-    sort: parseSort(params.sort),
+    sort: parseSort(params.sort, params.schoolSlug),
     addressContains: parseQuery(params.addressContains),
     mlsNumber: parseQuery(params.mlsNumber),
     minPrice: parseNumber(params.minPrice) ?? DEFAULT_MIN_PRICE,
@@ -54,7 +53,18 @@ export function parseListingFilters(params: {
   };
 }
 
-export function applyListingFilters(listings: Listing[], filters: ListingFilters): Listing[] {
+interface ListingFilterContext {
+  school?: {
+    latitude?: number;
+    longitude?: number;
+  };
+}
+
+export function applyListingFilters(
+  listings: Listing[],
+  filters: ListingFilters,
+  context: ListingFilterContext = {}
+): Listing[] {
   return listings.filter((listing) => {
     if (filters.city && listing.city !== filters.city) return false;
     if (filters.transactionType && listing.transactionType !== filters.transactionType) return false;
@@ -92,7 +102,7 @@ export function applyListingFilters(listings: Listing[], filters: ListingFilters
       if (filters.maxLongitude != null && listing.longitude > filters.maxLongitude) return false;
     }
     if (filters.schoolSlug) {
-      const school = schools.find((item) => item.slug === filters.schoolSlug);
+      const school = context.school;
       if (!school) return false;
       if (school.latitude == null || school.longitude == null) return false;
       if (listing.latitude == null || listing.longitude == null) return false;
@@ -111,9 +121,10 @@ function parseTransactionType(value?: string): ListingFilters["transactionType"]
   return undefined;
 }
 
-function parseSort(value?: string): ListingSort {
-  if (!value) return "price_asc";
+function parseSort(value?: string, schoolSlug?: string): ListingSort {
+  if (!value) return schoolSlug ? "distance" : "price_asc";
   const normalized = value.trim().toLowerCase();
+  if (normalized === "distance") return "distance";
   if (normalized === "price_desc") return "price_desc";
   if (normalized === "newest") return "newest";
   return "price_asc";

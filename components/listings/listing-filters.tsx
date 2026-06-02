@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
 import { formatPrice } from "@/lib/utils/format";
@@ -14,6 +14,7 @@ const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "
 const LEASE_MIN_PRICE = 500;
 const LEASE_MAX_PRICE = 4000;
 const SORT_OPTIONS: { value: ListingSort; label: string }[] = [
+  { value: "distance", label: "Distance to School" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
   { value: "newest", label: "Newest First" }
@@ -31,7 +32,17 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const [transactionType, setTransactionType] = useState<string>(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
   const [minPrice, setMinPrice] = useState(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
   const [maxPrice, setMaxPrice] = useState(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
-  const chips = buildFilterChips(filters);
+  const schoolOptions = useMemo(
+    () => schools.map((school) => ({ school, label: formatSchoolOptionLabel(school) })),
+    [schools]
+  );
+  const selectedSchool = useMemo(
+    () => schools.find((school) => school.slug === filters.schoolSlug),
+    [filters.schoolSlug, schools]
+  );
+  const [schoolSearch, setSchoolSearch] = useState(selectedSchool ? formatSchoolOptionLabel(selectedSchool) : "");
+  const [schoolSlug, setSchoolSlug] = useState(filters.schoolSlug || "");
+  const chips = buildFilterChips(filters, selectedSchool);
   const formResetKey = [
     filters.city || "",
     filters.transactionType || "",
@@ -58,6 +69,12 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     setMaxPrice(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
   }, [filters.maxPrice, filters.minPrice, filters.transactionType]);
 
+  useEffect(() => {
+    const selectedSchool = schools.find((school) => school.slug === filters.schoolSlug);
+    setSchoolSearch(selectedSchool ? formatSchoolOptionLabel(selectedSchool) : "");
+    setSchoolSlug(filters.schoolSlug || "");
+  }, [filters.schoolSlug, schools]);
+
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -65,7 +82,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
 
     const city = readFormValue(formData, "city");
     const transactionType = readFormValue(formData, "transactionType") || DEFAULT_TRANSACTION_TYPE;
-    const sort = readFormValue(formData, "sort") || "price_asc";
+    const rawSort = readFormValue(formData, "sort");
     const addressContains = readFormValue(formData, "addressContains");
     const mlsNumber = readFormValue(formData, "mlsNumber");
     const minPrice = readFormValue(formData, "minPrice") || String(DEFAULT_MIN_PRICE);
@@ -77,8 +94,10 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     const maxLatitude = readFormValue(formData, "maxLatitude");
     const minLongitude = readFormValue(formData, "minLongitude");
     const maxLongitude = readFormValue(formData, "maxLongitude");
-    const schoolSlug = readFormValue(formData, "schoolSlug");
+    const schoolSearch = readFormValue(formData, "schoolSearch");
+    const schoolSlug = readFormValue(formData, "schoolSlug") || resolveSchoolSlug(schools, schoolSearch);
     const schoolRadiusKm = readFormValue(formData, "schoolRadiusKm") || "3";
+    const sort = rawSort || (schoolSlug ? "distance" : "price_asc");
 
     if (city) params.set("city", city);
     if (transactionType) params.set("transactionType", transactionType);
@@ -120,6 +139,11 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
       setMinPrice(String(DEFAULT_MIN_PRICE));
       setMaxPrice(String(DEFAULT_MAX_PRICE));
     }
+  };
+
+  const handleSchoolSearchChange = (value: string) => {
+    setSchoolSearch(value);
+    setSchoolSlug(resolveSchoolSlug(schools, value) || "");
   };
 
   return (
@@ -252,18 +276,21 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
 
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
           <FilterLabel label="School">
-            <select
-              name="schoolSlug"
-              defaultValue={filters.schoolSlug || ""}
+            <input
+              type="text"
+              name="schoolSearch"
+              list="school-filter-options"
+              value={schoolSearch}
+              onChange={(event) => handleSchoolSearchChange(event.target.value)}
+              placeholder="Type a school name, board, or city"
               className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-            >
-              <option value="">Any school</option>
-              {schools.map((school) => (
-                <option key={school.id} value={school.slug}>
-                  {school.name} - {school.municipality} ({school.level})
-                </option>
+            />
+            <input type="hidden" name="schoolSlug" value={schoolSlug} />
+            <datalist id="school-filter-options">
+              {schoolOptions.map(({ school, label }) => (
+                <option key={school.id} value={label} />
               ))}
-            </select>
+            </datalist>
           </FilterLabel>
 
           <FilterLabel label="School Radius">
@@ -331,7 +358,7 @@ function FilterLabel({ label, children }: { label: string; children: React.React
   );
 }
 
-function buildFilterChips(filters: ListingFilters): { label: string }[] {
+function buildFilterChips(filters: ListingFilters, selectedSchool?: School): { label: string }[] {
   const chips: { label: string }[] = [];
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
@@ -343,7 +370,9 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
   if (filters.sort && filters.sort !== "price_asc") {
     chips.push({
       label:
-        filters.sort === "price_desc"
+        filters.sort === "distance"
+          ? "Sort: Distance to School"
+          : filters.sort === "price_desc"
           ? "Sort: Price High to Low"
           : filters.sort === "newest"
             ? "Sort: Newest First"
@@ -364,12 +393,35 @@ function buildFilterChips(filters: ListingFilters): { label: string }[] {
   }
   if (filters.propertyType) chips.push({ label: `Type: ${filters.propertyType}` });
   if (filters.schoolSlug) {
-    chips.push({ label: `School: ${formatSchoolSlug(filters.schoolSlug)}` });
+    chips.push({ label: `School: ${selectedSchool?.name || formatSchoolSlug(filters.schoolSlug)}` });
     chips.push({ label: `School radius: ${filters.schoolRadiusKm ?? 3} km` });
   }
   if (hasMapBounds(filters)) chips.push({ label: "Map Area Applied" });
 
   return chips;
+}
+
+function formatSchoolOptionLabel(school: School): string {
+  return `${school.name} - ${school.municipality} - ${school.board} (${school.level})`;
+}
+
+function resolveSchoolSlug(schools: School[], value: string): string {
+  const query = value.trim().toLowerCase();
+  if (!query) return "";
+
+  const exactLabelMatch = schools.find((school) => formatSchoolOptionLabel(school).toLowerCase() === query);
+  if (exactLabelMatch) return exactLabelMatch.slug;
+
+  const exactNameMatches = schools.filter((school) => school.name.trim().toLowerCase() === query);
+  if (exactNameMatches.length === 1) return exactNameMatches[0]!.slug;
+
+  const startsWithNameMatches = schools.filter((school) => school.name.trim().toLowerCase().startsWith(query));
+  if (startsWithNameMatches.length === 1) return startsWithNameMatches[0]!.slug;
+
+  const includesNameMatches = schools.filter((school) => school.name.trim().toLowerCase().includes(query));
+  if (includesNameMatches.length === 1) return includesNameMatches[0]!.slug;
+
+  return "";
 }
 
 function formatSchoolSlug(value: string): string {

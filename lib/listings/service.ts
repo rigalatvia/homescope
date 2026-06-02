@@ -9,13 +9,17 @@ import {
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
 import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings } from "@/lib/settings/site-settings";
+import { getSchoolDirectory } from "@/lib/schools/firestore-data";
+import { calculateDistanceKm } from "@/lib/schools/geo";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
+import type { School } from "@/types/school";
 
 export async function getPublicListings(
   filters: ListingFilters,
   options?: { includeAllItems?: boolean }
 ): Promise<PaginatedListings> {
   const includeAllItems = options?.includeAllItems === true;
+  const school = filters.schoolSlug ? await getSchoolForListingFilter(filters.schoolSlug) : undefined;
 
   if (canUseIndexedSearch(filters)) {
     const paged = await getPublicListingsPageFromFirestore(filters);
@@ -29,7 +33,11 @@ export async function getPublicListings(
 
     if (includeAllItems) {
       const allCandidates = await getPublicListingsFromFirestore(filters);
-      allItems = sortListingsForBrowsing(applyListingFilters(allCandidates, filters), filters.sort);
+      allItems = sortListingsForBrowsing(
+        addSchoolDistances(applyListingFilters(allCandidates, filters, { school }), school),
+        filters.sort,
+        school
+      );
     }
 
     return {
@@ -43,8 +51,8 @@ export async function getPublicListings(
   }
 
   const listings = await getPublicListingsFromFirestore(filters);
-  const filtered = applyListingFilters(listings, filters);
-  const sorted = sortListingsForBrowsing(filtered, filters.sort);
+  const filtered = applyListingFilters(listings, filters, { school });
+  const sorted = sortListingsForBrowsing(addSchoolDistances(filtered, school), filters.sort, school);
   const paginated = paginateListings(sorted, filters);
 
   if (!includeAllItems) {
@@ -57,12 +65,22 @@ export async function getPublicListings(
   return paginated;
 }
 
+async function getSchoolForListingFilter(slug: string): Promise<School | undefined> {
+  try {
+    const directory = await getSchoolDirectory();
+    return directory.find((school) => school.slug === slug);
+  } catch (error) {
+    console.error("[listings] Failed reading school directory for listing filter", error);
+    return undefined;
+  }
+}
+
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {
   return getPublicListingBySlugFromFirestore(slug);
 }
 
 export async function getAllPublicListings(): Promise<Listing[]> {
-  const listings = await getPublicListingsFromFirestore();
+  const listings = await getPublicListingsFromFirestore({});
   return sortListingsWithFeaturedPriority(listings);
 }
 
@@ -121,7 +139,20 @@ function sortByFeaturedIds(listings: Listing[], featuredListingIds: string[]): L
   });
 }
 
-function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort"] = "price_asc"): Listing[] {
+function sortListingsForBrowsing(
+  listings: Listing[],
+  sort: ListingFilters["sort"] = "price_asc",
+  school?: School
+): Listing[] {
+  if (sort === "distance" && school?.latitude != null && school.longitude != null) {
+    return [...listings].sort((a, b) => {
+      const aDistance = getDistanceToSchool(a, school);
+      const bDistance = getDistanceToSchool(b, school);
+      if (aDistance !== bDistance) return aDistance - bDistance;
+      return a.price - b.price;
+    });
+  }
+
   if (sort === "price_desc") {
     return [...listings].sort((a, b) => b.price - a.price);
   }
@@ -131,6 +162,32 @@ function sortListingsForBrowsing(listings: Listing[], sort: ListingFilters["sort
   }
 
   return [...listings].sort((a, b) => a.price - b.price);
+}
+
+function addSchoolDistances(listings: Listing[], school?: School): Listing[] {
+  if (school?.latitude == null || school.longitude == null) return listings;
+
+  return listings.map((listing) => {
+    const distanceKm = getDistanceToSchool(listing, school);
+    if (!Number.isFinite(distanceKm)) return listing;
+    return {
+      ...listing,
+      distanceKmFromSchool: distanceKm
+    };
+  });
+}
+
+function getDistanceToSchool(listing: Listing, school: School): number {
+  if (
+    listing.latitude == null ||
+    listing.longitude == null ||
+    school.latitude == null ||
+    school.longitude == null
+  ) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return calculateDistanceKm(school.latitude, school.longitude, listing.latitude, listing.longitude);
 }
 
 function toMillis(value: string): number {

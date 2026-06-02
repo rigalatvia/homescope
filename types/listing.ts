@@ -1,6 +1,6 @@
 export type ListingStatus = "active" | "sold" | "leased" | "pending";
 export type ListingTransactionType = "sale" | "lease";
-export type ListingSort = "price_asc" | "price_desc" | "newest";
+export type ListingSort = "price_asc" | "price_desc" | "newest" | "distance";
 
 export type PropertyType = string;
 
@@ -28,6 +28,7 @@ export interface Listing {
   badge?: "New" | "Hot";
   latitude?: number;
   longitude?: number;
+  distanceKmFromSchool?: number;
   createdAt: string;
   updatedAt: string;
 }

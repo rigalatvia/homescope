@@ -40,6 +40,11 @@ export function ListingCard({ listing }: ListingCardProps) {
             <p className="text-xl font-semibold text-brand-900">{formatPrice(listing.price)}</p>
             <p className="text-sm text-brand-700">{listing.address}</p>
             <p className="text-xs uppercase tracking-wide text-brand-500">{listing.city}</p>
+            {listing.distanceKmFromSchool != null && (
+              <p className="mt-1 text-xs font-semibold text-brand-700">
+                {formatSchoolDistance(listing.distanceKmFromSchool)} from selected school
+              </p>
+            )}
           </div>
           <FavoriteButton listingId={listing.id} />
         </div>
@@ -59,6 +64,10 @@ export function ListingCard({ listing }: ListingCardProps) {
       </div>
     </article>
   );
+}
+
+function formatSchoolDistance(distanceKm: number): string {
+  return `${distanceKm < 1 ? distanceKm.toFixed(2) : distanceKm.toFixed(1)} km`;
 }
 
 function ListingStat({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
