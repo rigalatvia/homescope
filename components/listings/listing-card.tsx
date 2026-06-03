@@ -8,15 +8,17 @@ import type { Listing } from "@/types/listing";
 
 interface ListingCardProps {
   listing: Listing;
+  returnTo?: string;
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, returnTo }: ListingCardProps) {
   const transactionLabel = listing.transactionType === "lease" ? "For Lease" : "For Sale";
+  const detailHref = buildListingDetailHref(listing.listingUrlSlug, returnTo);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-soft transition hover:-translate-y-1">
       <div className="relative">
-        <Link href={`/listings/${listing.listingUrlSlug}`} className="block">
+        <Link href={detailHref} className="block">
           <Image
             src={`${listing.images[0]}?auto=format&fit=crop&w=1200&q=80`}
             alt={`Photo of ${listing.address}`}
@@ -56,7 +58,7 @@ export function ListingCard({ listing }: ListingCardProps) {
         <p className="text-sm text-brand-700">{listing.propertyType}</p>
         <p className="text-sm text-brand-700">{truncate(listing.description, 120)}</p>
         <Link
-          href={`/listings/${listing.listingUrlSlug}`}
+          href={detailHref}
           className="inline-flex rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
         >
           View Details
@@ -68,6 +70,12 @@ export function ListingCard({ listing }: ListingCardProps) {
 
 function formatSchoolDistance(distanceKm: number): string {
   return `${distanceKm < 1 ? distanceKm.toFixed(2) : distanceKm.toFixed(1)} km`;
+}
+
+function buildListingDetailHref(slug: string, returnTo?: string): string {
+  const detailPath = `/listings/${slug}`;
+  if (!returnTo) return detailPath;
+  return `${detailPath}?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 function ListingStat({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {

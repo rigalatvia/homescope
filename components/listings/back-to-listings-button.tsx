@@ -2,13 +2,18 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getLastListingsUrl } from "@/components/listings/listing-return-memory";
+import { getLastListingsUrl, isListingsSearchUrl } from "@/components/listings/listing-return-memory";
 
-export function BackToListingsButton() {
+interface BackToListingsButtonProps {
+  returnUrl?: string;
+}
+
+export function BackToListingsButton({ returnUrl }: BackToListingsButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(getLastListingsUrl() || "/listings");
+    const destination = getSafeReturnUrl(returnUrl) || getLastListingsUrl() || "/listings";
+    router.push(destination, { scroll: false });
   };
 
   return (
@@ -21,4 +26,10 @@ export function BackToListingsButton() {
       Back to listings
     </button>
   );
+}
+
+function getSafeReturnUrl(url?: string): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  return isListingsSearchUrl(trimmed) ? trimmed : null;
 }

@@ -54,6 +54,7 @@ export default async function ListingsPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  const currentListingsUrl = buildCurrentListingsUrl(searchParams);
   const filters = parseListingFilters({
     city: toString(searchParams.city),
     transactionType: toString(searchParams.transactionType),
@@ -82,7 +83,7 @@ export default async function ListingsPage({
 
   return (
     <section className="site-container py-12">
-      <ListingReturnMemory />
+      <ListingReturnMemory currentUrl={currentListingsUrl} />
       <SearchTracker filters={filters} resultsTotal={results.total} />
       <h1 className="font-heading text-4xl text-brand-900">Find Your Next Home in the GTA</h1>
       <p className="mt-2 text-brand-700">
@@ -114,7 +115,7 @@ export default async function ListingsPage({
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {results.items.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
+            <ListingCard key={listing.id} listing={listing} returnTo={currentListingsUrl} />
           ))}
         </div>
       )}
@@ -127,4 +128,19 @@ export default async function ListingsPage({
 function toString(value: string | string[] | undefined): string | undefined {
   if (typeof value === "string") return value;
   return undefined;
+}
+
+function buildCurrentListingsUrl(searchParams: { [key: string]: string | string[] | undefined }): string {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (typeof value === "string") {
+      params.set(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/listings?${query}` : "/listings";
 }

@@ -44,10 +44,17 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function ListingDetailPage({ params }: { params: { slug: string } }) {
+export default async function ListingDetailPage({
+  params,
+  searchParams
+}: {
+  params: { slug: string };
+  searchParams?: { returnTo?: string | string[] };
+}) {
   const listing = await getPublicListingBySlug(params.slug);
   if (!listing) notFound();
 
+  const returnUrl = parseReturnUrl(searchParams?.returnTo);
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
   const relatedGuideLinks =
@@ -66,7 +73,7 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
   return (
     <section className="site-container py-10">
       <div className="mb-6">
-        <BackToListingsButton />
+        <BackToListingsButton returnUrl={returnUrl} />
       </div>
       <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr]">
         <ListingGallery images={listing.images} address={listing.address} />
@@ -149,4 +156,15 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 function formatListingAddress(address: string, city: string, postalCode?: string): string {
   const parts = [address, city, postalCode].filter((part): part is string => Boolean(part && part.trim()));
   return parts.join(", ");
+}
+
+function parseReturnUrl(value: string | string[] | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/listings")) return undefined;
+  if (trimmed.startsWith("/listings/")) return undefined;
+  if (trimmed.includes("\n") || trimmed.includes("\r")) return undefined;
+
+  return trimmed;
 }
