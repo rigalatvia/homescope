@@ -9,6 +9,7 @@ const adminLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/crm", label: "CRM" },
   { href: "/admin/sync", label: "Sync" },
+  { href: "/admin/schools", label: "Schools" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/featured", label: "Featured" }

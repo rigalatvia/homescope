@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
@@ -30,6 +31,8 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [transactionType, setTransactionType] = useState<string>(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
+  const [sortValue, setSortValue] = useState<ListingSort>(filters.sort || "price_asc");
+  const [sortTouched, setSortTouched] = useState(false);
   const [minPrice, setMinPrice] = useState(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
   const [maxPrice, setMaxPrice] = useState(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
   const schoolOptions = useMemo(
@@ -65,9 +68,11 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
 
   useEffect(() => {
     setTransactionType(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
+    setSortValue(filters.sort || "price_asc");
+    setSortTouched(false);
     setMinPrice(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
     setMaxPrice(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
-  }, [filters.maxPrice, filters.minPrice, filters.transactionType]);
+  }, [filters.maxPrice, filters.minPrice, filters.sort, filters.transactionType]);
 
   useEffect(() => {
     const selectedSchool = schools.find((school) => school.slug === filters.schoolSlug);
@@ -97,11 +102,19 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     const schoolSearch = readFormValue(formData, "schoolSearch");
     const schoolSlug = readFormValue(formData, "schoolSlug") || resolveSchoolSlug(schools, schoolSearch);
     const schoolRadiusKm = readFormValue(formData, "schoolRadiusKm") || "3";
-    const sort = rawSort || (schoolSlug ? "distance" : "price_asc");
+    const sort = resolveSubmittedSort(rawSort, {
+      hasCurrentSchool: Boolean(filters.schoolSlug),
+      hasSubmittedSchool: Boolean(schoolSlug),
+      sortTouched
+    });
 
     if (city) params.set("city", city);
     if (transactionType) params.set("transactionType", transactionType);
-    if (sort && sort !== "price_asc") params.set("sort", sort);
+    if (schoolSlug) {
+      params.set("sort", sort);
+    } else if (sort !== "price_asc") {
+      params.set("sort", sort);
+    }
     if (addressContains) params.set("addressContains", addressContains);
     if (mlsNumber) params.set("mlsNumber", mlsNumber);
     if (minPrice) params.set("minPrice", minPrice);
@@ -142,8 +155,28 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   };
 
   const handleSchoolSearchChange = (value: string) => {
+    const nextSchoolSlug = resolveSchoolSlug(schools, value) || "";
+
     setSchoolSearch(value);
-    setSchoolSlug(resolveSchoolSlug(schools, value) || "");
+    setSchoolSlug(nextSchoolSlug);
+
+    if (nextSchoolSlug && !filters.schoolSlug && !sortTouched && sortValue === "price_asc") {
+      setSortValue("distance");
+    }
+
+    if (!nextSchoolSlug && !value.trim() && sortValue === "distance") {
+      setSortValue("price_asc");
+      setSortTouched(true);
+    }
+  };
+
+  const clearSchool = () => {
+    setSchoolSearch("");
+    setSchoolSlug("");
+    if (sortValue === "distance") {
+      setSortValue("price_asc");
+      setSortTouched(true);
+    }
   };
 
   return (
@@ -197,7 +230,15 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
         </FilterLabel>
 
         <FilterLabel label="Sort">
-          <select name="sort" defaultValue={filters.sort || "price_asc"} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
+          <select
+            name="sort"
+            value={sortValue}
+            onChange={(event) => {
+              setSortValue(event.target.value as ListingSort);
+              setSortTouched(true);
+            }}
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -275,7 +316,9 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
         </div>
 
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
-          <FilterLabel label="School">
+          <div className="space-y-1 text-xs font-semibold uppercase tracking-wide text-brand-700">
+            <span>School</span>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <input
               type="text"
               name="schoolSearch"
@@ -285,13 +328,26 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
               placeholder="Type a school name, board, or city"
               className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
             />
+              {(schoolSearch || schoolSlug) && (
+                <button
+                  type="button"
+                  onClick={clearSchool}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-brand-800 transition hover:border-brand-300 hover:bg-brand-50"
+                  aria-label="Clear selected school"
+                  title="Clear selected school"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Clear</span>
+                </button>
+              )}
+            </div>
             <input type="hidden" name="schoolSlug" value={schoolSlug} />
             <datalist id="school-filter-options">
               {schoolOptions.map(({ school, label }) => (
                 <option key={school.id} value={label} />
               ))}
             </datalist>
-          </FilterLabel>
+          </div>
 
           <FilterLabel label="School Radius">
             <select
@@ -403,6 +459,32 @@ function buildFilterChips(filters: ListingFilters, selectedSchool?: School): { l
 
 function formatSchoolOptionLabel(school: School): string {
   return `${school.name} - ${school.municipality} - ${school.board} (${school.level})`;
+}
+
+function resolveSubmittedSort(
+  value: string,
+  options: {
+    hasCurrentSchool: boolean;
+    hasSubmittedSchool: boolean;
+    sortTouched: boolean;
+  }
+): ListingSort {
+  const sort = parseSubmittedSort(value);
+
+  if (!options.hasSubmittedSchool) {
+    return sort === "distance" ? "price_asc" : sort;
+  }
+
+  if (!options.hasCurrentSchool && !options.sortTouched && sort === "price_asc") {
+    return "distance";
+  }
+
+  return sort;
+}
+
+function parseSubmittedSort(value: string): ListingSort {
+  if (value === "distance" || value === "price_desc" || value === "newest") return value;
+  return "price_asc";
 }
 
 function resolveSchoolSlug(schools: School[], value: string): string {

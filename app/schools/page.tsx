@@ -9,7 +9,7 @@ import {
   getSchoolBySlug,
   getSchools
 } from "@/lib/schools/service";
-import type { SchoolLevel } from "@/types/school";
+import type { SchoolLevel, SchoolRanking } from "@/types/school";
 
 export const revalidate = 3600;
 
@@ -144,9 +144,12 @@ export default async function SchoolsPage({
                     <h3 className="font-semibold text-brand-900">{school.name}</h3>
                     <p className="text-sm text-brand-700">{school.municipality}</p>
                   </div>
-                  <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold capitalize text-brand-700">
-                    {school.level}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold capitalize text-brand-700">
+                      {school.level}
+                    </span>
+                    <RankingPill ranking={school.ranking} compact />
+                  </div>
                 </div>
                 <p className="mt-2 text-xs text-brand-600">{school.board}</p>
                 <p className="mt-2 text-sm text-brand-700">{school.programs.join(", ")}</p>
@@ -170,18 +173,7 @@ export default async function SchoolsPage({
                       {selectedSchool.municipality}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                    <span className="block text-xs font-semibold uppercase tracking-wide text-brand-500">
-                      Ranking
-                    </span>
-                    {selectedSchool.ranking ? (
-                      <span className="mt-1 block font-semibold">
-                        {selectedSchool.ranking.score ? `${selectedSchool.ranking.score}/10` : selectedSchool.ranking.rank}
-                      </span>
-                    ) : (
-                      <span className="mt-1 block font-semibold">Ready for approved ranking data</span>
-                    )}
-                  </div>
+                  <RankingPanel ranking={selectedSchool.ranking} />
                 </div>
 
                 <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -307,6 +299,98 @@ function InfoPanel({ label, value }: { label: string; value: string }) {
       <span className="mt-1 block text-sm font-semibold text-brand-900">{value}</span>
     </div>
   );
+}
+
+function RankingPanel({ ranking }: { ranking?: SchoolRanking }) {
+  const band = getRankingBand(ranking?.score);
+
+  return (
+    <div className={`min-w-48 rounded-lg border px-4 py-3 text-sm ${band.panelClassName}`}>
+      <span className="block text-xs font-semibold uppercase tracking-wide opacity-80">Ranking</span>
+      <div className="mt-2 flex items-end justify-between gap-3">
+        <div>
+          <span className="block text-3xl font-bold leading-none">
+            {ranking?.score != null ? formatRankingScore(ranking.score) : "--"}
+          </span>
+          <span className="mt-1 block text-xs font-semibold uppercase tracking-wide">{band.label}</span>
+        </div>
+        {ranking?.rank ? <span className="text-right text-sm font-semibold">{ranking.rank}</span> : null}
+      </div>
+      {ranking ? (
+        <p className="mt-3 text-xs leading-5 opacity-85">
+          {ranking.source}
+          {ranking.year ? `, ${ranking.year}` : ""}
+        </p>
+      ) : (
+        <p className="mt-3 text-xs leading-5 opacity-85">Ready for approved ranking data</p>
+      )}
+      {ranking?.url ? (
+        <a href={ranking.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold underline">
+          View source
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function RankingPill({ ranking, compact = false }: { ranking?: SchoolRanking; compact?: boolean }) {
+  const band = getRankingBand(ranking?.score);
+
+  if (!ranking?.score && !ranking?.rank) return null;
+
+  return (
+    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${band.pillClassName}`}>
+      {ranking?.score != null ? `${compact ? "" : "Rating "}${formatRankingScore(ranking.score)}` : ranking.rank}
+    </span>
+  );
+}
+
+function getRankingBand(score?: number): {
+  label: string;
+  panelClassName: string;
+  pillClassName: string;
+} {
+  if (score == null) {
+    return {
+      label: "Pending",
+      panelClassName: "border-brand-100 bg-brand-50 text-brand-800",
+      pillClassName: "border-brand-100 bg-brand-50 text-brand-700"
+    };
+  }
+
+  if (score >= 8) {
+    return {
+      label: "High",
+      panelClassName: "border-emerald-200 bg-emerald-50 text-emerald-900",
+      pillClassName: "border-emerald-200 bg-emerald-50 text-emerald-800"
+    };
+  }
+
+  if (score >= 6) {
+    return {
+      label: "Mid-high",
+      panelClassName: "border-yellow-200 bg-yellow-50 text-yellow-950",
+      pillClassName: "border-yellow-200 bg-yellow-50 text-yellow-900"
+    };
+  }
+
+  if (score >= 4) {
+    return {
+      label: "Mid-low",
+      panelClassName: "border-orange-200 bg-orange-50 text-orange-950",
+      pillClassName: "border-orange-200 bg-orange-50 text-orange-900"
+    };
+  }
+
+  return {
+    label: "Low",
+    panelClassName: "border-red-200 bg-red-50 text-red-900",
+    pillClassName: "border-red-200 bg-red-50 text-red-800"
+  };
+}
+
+function formatRankingScore(score: number): string {
+  return `${Number.isInteger(score) ? score.toFixed(0) : score.toFixed(1)}/10`;
 }
 
 function ExternalButton({ href, children }: { href: string; children: ReactNode }) {

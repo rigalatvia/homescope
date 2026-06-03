@@ -85,6 +85,9 @@ export default async function AdminIndexPage() {
           <Link href="/admin/featured" className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-800">
             Manage Featured
           </Link>
+          <Link href="/admin/schools" className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-800">
+            Import Rankings
+          </Link>
           <Link href="/admin/leads" className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-800">
             Open Leads
           </Link>

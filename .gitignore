@@ -13,6 +13,9 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log
 .tmp-*.log
+.tmp-pdf-tools/
+.tmp-school-rankings-*.csv
+.tmp-school-rankings-*.json
 *.tsbuildinfo
 
 # env files

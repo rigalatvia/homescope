@@ -22,6 +22,7 @@ export interface School {
   grades?: string;
   programs: string[];
   ranking?: SchoolRanking;
+  rankingUpdatedAt?: string;
   geocodeProvider?: string;
   geocodedAt?: string;
   geocodeAttemptedAt?: string;

@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { schools as seedSchools } from "@/data/schools";
 import { COLLECTIONS } from "@/lib/firebase-sync/firestore/collections";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import type { School } from "@/types/school";
+import type { School, SchoolRanking } from "@/types/school";
 
 export type SchoolFirestoreDocument = School & {
   importedAt?: string;
@@ -117,7 +117,8 @@ function sanitizeSchoolDocument(data: FirebaseFirestore.DocumentData, docId: str
     longitude: typeof data.longitude === "number" ? data.longitude : undefined,
     grades: typeof data.grades === "string" ? data.grades : undefined,
     programs: Array.isArray(data.programs) ? data.programs.filter((item): item is string => typeof item === "string") : [],
-    ranking: typeof data.ranking === "object" && data.ranking != null ? data.ranking : undefined,
+    ranking: sanitizeSchoolRanking(data.ranking),
+    rankingUpdatedAt: typeof data.rankingUpdatedAt === "string" ? data.rankingUpdatedAt : undefined,
     geocodeProvider: typeof data.geocodeProvider === "string" ? data.geocodeProvider : undefined,
     geocodedAt: typeof data.geocodedAt === "string" ? data.geocodedAt : undefined,
     geocodeAttemptedAt: typeof data.geocodeAttemptedAt === "string" ? data.geocodeAttemptedAt : undefined,
@@ -133,6 +134,28 @@ function sanitizeSchoolDocument(data: FirebaseFirestore.DocumentData, docId: str
     notes: typeof data.notes === "string" ? data.notes : undefined,
     dataSource: typeof data.dataSource === "string" ? data.dataSource : "Firestore schools collection",
     updatedLabel: typeof data.updatedLabel === "string" ? data.updatedLabel : undefined
+  };
+}
+
+function sanitizeSchoolRanking(value: unknown): SchoolRanking | undefined {
+  if (typeof value !== "object" || value == null) return undefined;
+
+  const ranking = value as Record<string, unknown>;
+  const source = typeof ranking.source === "string" ? ranking.source.trim() : "";
+  const year = typeof ranking.year === "string" ? ranking.year.trim() : "";
+  const score = typeof ranking.score === "number" && Number.isFinite(ranking.score) ? ranking.score : undefined;
+  const rank = typeof ranking.rank === "string" && ranking.rank.trim() ? ranking.rank.trim() : undefined;
+  const url = typeof ranking.url === "string" && ranking.url.trim() ? ranking.url.trim() : undefined;
+
+  if (!source || !year) return undefined;
+  if (score === undefined && !rank) return undefined;
+
+  return {
+    source,
+    year,
+    score,
+    rank,
+    url
   };
 }
 

@@ -124,7 +124,7 @@ function parseTransactionType(value?: string): ListingFilters["transactionType"]
 function parseSort(value?: string, schoolSlug?: string): ListingSort {
   if (!value) return schoolSlug ? "distance" : "price_asc";
   const normalized = value.trim().toLowerCase();
-  if (normalized === "distance") return "distance";
+  if (normalized === "distance") return schoolSlug ? "distance" : "price_asc";
   if (normalized === "price_desc") return "price_desc";
   if (normalized === "newest") return "newest";
   return "price_asc";

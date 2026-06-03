@@ -4,6 +4,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { ListingFilters } from "@/components/listings/listing-filters";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingsPagination } from "@/components/listings/listings-pagination";
+import { ListingReturnMemory } from "@/components/listings/listing-return-memory";
 import { SearchTracker } from "@/components/listings/search-tracker";
 import { parseListingFilters } from "@/lib/listings/filters";
 import { getPublicListings } from "@/lib/listings/service";
@@ -81,6 +82,7 @@ export default async function ListingsPage({
 
   return (
     <section className="site-container py-12">
+      <ListingReturnMemory />
       <SearchTracker filters={filters} resultsTotal={results.total} />
       <h1 className="font-heading text-4xl text-brand-900">Find Your Next Home in the GTA</h1>
       <p className="mt-2 text-brand-700">

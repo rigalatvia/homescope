@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeadCaptureModal } from "@/components/leads/lead-capture-modal";
+import { BackToListingsButton } from "@/components/listings/back-to-listings-button";
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
 import { formatPrice } from "@/lib/utils/format";
@@ -64,6 +65,9 @@ export default async function ListingDetailPage({ params }: { params: { slug: st
 
   return (
     <section className="site-container py-10">
+      <div className="mb-6">
+        <BackToListingsButton />
+      </div>
       <div className="grid gap-10 lg:grid-cols-[1.05fr,0.95fr]">
         <ListingGallery images={listing.images} address={listing.address} />
         <div className="space-y-6">
