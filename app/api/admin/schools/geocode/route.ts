@@ -39,6 +39,8 @@ interface SchoolGeocodeCandidate {
   address?: string;
   latitude?: number;
   longitude?: number;
+  geocodeProvider?: string;
+  geocodeStatus?: string;
 }
 
 interface GeocodeSuccess {
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
       .filter((candidate) => {
         if (schoolId && candidate.id !== schoolId && candidate.docId !== schoolId) return false;
         if (!candidate.address) return false;
-        if (!force && candidate.latitude != null && candidate.longitude != null) return false;
+        if (!force && hasConfirmedGeocode(candidate)) return false;
         return true;
       })
       .sort((a, b) => a.municipality.localeCompare(b.municipality) || a.name.localeCompare(b.name));
@@ -223,8 +225,19 @@ function toCandidate(docId: string, data: FirebaseFirestore.DocumentData): Schoo
     sourceCity: typeof data.sourceCity === "string" ? data.sourceCity : undefined,
     address: typeof data.address === "string" ? data.address : undefined,
     latitude: typeof data.latitude === "number" ? data.latitude : undefined,
-    longitude: typeof data.longitude === "number" ? data.longitude : undefined
+    longitude: typeof data.longitude === "number" ? data.longitude : undefined,
+    geocodeProvider: typeof data.geocodeProvider === "string" ? data.geocodeProvider : undefined,
+    geocodeStatus: typeof data.geocodeStatus === "string" ? data.geocodeStatus : undefined
   };
+}
+
+function hasConfirmedGeocode(candidate: SchoolGeocodeCandidate): boolean {
+  return (
+    candidate.latitude != null &&
+    candidate.longitude != null &&
+    candidate.geocodeProvider === GEOCODE_PROVIDER &&
+    candidate.geocodeStatus === "OK"
+  );
 }
 
 function buildAddressQuery(candidate: SchoolGeocodeCandidate): string {

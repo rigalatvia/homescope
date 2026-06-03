@@ -1210,8 +1210,6 @@ export const schools: School[] = [
     "sourceCity": "Richmond Hill",
     "level": "secondary",
     "address": "10077 Bayview Ave, Richmond Hill, Ontario, L4C2L4",
-    "latitude": 43.8729,
-    "longitude": -79.4242,
     "grades": "9-12",
     "programs": [
       "Public",
@@ -1580,8 +1578,6 @@ export const schools: School[] = [
     "sourceCity": "Richmond Hill",
     "level": "elementary",
     "address": "85 Rollinghill Rd, Richmond Hill, Ontario, L4E4C7",
-    "latitude": 43.9417,
-    "longitude": -79.4605,
     "grades": "JK-8",
     "programs": [
       "Public",
@@ -1776,8 +1772,6 @@ export const schools: School[] = [
     "sourceCity": "Richmond Hill",
     "level": "secondary",
     "address": "1 William F. Bell Parkway, Richmond Hill, Ontario, L4S2T9",
-    "latitude": 43.9039,
-    "longitude": -79.3918,
     "grades": "9-12",
     "programs": [
       "Public",
@@ -5601,8 +5595,6 @@ export const schools: School[] = [
     "sourceCity": "North York",
     "level": "secondary",
     "address": "100 Princess Ave, North York, Ontario, M2N3R7",
-    "latitude": 43.7689,
-    "longitude": -79.4089,
     "grades": "9-12",
     "programs": [
       "Public",

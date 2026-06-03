@@ -44,12 +44,7 @@ export async function importSeedSchoolsToFirestore(): Promise<{
 
     for (const school of chunk) {
       const reference = firestore.collection(COLLECTIONS.schools).doc(school.id);
-      const document: SchoolFirestoreDocument = {
-        ...school,
-        importedAt,
-        updatedAt: importedAt,
-        dataSource: school.dataSource || "Ontario public school contact information, May 2026"
-      };
+      const document = buildSeedSchoolDocument(school, importedAt);
 
       batch.set(
         reference,
@@ -70,6 +65,28 @@ export async function importSeedSchoolsToFirestore(): Promise<{
     collection: COLLECTIONS.schools,
     sourceVersion: SCHOOL_DATA_VERSION
   };
+}
+
+function buildSeedSchoolDocument(school: School, importedAt: string): SchoolFirestoreDocument {
+  const document: SchoolFirestoreDocument = {
+    ...school,
+    importedAt,
+    updatedAt: importedAt,
+    dataSource: school.dataSource || "Ontario public school contact information, May 2026"
+  };
+
+  delete document.latitude;
+  delete document.longitude;
+  delete document.geocodeProvider;
+  delete document.geocodedAt;
+  delete document.geocodeAttemptedAt;
+  delete document.geocodeStatus;
+  delete document.geocodeFormattedAddress;
+  delete document.geocodePlaceId;
+  delete document.geocodeLocationType;
+  delete document.geocodePartialMatch;
+
+  return document;
 }
 
 async function getSchoolsFromFirestore(): Promise<School[]> {
