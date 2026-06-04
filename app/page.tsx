@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, ClipboardCheck, FolderKanban, KeyRound } from "lucide-react";
 import { FeaturedListingsPreview } from "@/components/home/featured-listings-preview";
 import { HeroSection } from "@/components/home/hero";
+import { SchoolSearchAd } from "@/components/home/school-search-ad";
 import { ServiceAreasSection } from "@/components/home/service-areas";
 import { ValuePointsSection } from "@/components/home/value-points";
 import { getFeaturedListings } from "@/lib/listings/service";
@@ -46,6 +47,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection />
+      <SchoolSearchAd />
       <ServiceAreasSection />
       <ValuePointsSection />
       <section className="site-container py-8 sm:py-10">
