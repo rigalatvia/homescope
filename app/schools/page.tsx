@@ -10,9 +10,11 @@ import {
   getSchoolBySlug,
   getSchools
 } from "@/lib/schools/service";
-import type { SchoolLevel, SchoolRanking } from "@/types/school";
+import type { School, SchoolLevel, SchoolRanking } from "@/types/school";
 
 export const revalidate = 3600;
+const NEARBY_LISTINGS_DISPLAY_LIMIT = 24;
+const SCHOOL_RESULTS_DISPLAY_LIMIT = 75;
 
 export const metadata: Metadata = {
   title: "School Search",
@@ -35,11 +37,19 @@ export default async function SchoolsPage({
   const radiusKm = parseRadiusKm(toString(searchParams.radiusKm));
 
   const municipalities = SITE_CONFIG.primaryMarkets;
-  const schoolResults = await getSchools({ query, municipality, level });
+  const selectedSchoolBySlug = selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined;
+  const listMunicipality = municipality || (!query && !level ? selectedSchoolBySlug?.municipality : undefined);
+  const schoolResults = await getSchools({ query, municipality: listMunicipality, level });
   const selectedSchool =
-    (selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined) ??
-    (schoolResults.length === 1 ? schoolResults[0] : undefined);
-  const nearbyListings = selectedSchool ? await getNearbyListingsForSchool(selectedSchool, radiusKm) : [];
+    selectedSchoolBySlug ??
+    getSchoolSelectionFromSearch(query, schoolResults);
+  const visibleSchoolResults = getVisibleSchoolResults(schoolResults, selectedSchool);
+  const hiddenSchoolResultsCount = Math.max(0, schoolResults.length - visibleSchoolResults.length);
+  const hasSchoolFilters = Boolean(query || listMunicipality || level);
+  const nearbyListings = selectedSchool
+    ? await getNearbyListingsForSchool(selectedSchool, radiusKm, { limit: NEARBY_LISTINGS_DISPLAY_LIMIT })
+    : [];
+  const hasMoreNearbyListings = nearbyListings.length >= NEARBY_LISTINGS_DISPLAY_LIMIT;
 
   return (
     <section className="site-container py-10">
@@ -81,7 +91,7 @@ export default async function SchoolsPage({
           <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">Municipality</span>
           <select
             name="municipality"
-            defaultValue={municipality || ""}
+            defaultValue={listMunicipality || ""}
             className="mt-1 h-10 w-full rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm text-brand-900 outline-none"
           >
             <option value="">All cities</option>
@@ -117,22 +127,30 @@ export default async function SchoolsPage({
         <aside className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-heading text-2xl text-brand-900">Schools</h2>
-            <span className="text-sm text-brand-600">{schoolResults.length} found</span>
+            <span className="text-sm text-brand-600">
+              {schoolResults.length} found{hiddenSchoolResultsCount > 0 ? `; showing ${visibleSchoolResults.length}` : ""}
+            </span>
           </div>
 
-          {schoolResults.map((school) => {
+          {hiddenSchoolResultsCount > 0 ? (
+            <p className="rounded-lg border border-brand-100 bg-white px-3 py-2 text-sm text-brand-700">
+              Search by name or choose a city to narrow the full directory.
+            </p>
+          ) : null}
+
+          {visibleSchoolResults.map((school) => {
             const isSelected = selectedSchool?.slug === school.slug;
-            const params = new URLSearchParams();
-            if (query) params.set("q", query);
-            if (municipality) params.set("municipality", municipality);
-            if (level) params.set("level", level);
-            params.set("school", school.slug);
-            params.set("radiusKm", String(radiusKm));
+            const href = buildSchoolSearchHref(school, {
+              query,
+              municipality: listMunicipality,
+              level,
+              radiusKm
+            });
 
             return (
               <PendingSchoolLink
                 key={school.id}
-                href={`/schools?${params.toString()}`}
+                href={href}
                 className={`block rounded-xl border bg-white p-4 shadow-soft transition hover:-translate-y-0.5 ${
                   isSelected ? "border-brand-700 ring-2 ring-brand-100" : "border-brand-100"
                 }`}
@@ -213,7 +231,8 @@ export default async function SchoolsPage({
                   <h2 className="font-heading text-2xl text-brand-900">Nearby listings</h2>
                   {selectedSchool.latitude != null && selectedSchool.longitude != null ? (
                     <p className="text-sm text-brand-700">
-                      {nearbyListings.length} listing(s) within {radiusKm} km of {selectedSchool.name}
+                      Showing up to {NEARBY_LISTINGS_DISPLAY_LIMIT} closest listing(s) within {radiusKm} km of{" "}
+                      {selectedSchool.name}
                     </p>
                   ) : (
                     <p className="text-sm text-brand-700">
@@ -225,7 +244,7 @@ export default async function SchoolsPage({
                   <form className="flex items-end gap-2">
                   <input type="hidden" name="school" value={selectedSchool.slug} />
                   {query ? <input type="hidden" name="q" value={query} /> : null}
-                  {municipality ? <input type="hidden" name="municipality" value={municipality} /> : null}
+                  {listMunicipality ? <input type="hidden" name="municipality" value={listMunicipality} /> : null}
                   {level ? <input type="hidden" name="level" value={level} /> : null}
                   <label>
                     <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">Radius</span>
@@ -262,23 +281,75 @@ export default async function SchoolsPage({
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {nearbyListings.map(({ listing, distanceKm }) => (
-                    <div key={listing.id} className="space-y-2">
-                      <p className="text-sm font-semibold text-brand-700">{distanceKm.toFixed(1)} km from school</p>
-                      <ListingCard listing={listing} />
+                <>
+                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {nearbyListings.map(({ listing, distanceKm }) => (
+                      <div key={listing.id} className="space-y-2">
+                        <p className="text-sm font-semibold text-brand-700">{distanceKm.toFixed(1)} km from school</p>
+                        <ListingCard listing={listing} />
+                      </div>
+                    ))}
+                  </div>
+                  {hasMoreNearbyListings ? (
+                    <div className="rounded-xl border border-brand-100 bg-white p-5 text-center shadow-soft">
+                      <p className="text-sm text-brand-700">
+                        Open the full listings search to browse every visible match for this school radius.
+                      </p>
+                      <Link
+                        href={`/listings?schoolSlug=${selectedSchool.slug}&schoolRadiusKm=${radiusKm}&sort=distance`}
+                        className="mt-3 inline-flex rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+                      >
+                        View all nearby listings
+                      </Link>
                     </div>
-                  ))}
-                </div>
+                  ) : null}
+                </>
               )}
             </div>
           ) : (
             <div className="rounded-xl border border-brand-100 bg-white p-10 text-center shadow-soft">
-              <h2 className="font-heading text-3xl text-brand-900">Choose a school to see details</h2>
+              <h2 className="font-heading text-3xl text-brand-900">
+                {schoolResults.length === 0
+                  ? "No schools found"
+                  : hasSchoolFilters
+                    ? "Choose a school to see nearby homes"
+                    : "Choose a school to see details"}
+              </h2>
               <p className="mt-2 text-brand-700">
-                Search the official school directory, then use board links to verify boundaries. Nearby homes appear for
-                schools after latitude and longitude are added.
+                {schoolResults.length === 0
+                  ? "Try a different school name, municipality, or level."
+                  : hasSchoolFilters
+                    ? `${schoolResults.length} school(s) match these filters.`
+                    : "Search the official school directory, then use board links to verify boundaries."}
               </p>
+
+              {schoolResults.length > 0 && hasSchoolFilters ? (
+                <div className="mt-6 grid gap-3 text-left md:grid-cols-2">
+                  {visibleSchoolResults.slice(0, 6).map((school) => (
+                    <PendingSchoolLink
+                      key={school.id}
+                      href={buildSchoolSearchHref(school, {
+                        query,
+                        municipality: listMunicipality,
+                        level,
+                        radiusKm
+                      })}
+                      className="block rounded-xl border border-brand-100 bg-brand-50 p-4 transition hover:border-brand-300 hover:bg-white"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-brand-900">{school.name}</h3>
+                          <p className="mt-1 text-sm text-brand-700">{school.municipality}</p>
+                          <p className="mt-2 text-xs text-brand-600">{school.board}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-brand-700">
+                          {school.level}
+                        </span>
+                      </div>
+                    </PendingSchoolLink>
+                  ))}
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -416,6 +487,81 @@ function parseRadiusKm(value?: string): number {
   const parsed = Number(value);
   if ([1, 3, 5, 10].includes(parsed)) return parsed;
   return 3;
+}
+
+function getVisibleSchoolResults(schools: School[], selectedSchool?: School) {
+  const visible = schools.slice(0, SCHOOL_RESULTS_DISPLAY_LIMIT);
+  if (!selectedSchool || visible.some((school) => school.slug === selectedSchool.slug)) {
+    return visible;
+  }
+
+  return [
+    selectedSchool,
+    ...schools
+      .filter((school) => school.slug !== selectedSchool.slug)
+      .slice(0, Math.max(0, SCHOOL_RESULTS_DISPLAY_LIMIT - 1))
+  ];
+}
+
+function buildSchoolSearchHref(
+  school: School,
+  options: {
+    query?: string;
+    municipality?: string;
+    level?: SchoolLevel;
+    radiusKm: number;
+  }
+): string {
+  const params = new URLSearchParams();
+  if (options.query) params.set("q", options.query);
+  if (options.municipality) params.set("municipality", options.municipality);
+  if (options.level) params.set("level", options.level);
+  params.set("school", school.slug);
+  params.set("radiusKm", String(options.radiusKm));
+
+  return `/schools?${params.toString()}`;
+}
+
+function getSchoolSelectionFromSearch(query: string | undefined, schools: School[]): School | undefined {
+  if (schools.length === 0) return undefined;
+  if (!query) return schools.length === 1 ? schools[0] : undefined;
+
+  const normalizedQuery = normalizeSchoolSearchText(query);
+  if (!normalizedQuery) return schools.length === 1 ? schools[0] : undefined;
+
+  const exactMatches = schools.filter((school) => {
+    const normalizedName = normalizeSchoolSearchText(school.name);
+    const normalizedSlug = normalizeSchoolSearchText(school.slug);
+    const normalizedFullLabel = normalizeSchoolSearchText(`${school.name} ${school.municipality} ${school.board}`);
+
+    return (
+      normalizedName === normalizedQuery ||
+      normalizedSlug === normalizedQuery ||
+      normalizedFullLabel === normalizedQuery
+    );
+  });
+
+  if (exactMatches.length === 1) return exactMatches[0];
+
+  const nameMatches = schools.filter((school) => normalizeSchoolSearchText(school.name).includes(normalizedQuery));
+  if (nameMatches.length === 1) return nameMatches[0];
+
+  return schools.length === 1 ? schools[0] : undefined;
+}
+
+function normalizeSchoolSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\bp s\b/g, "public school")
+    .replace(/\bps\b/g, "public school")
+    .replace(/\bs s\b/g, "secondary school")
+    .replace(/\bss\b/g, "secondary school")
+    .replace(/\bh s\b/g, "high school")
+    .replace(/\bhs\b/g, "high school")
+    .replace(/\s+/g, " ");
 }
 
 function titleCase(value: string): string {

@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+
+const PENDING_FALLBACK_MS = 12000;
 
 interface PendingSchoolLinkProps {
   href: string;
@@ -11,9 +14,25 @@ interface PendingSchoolLinkProps {
 
 export function PendingSchoolLink({ href, className, children }: PendingSchoolLinkProps) {
   const [isPending, setIsPending] = useState(false);
+  const currentUrl = useCurrentRelativeUrl();
+
+  useEffect(() => {
+    setIsPending(false);
+  }, [currentUrl]);
+
+  useEffect(() => {
+    if (!isPending) return;
+
+    const timeout = window.setTimeout(() => setIsPending(false), PENDING_FALLBACK_MS);
+    return () => window.clearTimeout(timeout);
+  }, [isPending]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    if (normalizeRelativeUrl(href) === normalizeRelativeUrl(currentUrl)) {
       return;
     }
 
@@ -41,6 +60,18 @@ export function PendingSubmitButton({
   className: string;
 }) {
   const [isPending, setIsPending] = useState(false);
+  const currentUrl = useCurrentRelativeUrl();
+
+  useEffect(() => {
+    setIsPending(false);
+  }, [currentUrl]);
+
+  useEffect(() => {
+    if (!isPending) return;
+
+    const timeout = window.setTimeout(() => setIsPending(false), PENDING_FALLBACK_MS);
+    return () => window.clearTimeout(timeout);
+  }, [isPending]);
 
   return (
     <button
@@ -75,4 +106,21 @@ function LoadingVeil({ label }: { label: string }) {
 
 function Spinner() {
   return <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-800" aria-hidden="true" />;
+}
+
+function useCurrentRelativeUrl(): string {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+
+  return useMemo(() => `${pathname}${search ? `?${search}` : ""}`, [pathname, search]);
+}
+
+function normalizeRelativeUrl(value: string): string {
+  try {
+    const url = new URL(value, "https://homescope.local");
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return value;
+  }
 }

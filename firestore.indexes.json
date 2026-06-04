@@ -6,6 +6,15 @@
       "fields": [
         { "fieldPath": "isVisible", "order": "ASCENDING" },
         { "fieldPath": "municipality", "order": "ASCENDING" },
+        { "fieldPath": "coordinates.latitude", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isVisible", "order": "ASCENDING" },
+        { "fieldPath": "municipality", "order": "ASCENDING" },
         { "fieldPath": "price", "order": "DESCENDING" }
       ]
     },

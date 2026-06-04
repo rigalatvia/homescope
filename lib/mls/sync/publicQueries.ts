@@ -24,6 +24,14 @@ export interface PublicListingsPageResult {
   totalPages: number;
 }
 
+export interface NearbyListingsQuery {
+  latitude: number;
+  longitude: number;
+  radiusKm: number;
+  municipality?: string;
+  maxCandidates?: number;
+}
+
 function sanitizePublicListing(doc: MLSListingFirestoreDocument): MLSListingFirestoreDocument {
   return {
     ...doc,
@@ -100,6 +108,55 @@ export async function getListingsByMunicipality(
     .get();
 
   return snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument));
+}
+
+export async function getListingsNearCoordinate(
+  filters: NearbyListingsQuery
+): Promise<MLSListingFirestoreDocument[]> {
+  if (!Number.isFinite(filters.latitude) || !Number.isFinite(filters.longitude)) return [];
+
+  const radiusKm = Math.max(0.1, filters.radiusKm);
+  const bounds = calculateCoordinateBounds(filters.latitude, filters.longitude, radiusKm);
+  const maxCandidates = Math.max(1, filters.maxCandidates ?? 1000);
+  const batchSize = Math.min(maxCandidates, 500);
+  const firestore = getFirebaseAdminFirestore();
+  const results: MLSListingFirestoreDocument[] = [];
+  let baseQuery: Query = firestore.collection(LISTINGS_COLLECTION).where("isVisible", "==", true);
+
+  if (filters.municipality) {
+    if (!allowedMunicipalities.includes(filters.municipality as (typeof allowedMunicipalities)[number])) return [];
+    baseQuery = baseQuery.where("municipality", "==", filters.municipality);
+  } else {
+    baseQuery = baseQuery.where("municipality", "in", allowedMunicipalities);
+  }
+
+  let query = baseQuery
+    .where("coordinates.latitude", ">=", bounds.minLatitude)
+    .where("coordinates.latitude", "<=", bounds.maxLatitude)
+    .orderBy("coordinates.latitude", "asc")
+    .limit(batchSize);
+
+  while (results.length < maxCandidates) {
+    const snapshot = await query.get();
+    if (snapshot.empty) break;
+
+    for (const doc of snapshot.docs) {
+      const listing = sanitizePublicListing(doc.data() as MLSListingFirestoreDocument);
+      const latitude = listing.coordinates.latitude;
+      const longitude = listing.coordinates.longitude;
+
+      if (latitude == null || longitude == null) continue;
+      if (longitude < bounds.minLongitude || longitude > bounds.maxLongitude) continue;
+      results.push(listing);
+      if (results.length >= maxCandidates) break;
+    }
+
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    if (!lastDoc || snapshot.docs.length < batchSize) break;
+    query = query.startAfter(lastDoc);
+  }
+
+  return results;
 }
 
 export async function getFilteredListings(filters: {
@@ -270,4 +327,26 @@ function buildPublicListingsQuery(
   }
 
   return nextQuery.orderBy("price", "desc");
+}
+
+function calculateCoordinateBounds(latitude: number, longitude: number, radiusKm: number): {
+  minLatitude: number;
+  maxLatitude: number;
+  minLongitude: number;
+  maxLongitude: number;
+} {
+  const latitudeDelta = radiusKm / 110.574;
+  const longitudeScale = 111.32 * Math.max(Math.cos(toRadians(latitude)), 0.01);
+  const longitudeDelta = radiusKm / longitudeScale;
+
+  return {
+    minLatitude: latitude - latitudeDelta,
+    maxLatitude: latitude + latitudeDelta,
+    minLongitude: longitude - longitudeDelta,
+    maxLongitude: longitude + longitudeDelta
+  };
+}
+
+function toRadians(value: number): number {
+  return (value * Math.PI) / 180;
 }

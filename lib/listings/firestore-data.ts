@@ -9,6 +9,7 @@ import {
   getFilteredListings as getFilteredMLSListings,
   getListingsByAgentKey as getMLSListingsByAgentKey,
   getListingsByMunicipality as getMLSListingsByMunicipality,
+  getListingsNearCoordinate as getMLSListingsNearCoordinate,
   getPublicListingBySlug as getMLSListingBySlug,
   getPublicListings as getPublicMLSListings
 } from "@/lib/mls/sync/publicQueries";
@@ -94,6 +95,17 @@ export async function getPublicListingBySlug(slug: string): Promise<Listing | nu
 
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
   const listings = await getMLSListingsByMunicipality(city, 200);
+  return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
+}
+
+export async function getListingsNearCoordinate(filters: {
+  latitude: number;
+  longitude: number;
+  radiusKm: number;
+  municipality?: string;
+  maxCandidates?: number;
+}): Promise<Listing[]> {
+  const listings = await getMLSListingsNearCoordinate(filters);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
 }
 

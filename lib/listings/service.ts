@@ -5,6 +5,7 @@ import {
   getPublicListingsPage as getPublicListingsPageFromFirestore,
   getPublicListingsByIds as getPublicListingsByIdsFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
+  getListingsNearCoordinate as getListingsNearCoordinateFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
@@ -20,6 +21,28 @@ export async function getPublicListings(
 ): Promise<PaginatedListings> {
   const includeAllItems = options?.includeAllItems === true;
   const school = filters.schoolSlug ? await getSchoolForListingFilter(filters.schoolSlug) : undefined;
+
+  if (school?.latitude != null && school.longitude != null && filters.schoolSlug) {
+    const listings = await getNearbyListingCandidates({
+      latitude: school.latitude,
+      longitude: school.longitude,
+      radiusKm: filters.schoolRadiusKm ?? 3,
+      municipality: filters.city || school.municipality,
+      maxCandidates: 2500
+    });
+    const filtered = applyListingFilters(listings, filters, { school });
+    const sorted = sortListingsForBrowsing(addSchoolDistances(filtered, school), filters.sort, school);
+    const paginated = paginateListings(sorted, filters);
+
+    if (!includeAllItems) {
+      return {
+        ...paginated,
+        allItems: undefined
+      };
+    }
+
+    return paginated;
+  }
 
   if (canUseIndexedSearch(filters)) {
     const paged = await getPublicListingsPageFromFirestore(filters);
@@ -107,6 +130,24 @@ export async function getFeaturedListings(): Promise<Listing[]> {
 export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
   const listings = await getListingsByMunicipalityFromFirestore(city);
   return sortListingsWithFeaturedPriority(listings);
+}
+
+export async function getNearbyListingCandidates(options: {
+  latitude: number;
+  longitude: number;
+  radiusKm: number;
+  municipality?: string;
+  maxCandidates?: number;
+}): Promise<Listing[]> {
+  try {
+    return await getListingsNearCoordinateFromFirestore(options);
+  } catch (error) {
+    console.error("[listings] Nearby coordinate lookup failed; falling back to municipality listings", error);
+    if (options.municipality) {
+      return getPublicListingsFromFirestore({ city: options.municipality });
+    }
+    return getPublicListingsFromFirestore({});
+  }
 }
 
 export async function getPublicListingsByIds(listingIds: string[]): Promise<Listing[]> {

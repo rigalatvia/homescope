@@ -1,12 +1,13 @@
 import { schools as seedSchools } from "@/data/schools";
 import { ALLOWED_PUBLIC_CITIES } from "@/config/site";
-import { getAllPublicListings } from "@/lib/listings/service";
+import { getNearbyListingCandidates } from "@/lib/listings/service";
 import { getSchoolDirectory } from "@/lib/schools/firestore-data";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 import type { Listing } from "@/types/listing";
 import type { School, SchoolSearchFilters } from "@/types/school";
 
 const DEFAULT_NEARBY_RADIUS_KM = 3;
+const DEFAULT_NEARBY_LISTING_LIMIT = 24;
 
 export async function getSchools(filters: SchoolSearchFilters = {}): Promise<School[]> {
   const directory = await getSchoolDirectory();
@@ -59,7 +60,8 @@ function filterSchools(directory: School[], filters: SchoolSearchFilters = {}): 
 
 export async function getNearbyListingsForSchool(
   school: School,
-  radiusKm = DEFAULT_NEARBY_RADIUS_KM
+  radiusKm = DEFAULT_NEARBY_RADIUS_KM,
+  options: { limit?: number } = {}
 ): Promise<Array<{ listing: Listing; distanceKm: number }>> {
   if (school.latitude == null || school.longitude == null) {
     return [];
@@ -67,7 +69,14 @@ export async function getNearbyListingsForSchool(
 
   const schoolLatitude = school.latitude;
   const schoolLongitude = school.longitude;
-  const listings = await getAllPublicListings();
+  const limit = Math.max(1, options.limit ?? DEFAULT_NEARBY_LISTING_LIMIT);
+  const listings = await getNearbyListingCandidates({
+    latitude: schoolLatitude,
+    longitude: schoolLongitude,
+    radiusKm,
+    municipality: school.municipality,
+    maxCandidates: Math.max(150, limit * 10)
+  });
 
   return listings
     .filter((listing) => listing.latitude != null && listing.longitude != null)
@@ -76,9 +85,21 @@ export async function getNearbyListingsForSchool(
       distanceKm: calculateDistanceKm(schoolLatitude, schoolLongitude, listing.latitude!, listing.longitude!)
     }))
     .filter((result) => result.distanceKm <= radiusKm)
-    .sort((a, b) => a.distanceKm - b.distanceKm || a.listing.price - b.listing.price);
+    .sort((a, b) => a.distanceKm - b.distanceKm || a.listing.price - b.listing.price)
+    .slice(0, limit);
 }
 
 function normalize(value?: string): string {
-  return (value || "").trim().toLowerCase();
+  return (value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\bp s\b/g, "public school")
+    .replace(/\bps\b/g, "public school")
+    .replace(/\bs s\b/g, "secondary school")
+    .replace(/\bss\b/g, "secondary school")
+    .replace(/\bh s\b/g, "high school")
+    .replace(/\bhs\b/g, "high school")
+    .replace(/\s+/g, " ");
 }
