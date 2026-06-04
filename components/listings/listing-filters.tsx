@@ -30,14 +30,16 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [cityValue, setCityValue] = useState(filters.city || "");
   const [transactionType, setTransactionType] = useState<string>(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
   const [sortValue, setSortValue] = useState<ListingSort>(filters.sort || "price_asc");
   const [sortTouched, setSortTouched] = useState(false);
   const [minPrice, setMinPrice] = useState(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
   const [maxPrice, setMaxPrice] = useState(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
+  const citySchools = useMemo(() => filterSchoolsByCity(schools, cityValue), [cityValue, schools]);
   const schoolOptions = useMemo(
-    () => schools.map((school) => ({ school, label: formatSchoolOptionLabel(school) })),
-    [schools]
+    () => citySchools.map((school) => ({ school, label: formatSchoolOptionLabel(school) })),
+    [citySchools]
   );
   const selectedSchool = useMemo(
     () => schools.find((school) => school.slug === filters.schoolSlug),
@@ -67,12 +69,13 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const clearFiltersUrl = `/listings?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
 
   useEffect(() => {
+    setCityValue(filters.city || "");
     setTransactionType(filters.transactionType || DEFAULT_TRANSACTION_TYPE);
     setSortValue(filters.sort || "price_asc");
     setSortTouched(false);
     setMinPrice(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
     setMaxPrice(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
-  }, [filters.maxPrice, filters.minPrice, filters.sort, filters.transactionType]);
+  }, [filters.city, filters.maxPrice, filters.minPrice, filters.sort, filters.transactionType]);
 
   useEffect(() => {
     const selectedSchool = schools.find((school) => school.slug === filters.schoolSlug);
@@ -100,7 +103,12 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     const minLongitude = readFormValue(formData, "minLongitude");
     const maxLongitude = readFormValue(formData, "maxLongitude");
     const schoolSearch = readFormValue(formData, "schoolSearch");
-    const schoolSlug = readFormValue(formData, "schoolSlug") || resolveSchoolSlug(schools, schoolSearch);
+    const schoolSlug = resolveSubmittedSchoolSlug({
+      city,
+      schoolSearch,
+      schoolSlug: readFormValue(formData, "schoolSlug"),
+      schools
+    });
     const schoolRadiusKm = readFormValue(formData, "schoolRadiusKm") || "3";
     const sort = resolveSubmittedSort(rawSort, {
       hasCurrentSchool: Boolean(filters.schoolSlug),
@@ -154,8 +162,17 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     }
   };
 
+  const handleCityChange = (value: string) => {
+    setCityValue(value);
+
+    const selectedSchool = schools.find((school) => school.slug === schoolSlug);
+    if (selectedSchool && !schoolMatchesCity(selectedSchool, value)) {
+      clearSchool();
+    }
+  };
+
   const handleSchoolSearchChange = (value: string) => {
-    const nextSchoolSlug = resolveSchoolSlug(schools, value) || "";
+    const nextSchoolSlug = resolveSchoolSlug(citySchools, value) || "";
 
     setSchoolSearch(value);
     setSchoolSlug(nextSchoolSlug);
@@ -206,7 +223,12 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <FilterLabel label="City">
-          <select name="city" defaultValue={filters.city || ""} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm">
+          <select
+            name="city"
+            value={cityValue}
+            onChange={(event) => handleCityChange(event.target.value)}
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          >
             <option value="">All Cities</option>
             {SITE_CONFIG.primaryMarkets.map((city) => (
               <option key={city} value={city}>
@@ -487,6 +509,36 @@ function parseSubmittedSort(value: string): ListingSort {
   return "price_asc";
 }
 
+function resolveSubmittedSchoolSlug({
+  city,
+  schoolSearch,
+  schoolSlug,
+  schools
+}: {
+  city: string;
+  schoolSearch: string;
+  schoolSlug: string;
+  schools: School[];
+}): string {
+  const selectedSchool = schools.find((school) => school.slug === schoolSlug);
+  if (selectedSchool && schoolMatchesCity(selectedSchool, city)) return selectedSchool.slug;
+
+  return resolveSchoolSlug(filterSchoolsByCity(schools, city), schoolSearch);
+}
+
+function filterSchoolsByCity(schools: School[], city: string): School[] {
+  const normalizedCity = normalizeCity(city);
+  if (!normalizedCity) return schools;
+
+  return schools.filter((school) => normalizeCity(school.municipality) === normalizedCity);
+}
+
+function schoolMatchesCity(school: School, city: string): boolean {
+  const normalizedCity = normalizeCity(city);
+  if (!normalizedCity) return true;
+  return normalizeCity(school.municipality) === normalizedCity;
+}
+
 function resolveSchoolSlug(schools: School[], value: string): string {
   const query = value.trim().toLowerCase();
   if (!query) return "";
@@ -532,4 +584,8 @@ function readFormValue(formData: FormData, key: string): string {
   const raw = formData.get(key);
   if (typeof raw !== "string") return "";
   return raw.trim();
+}
+
+function normalizeCity(value: string): string {
+  return value.trim().toLowerCase();
 }

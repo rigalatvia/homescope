@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExternalLink, GraduationCap, MapPin, Search, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
+import { PendingSchoolLink, PendingSubmitButton } from "@/components/schools/school-pending-controls";
 import { SITE_CONFIG } from "@/config/site";
 import {
   getNearbyListingsForSchool,
@@ -106,12 +107,9 @@ export default async function SchoolsPage({
         </label>
 
         <div className="flex items-end">
-          <button
-            type="submit"
-            className="inline-flex h-10 w-full items-center justify-center rounded-full bg-brand-800 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
-          >
+          <PendingSubmitButton className="inline-flex h-10 w-full items-center justify-center rounded-full bg-brand-800 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-wait disabled:opacity-80">
             Search
-          </button>
+          </PendingSubmitButton>
         </div>
       </form>
 
@@ -132,7 +130,7 @@ export default async function SchoolsPage({
             params.set("radiusKm", String(radiusKm));
 
             return (
-              <Link
+              <PendingSchoolLink
                 key={school.id}
                 href={`/schools?${params.toString()}`}
                 className={`block rounded-xl border bg-white p-4 shadow-soft transition hover:-translate-y-0.5 ${
@@ -153,7 +151,7 @@ export default async function SchoolsPage({
                 </div>
                 <p className="mt-2 text-xs text-brand-600">{school.board}</p>
                 <p className="mt-2 text-sm text-brand-700">{school.programs.join(", ")}</p>
-              </Link>
+              </PendingSchoolLink>
             );
           })}
         </aside>
@@ -242,12 +240,9 @@ export default async function SchoolsPage({
                       <option value="10">10 km</option>
                     </select>
                   </label>
-                  <button
-                    type="submit"
-                    className="h-10 rounded-full border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
-                  >
+                  <PendingSubmitButton className="h-10 rounded-full border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-900 transition hover:bg-brand-50 disabled:cursor-wait disabled:opacity-80">
                     Apply
-                  </button>
+                  </PendingSubmitButton>
                   </form>
                 ) : null}
               </div>
