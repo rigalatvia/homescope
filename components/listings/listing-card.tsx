@@ -9,9 +9,10 @@ import type { Listing } from "@/types/listing";
 interface ListingCardProps {
   listing: Listing;
   returnTo?: string;
+  showStatLabels?: boolean;
 }
 
-export function ListingCard({ listing, returnTo }: ListingCardProps) {
+export function ListingCard({ listing, returnTo, showStatLabels = true }: ListingCardProps) {
   const transactionLabel = listing.transactionType === "lease" ? "For Lease" : "For Sale";
   const detailHref = buildListingDetailHref(listing.listingUrlSlug, returnTo);
 
@@ -51,9 +52,9 @@ export function ListingCard({ listing, returnTo }: ListingCardProps) {
           <FavoriteButton listingId={listing.id} />
         </div>
         <div className="grid grid-cols-3 gap-3 rounded-2xl border border-brand-100 bg-brand-50/50 px-3 py-3">
-          <ListingStat icon={<BedStatIcon />} value={String(listing.bedrooms)} label="Bedrooms" />
-          <ListingStat icon={<BathStatIcon />} value={String(listing.bathrooms)} label="Bathrooms" />
-          <ListingStat icon={<AreaStatIcon />} value={listing.squareFootage ?? "N/A"} label="Square Feet" />
+          <ListingStat icon={<BedStatIcon />} value={String(listing.bedrooms)} label="Bedrooms" showLabel={showStatLabels} />
+          <ListingStat icon={<BathStatIcon />} value={String(listing.bathrooms)} label="Bathrooms" showLabel={showStatLabels} />
+          <ListingStat icon={<AreaStatIcon />} value={listing.squareFootage ?? "N/A"} label="Square Feet" showLabel={showStatLabels} />
         </div>
         <p className="text-sm text-brand-700">{listing.propertyType}</p>
         <p className="text-sm text-brand-700">{truncate(listing.description, 120)}</p>
@@ -78,14 +79,24 @@ function buildListingDetailHref(slug: string, returnTo?: string): string {
   return `${detailPath}?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
-function ListingStat({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
+function ListingStat({
+  icon,
+  value,
+  label,
+  showLabel
+}: {
+  icon: ReactNode;
+  value: string;
+  label: string;
+  showLabel: boolean;
+}) {
   return (
     <div className="flex min-w-0 flex-col items-center justify-start gap-2 text-center">
       <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-100 bg-white text-brand-500 shadow-sm">
         {icon}
       </span>
       <span className="max-w-full truncate text-base font-semibold leading-none text-brand-900">{value}</span>
-      <span className="text-[11px] uppercase tracking-[0.14em] text-brand-600">{label}</span>
+      <span className={showLabel ? "text-[11px] uppercase tracking-[0.14em] text-brand-600" : "sr-only"}>{label}</span>
     </div>
   );
 }

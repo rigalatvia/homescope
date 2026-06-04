@@ -289,7 +289,7 @@ export default async function SchoolsPage({
                     {nearbyListings.map(({ listing, distanceKm }) => (
                       <div key={listing.id} className="space-y-2">
                         <p className="text-sm font-semibold text-brand-700">{distanceKm.toFixed(1)} km from school</p>
-                        <ListingCard listing={listing} />
+                        <ListingCard listing={listing} showStatLabels={false} />
                       </div>
                     ))}
                   </div>
@@ -315,44 +315,16 @@ export default async function SchoolsPage({
                 {schoolResults.length === 0
                   ? "No schools found"
                   : hasSchoolFilters
-                    ? "Choose a school to see nearby homes"
+                    ? "Select a school from the list"
                     : "Choose a school to see details"}
               </h2>
               <p className="mt-2 text-brand-700">
                 {schoolResults.length === 0
                   ? "Try a different school name, municipality, or level."
                   : hasSchoolFilters
-                    ? `${schoolResults.length} school(s) match these filters.`
+                    ? `${schoolResults.length} school(s) match these filters. Click a school on the left to see details and nearby homes.`
                     : "Search the official school directory, then use board links to verify boundaries."}
               </p>
-
-              {schoolResults.length > 0 && hasSchoolFilters ? (
-                <div className="mt-6 grid gap-3 text-left md:grid-cols-2">
-                  {visibleSchoolResults.slice(0, 6).map((school) => (
-                    <PendingSchoolLink
-                      key={school.id}
-                      href={buildSchoolSearchHref(school, {
-                        query,
-                        municipality: listMunicipality,
-                        level,
-                        radiusKm
-                      })}
-                      className="block rounded-xl border border-brand-100 bg-brand-50 p-4 transition hover:border-brand-300 hover:bg-white"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-semibold text-brand-900">{school.name}</h3>
-                          <p className="mt-1 text-sm text-brand-700">{school.municipality}</p>
-                          <p className="mt-2 text-xs text-brand-600">{school.board}</p>
-                        </div>
-                        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-brand-700">
-                          {school.level}
-                        </span>
-                      </div>
-                    </PendingSchoolLink>
-                  ))}
-                </div>
-              ) : null}
             </div>
           )}
         </div>
