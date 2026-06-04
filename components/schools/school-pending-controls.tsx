@@ -77,7 +77,6 @@ export function PendingSubmitButton({
     <button
       type="submit"
       onClick={() => setIsPending(true)}
-      disabled={isPending}
       aria-busy={isPending}
       className={className}
     >

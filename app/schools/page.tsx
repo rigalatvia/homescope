@@ -40,9 +40,7 @@ export default async function SchoolsPage({
   const selectedSchoolBySlug = selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined;
   const listMunicipality = municipality || (!query && !level ? selectedSchoolBySlug?.municipality : undefined);
   const schoolResults = await getSchools({ query, municipality: listMunicipality, level });
-  const selectedSchool =
-    selectedSchoolBySlug ??
-    getSchoolSelectionFromSearch(query, schoolResults);
+  const selectedSchool = selectedSchoolBySlug;
   const visibleSchoolResults = getVisibleSchoolResults(schoolResults, selectedSchool);
   const hiddenSchoolResultsCount = Math.max(0, schoolResults.length - visibleSchoolResults.length);
   const hasSchoolFilters = Boolean(query || listMunicipality || level);
@@ -73,7 +71,12 @@ export default async function SchoolsPage({
         </Link>
       </div>
 
-      <form className="mt-8 grid gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-soft md:grid-cols-[minmax(0,1fr)_180px_160px_120px]">
+      <form
+        action="/schools"
+        method="get"
+        autoComplete="off"
+        className="mt-8 grid gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-soft md:grid-cols-[minmax(0,1fr)_180px_160px_120px]"
+      >
         <label className="min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">School, board, program</span>
           <div className="mt-1 flex items-center gap-2 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
@@ -241,7 +244,7 @@ export default async function SchoolsPage({
                   )}
                 </div>
                 {selectedSchool.latitude != null && selectedSchool.longitude != null ? (
-                  <form className="flex items-end gap-2">
+                  <form action="/schools" method="get" autoComplete="off" className="flex items-end gap-2">
                   <input type="hidden" name="school" value={selectedSchool.slug} />
                   {query ? <input type="hidden" name="q" value={query} /> : null}
                   {listMunicipality ? <input type="hidden" name="municipality" value={listMunicipality} /> : null}
@@ -520,48 +523,6 @@ function buildSchoolSearchHref(
   params.set("radiusKm", String(options.radiusKm));
 
   return `/schools?${params.toString()}`;
-}
-
-function getSchoolSelectionFromSearch(query: string | undefined, schools: School[]): School | undefined {
-  if (schools.length === 0) return undefined;
-  if (!query) return schools.length === 1 ? schools[0] : undefined;
-
-  const normalizedQuery = normalizeSchoolSearchText(query);
-  if (!normalizedQuery) return schools.length === 1 ? schools[0] : undefined;
-
-  const exactMatches = schools.filter((school) => {
-    const normalizedName = normalizeSchoolSearchText(school.name);
-    const normalizedSlug = normalizeSchoolSearchText(school.slug);
-    const normalizedFullLabel = normalizeSchoolSearchText(`${school.name} ${school.municipality} ${school.board}`);
-
-    return (
-      normalizedName === normalizedQuery ||
-      normalizedSlug === normalizedQuery ||
-      normalizedFullLabel === normalizedQuery
-    );
-  });
-
-  if (exactMatches.length === 1) return exactMatches[0];
-
-  const nameMatches = schools.filter((school) => normalizeSchoolSearchText(school.name).includes(normalizedQuery));
-  if (nameMatches.length === 1) return nameMatches[0];
-
-  return schools.length === 1 ? schools[0] : undefined;
-}
-
-function normalizeSchoolSearchText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\bp s\b/g, "public school")
-    .replace(/\bps\b/g, "public school")
-    .replace(/\bs s\b/g, "secondary school")
-    .replace(/\bss\b/g, "secondary school")
-    .replace(/\bh s\b/g, "high school")
-    .replace(/\bhs\b/g, "high school")
-    .replace(/\s+/g, " ");
 }
 
 function titleCase(value: string): string {
