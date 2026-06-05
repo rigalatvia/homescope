@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { SITE_CONFIG } from "@/config/site";
 import { getAllPublicListings } from "@/lib/listings/service";
 
-const SITEMAP_BASE_URL = "https://homescopegta.ca";
 const STATIC_ROUTES = [
   "",
   "/listings",
+  "/schools",
   "/guides",
   "/guides/first-time-home-buyer-ontario",
   "/guides/documents-needed-buy-house-toronto",
@@ -18,13 +19,13 @@ const STATIC_ROUTES = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
-    url: `${SITEMAP_BASE_URL}${route}`,
+    url: `${SITE_CONFIG.baseUrl}${route}`,
     lastModified: new Date()
   }));
 
   const listings = await getAllPublicListings();
   const listingPages = listings.map((listing) => ({
-    url: `${SITEMAP_BASE_URL}/listings/${listing.listingUrlSlug}`,
+    url: `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`,
     lastModified: new Date(listing.updatedAt)
   }));
 
