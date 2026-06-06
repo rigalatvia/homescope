@@ -51,6 +51,7 @@ export async function GET(request: Request) {
         filtered?: number;
       };
       lastError?: string | null;
+      lastNote?: string | null;
     };
     const manualSync = (manualSyncSnap.data() ?? {}) as {
       lastRunAt?: string;
@@ -90,6 +91,7 @@ export async function GET(request: Request) {
         schedulerLastRunFetched: Number(scheduler.lastRunCounts?.fetched ?? 0),
         schedulerLastRunFiltered: Number(scheduler.lastRunCounts?.filtered ?? 0),
         schedulerLastError: scheduler.lastError ?? null,
+        schedulerLastNote: scheduler.lastNote ?? null,
         manualLastRunAt: manualSync.lastRunAt ?? null,
         manualLastRunMode: manualSync.lastRunMode ?? null,
         manualLastRunStatus: manualSync.lastRunStatus ?? null,

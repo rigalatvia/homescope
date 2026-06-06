@@ -74,6 +74,7 @@ interface ListingsStatsResponse {
     schedulerLastRunFetched: number;
     schedulerLastRunFiltered: number;
     schedulerLastError: string | null;
+    schedulerLastNote: string | null;
     manualLastRunAt: string | null;
     manualLastRunMode: string | null;
     manualLastRunStatus: string | null;
@@ -654,6 +655,7 @@ export function MlsSyncPanel() {
               <p>
                 Fetched/Filtered: {listingsStats.schedulerLastRunFetched}/{listingsStats.schedulerLastRunFiltered}
               </p>
+              {listingsStats.schedulerLastNote ? <p className="text-brand-700 sm:col-span-2">Last Note: {listingsStats.schedulerLastNote}</p> : null}
               {listingsStats.schedulerLastError ? <p className="text-red-700 sm:col-span-2">Last Error: {listingsStats.schedulerLastError}</p> : null}
             </div>
           </div>
