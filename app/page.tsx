@@ -4,7 +4,6 @@ import { ArrowRight, BriefcaseBusiness, ClipboardCheck, FolderKanban, KeyRound }
 import { FeaturedListingsPreview } from "@/components/home/featured-listings-preview";
 import { HeroSection } from "@/components/home/hero";
 import { ServiceAreasSection } from "@/components/home/service-areas";
-import { ValuePointsSection } from "@/components/home/value-points";
 import { getFeaturedListings } from "@/lib/listings/service";
 
 const FEATURED_GUIDES = [
@@ -47,7 +46,6 @@ export default async function HomePage() {
     <>
       <HeroSection />
       <ServiceAreasSection />
-      <ValuePointsSection />
       <FeaturedListingsPreview listings={featuredListings} />
       <section className="site-container py-8 sm:py-10">
         <div className="rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">
