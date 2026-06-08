@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function ServiceAreasSection() {
   return (
-    <section className="site-container py-14 sm:py-16">
+    <section className="site-container py-8 sm:py-10">
       <div className="rounded-3xl border border-brand-100 bg-white p-8 shadow-soft sm:p-10">
         <h2 className="font-heading text-3xl text-brand-900">Explore Key GTA Markets</h2>
         <p className="mt-3 max-w-3xl text-brand-700">
