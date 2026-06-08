@@ -50,6 +50,7 @@ export default async function HomePage() {
       <SchoolSearchAd />
       <ServiceAreasSection />
       <ValuePointsSection />
+      <FeaturedListingsPreview listings={featuredListings} />
       <section className="site-container py-8 sm:py-10">
         <div className="rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">
           <div className="max-w-3xl">
@@ -88,7 +89,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-      <FeaturedListingsPreview listings={featuredListings} />
       <section className="site-container py-8 sm:py-12">
         <div className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-10">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
