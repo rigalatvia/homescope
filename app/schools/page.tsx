@@ -17,9 +17,9 @@ const NEARBY_LISTINGS_DISPLAY_LIMIT = 24;
 const SCHOOL_RESULTS_DISPLAY_LIMIT = 75;
 
 export const metadata: Metadata = {
-  title: "School Search",
+  title: "GTA School Search, Rankings & Nearby Homes",
   description:
-    "Search GTA homes by school, board, municipality, and official school boundary references on HomeScope GTA.",
+    "Search schools across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Compare rankings, board details, and nearby homes on HomeScope GTA.",
   alternates: {
     canonical: `${SITE_CONFIG.baseUrl}/schools`
   }

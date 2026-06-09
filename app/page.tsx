@@ -34,9 +34,9 @@ const FEATURED_GUIDES = [
 ] as const;
 
 export const metadata: Metadata = {
-  title: "GTA Real Estate Listings",
+  title: "GTA Homes for Sale, Rentals & School Search",
   description:
-    "Search GTA real estate listings across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Browse homes for sale and lease with HomeScope GTA."
+    "Search GTA homes for sale and lease across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Browse listings, school rankings, and buyer resources."
 };
 
 export default async function HomePage() {

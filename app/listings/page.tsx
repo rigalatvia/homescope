@@ -22,6 +22,7 @@ export async function generateMetadata({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }): Promise<Metadata> {
+  const hasSearchFilters = hasActiveSearchParams(searchParams);
   const city = toString(searchParams.city);
   const transactionType = toString(searchParams.transactionType);
   const propertyType = toString(searchParams.propertyType);
@@ -45,7 +46,17 @@ export async function generateMetadata({
     description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
     alternates: {
       canonical: `${SITE_CONFIG.baseUrl}/listings`
-    }
+    },
+    robots: hasSearchFilters
+      ? {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true
+          }
+        }
+      : undefined
   };
 }
 
@@ -128,6 +139,14 @@ export default async function ListingsPage({
 function toString(value: string | string[] | undefined): string | undefined {
   if (typeof value === "string") return value;
   return undefined;
+}
+
+function hasActiveSearchParams(searchParams: { [key: string]: string | string[] | undefined }): boolean {
+  return Object.values(searchParams).some((value) => {
+    if (typeof value === "string") return value.trim().length > 0;
+    if (Array.isArray(value)) return value.some((item) => item.trim().length > 0);
+    return false;
+  });
 }
 
 function buildCurrentListingsUrl(searchParams: { [key: string]: string | string[] | undefined }): string {

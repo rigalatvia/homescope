@@ -1,5 +1,6 @@
 import { SITE_CONFIG } from "@/config/site";
 import Link from "next/link";
+import { getMarketByCity } from "@/lib/locations/markets";
 
 export function ServiceAreasSection() {
   return (
@@ -13,7 +14,7 @@ export function ServiceAreasSection() {
           {SITE_CONFIG.primaryMarkets.map((city) => (
             <li key={city}>
               <Link
-                href={`/listings?city=${encodeURIComponent(city)}`}
+                href={`/locations/${getMarketByCity(city)?.slug ?? encodeURIComponent(city.toLowerCase())}`}
                 className="block rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 px-4 py-4 text-center font-semibold text-brand-900 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
                 aria-label={`Browse ${city} listings`}
               >

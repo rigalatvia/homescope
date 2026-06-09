@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact/contact-form";
+import { SITE_CONFIG } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Contact",
-  description: "Contact HomeScope GTA and send a message through our streamlined contact form."
+  title: "Contact HomeScope GTA",
+  description:
+    "Contact HomeScope GTA for help with homes for sale, rentals, school-area searches, and private showing requests across the Greater Toronto Area.",
+  alternates: {
+    canonical: `${SITE_CONFIG.baseUrl}/contact`
+  }
 };
 
 export default function ContactPage() {

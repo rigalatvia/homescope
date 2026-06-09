@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   const title = `${listing.title} in ${listing.city}`;
-  const description = `${formatPrice(listing.price)} • ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType} in ${listing.city}. View photos, listing details, and request a private showing.`;
+  const description = `${formatPrice(listing.price)}, ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType} in ${listing.city}. View photos, listing details, and request a private showing.`;
   const url = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const primaryImage = listing.images[0];
 
@@ -57,6 +57,20 @@ export default async function ListingDetailPage({
   const returnUrl = parseReturnUrl(searchParams?.returnTo);
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
+  const listingJsonLd = buildListingJsonLd({
+    title: listing.title,
+    description: listing.description,
+    url: listingUrl,
+    image: listing.images[0],
+    price: listing.price,
+    address: listing.address,
+    city: listing.city,
+    postalCode: listing.postalCode,
+    propertyType: listing.propertyType,
+    transactionType: listing.transactionType,
+    bedrooms: listing.bedrooms,
+    bathrooms: listing.bathrooms
+  });
   const relatedGuideLinks =
     listing.transactionType === "lease"
       ? [
@@ -72,6 +86,7 @@ export default async function ListingDetailPage({
 
   return (
     <section className="site-container py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }} />
       <div className="mb-6">
         <BackToListingsButton returnUrl={returnUrl} />
       </div>
@@ -167,4 +182,85 @@ function parseReturnUrl(value: string | string[] | undefined): string | undefine
   if (trimmed.includes("\n") || trimmed.includes("\r")) return undefined;
 
   return trimmed;
+}
+
+function buildListingJsonLd(input: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string;
+  price: number;
+  address: string;
+  city: string;
+  postalCode?: string;
+  propertyType: string;
+  transactionType: string;
+  bedrooms: number;
+  bathrooms: number;
+}) {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_CONFIG.baseUrl
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Listings",
+          item: `${SITE_CONFIG.baseUrl}/listings`
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: input.title,
+          item: input.url
+        }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Residence",
+      name: input.title,
+      description: input.description,
+      url: input.url,
+      image: input.image,
+      numberOfRooms: input.bedrooms,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: input.address,
+        addressLocality: input.city,
+        addressRegion: "ON",
+        postalCode: input.postalCode,
+        addressCountry: "CA"
+      },
+      additionalProperty: [
+        {
+          "@type": "PropertyValue",
+          name: "Property type",
+          value: input.propertyType
+        },
+        {
+          "@type": "PropertyValue",
+          name: "Listing type",
+          value: input.transactionType === "lease" ? "For lease" : "For sale"
+        },
+        {
+          "@type": "PropertyValue",
+          name: "Bathrooms",
+          value: input.bathrooms
+        },
+        {
+          "@type": "PropertyValue",
+          name: "Price",
+          value: input.price
+        }
+      ]
+    }
+  ];
 }

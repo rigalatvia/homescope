@@ -10,6 +10,7 @@ import { ConsentBanner } from "@/components/analytics/consent-banner";
 import { MetaPixelScript } from "@/components/analytics/meta-pixel-script";
 import { SiteChatbot } from "@/components/chat/site-chatbot";
 import { AppProviders } from "@/components/providers/app-providers";
+import { SiteStructuredData } from "@/components/seo/site-structured-data";
 
 const DEFAULT_GA_MEASUREMENT_ID = "G-1G84P57QZY";
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID;
@@ -19,12 +20,15 @@ const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATIO
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.baseUrl),
   title: {
-    default: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
-    template: "%s | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
+    default: "HomeScope GTA | GTA Real Estate Listings, School Search & Buyer Guides",
+    template: "%s | HomeScope GTA"
   },
   description:
-    "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
+    "Search homes for sale and lease across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with school search, listing details, and Ontario buyer resources.",
   applicationName: "HomeScope GTA",
+  alternates: {
+    canonical: SITE_CONFIG.baseUrl
+  },
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-icon.png"
@@ -35,9 +39,9 @@ export const metadata: Metadata = {
       }
     : undefined,
   openGraph: {
-    title: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
+    title: "HomeScope GTA | GTA Real Estate Listings, School Search & Buyer Guides",
     description:
-      "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
+      "Search homes for sale and lease across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with school search, listing details, and Ontario buyer resources.",
     url: SITE_CONFIG.baseUrl,
     siteName: "HomeScope GTA",
     type: "website",
@@ -45,9 +49,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "HomeScope GTA - Real Estate Listings & Document Hub Ontario",
+    title: "HomeScope GTA | GTA Real Estate Listings, School Search & Buyer Guides",
     description:
-      "Browse real estate listings and manage all your home buying and leasing documents in one place across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, King, and surrounding Ontario areas.",
+      "Search homes for sale and lease across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King with school search, listing details, and Ontario buyer resources.",
     images: ["/og-image.png"]
   }
 };
@@ -96,6 +100,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <PageViewTracker />
           </Suspense>
           <SiteHeader />
+          <SiteStructuredData />
           <main>{children}</main>
           <SiteFooter />
           <ConsentBanner />

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_CONFIG } from "@/config/site";
+import { PRIMARY_MARKET_PAGES } from "@/lib/locations/markets";
 import { getAllPublicListings } from "@/lib/listings/service";
 
 const STATIC_ROUTES = [
@@ -20,14 +21,25 @@ const STATIC_ROUTES = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
     url: `${SITE_CONFIG.baseUrl}${route}`,
-    lastModified: new Date()
+    lastModified: new Date(),
+    changeFrequency: route === "" || route === "/listings" || route === "/schools" ? "daily" : "weekly",
+    priority: route === "" ? 1 : route === "/listings" || route === "/schools" ? 0.9 : 0.7
+  }));
+
+  const locationPages: MetadataRoute.Sitemap = PRIMARY_MARKET_PAGES.map((market) => ({
+    url: `${SITE_CONFIG.baseUrl}/locations/${market.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "daily",
+    priority: 0.85
   }));
 
   const listings = await getAllPublicListings();
   const listingPages = listings.map((listing) => ({
     url: `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`,
-    lastModified: new Date(listing.updatedAt)
+    lastModified: new Date(listing.updatedAt),
+    changeFrequency: "daily" as const,
+    priority: 0.65
   }));
 
-  return [...staticPages, ...listingPages];
+  return [...staticPages, ...locationPages, ...listingPages];
 }
