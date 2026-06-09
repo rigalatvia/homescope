@@ -42,8 +42,8 @@ const GUIDE_CARDS = [
     href: "/guides/rental-application-ontario",
     category: "Rental Resource",
     icon: FileArchive,
-    title: "Rental Application Ontario - Download Form 410",
-    description: "Download the Ontario rental application form and learn which leasing documents to prepare in advance."
+    title: "Ontario Rental Application Form 410 PDF",
+    description: "Download Form 410 and learn which tenant application details and rental documents to prepare in advance."
   },
   {
     href: "/guides/buying",
@@ -63,8 +63,8 @@ const GUIDE_CARDS = [
     href: "/guides/lease-documents",
     category: "Lease Documents",
     icon: Search,
-    title: "Lease Documents for Ontario Rentals",
-    description: "See the core documents renters often gather before applying for a lease in Ontario."
+    title: "Documents Needed to Rent in Canada",
+    description: "See the core rental documents renters often gather before applying in Canada and Ontario."
   }
 ] as const;
 

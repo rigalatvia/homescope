@@ -31,9 +31,9 @@ const LEASE_DOCS = [
 ];
 
 export const metadata: Metadata = {
-  title: "Ontario Rental Documents Checklist",
+  title: "Documents Needed to Rent in Canada & Ontario Checklist",
   description:
-    "Ontario rental document checklist covering proof of income, credit report, employment letter, references, and what to keep after the lease is signed.",
+    "See documents needed to rent in Canada and Ontario, including proof of income, credit report, employment letter, references, ID, and Form 410.",
   alternates: {
     canonical: "/guides/lease-documents"
   }
@@ -43,9 +43,14 @@ export default function LeaseDocumentsGuidePage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/lease-documents`;
   const faqItems = [
     {
+      question: "What documents do you need to rent in Canada?",
+      answer:
+        "Renters are commonly asked for photo ID, proof of income, employment confirmation, references, and sometimes credit information or supporting financial records. Exact requirements vary by landlord, province, and property."
+    },
+    {
       question: "What rental documents are most commonly requested in Ontario?",
       answer:
-        "Landlords commonly ask for proof of income, employment confirmation, references, photo ID, and sometimes credit information or supporting financial records."
+        "Ontario landlords commonly ask for proof of income, employment confirmation, references, photo ID, and sometimes credit information or supporting financial records."
     },
     {
       question: "Should I bring my documents before I decide on a rental?",
@@ -66,12 +71,12 @@ export default function LeaseDocumentsGuidePage() {
 
   return (
     <GuidePageLayout
-      title="Lease Documents for Ontario Rentals"
-      intro="Preparing these documents in advance can help renters move faster when booking showings and submitting applications, especially when a strong lease opportunity receives immediate attention."
+      title="Documents Needed to Rent in Canada and Ontario"
+      intro="Wondering what documents you need to rent in Canada or Ontario? This checklist covers the rental files renters commonly prepare before showings, tenant applications, and Form 410 submissions."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
-        { label: "Lease Documents for Ontario Rentals" }
+        { label: "Documents Needed to Rent in Canada and Ontario" }
       ]}
       relatedLinks={[
         { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
@@ -84,37 +89,37 @@ export default function LeaseDocumentsGuidePage() {
         },
         {
           href: "/guides/rental-application-ontario",
-          label: "Rental Application Ontario",
-          description: "Download Form 410 and review the application fields in advance."
+          label: "Ontario Rental Application Form 410 PDF",
+          description: "Download Form 410 and review the tenant application fields in advance."
         }
       ]}
       articleSchema={{
-        title: "Lease Documents for Ontario Rentals",
+        title: "Documents Needed to Rent in Canada and Ontario",
         description: metadata.description as string,
         url
       }}
     >
       <GuideQuickChecklist
         eyebrow="Rental File Checklist"
-        title="The Core Documents Most Renters Should Prepare"
-        description="This page is intentionally document-focused. Use it to understand which rental files matter, why they matter, and what to keep after a lease is approved."
+        title="Documents Needed to Rent in Canada"
+        description="This page is intentionally document-focused. Use it to understand which rental files matter, why landlords ask for them, and what to keep after a lease is approved."
         items={LEASE_DOCS.map((item) => item.title)}
         icon={BadgeCheck}
       />
 
       <LeaseApplicationDownloadCard
         title="Download Ontario Rental Application Form 410"
-        description="Pair your supporting documents with a ready-to-review rental application so your leasing package is easier to complete when a suitable property appears."
+        description="Pair your supporting documents with a ready-to-review tenant application form so your leasing package is easier to complete when a suitable property appears."
         href="/forms/410-rental-application-ontario.pdf"
-        buttonLabel="Download Rental Application"
+        buttonLabel="Download Form 410"
       />
 
       <div className="mt-10 grid gap-5">
         <GuideSectionCard
           eyebrow="What This Page Covers"
-          title="This guide is your rental document checklist"
+          title="This guide is your rental document checklist for Canada and Ontario"
           icon={ClipboardCheck}
-          description="Unlike the Ontario Leasing Guide, which explains the leasing process, this page focuses narrowly on the supporting documents renters often need before and after they apply."
+          description="Unlike the Ontario Leasing Guide, which explains the leasing process, this page focuses narrowly on the supporting documents renters often need before and after they apply in Canada and Ontario."
           bullets={[
             "What each file helps prove",
             "Why landlords may ask for it",
@@ -125,7 +130,7 @@ export default function LeaseDocumentsGuidePage() {
 
         <GuideSectionCard
           eyebrow="Core Document 1"
-          title="Proof of income"
+          title="Proof of income for a rental application"
           icon={BriefcaseBusiness}
           description={LEASE_DOCS[0].description}
           bullets={[
@@ -137,7 +142,7 @@ export default function LeaseDocumentsGuidePage() {
 
         <GuideSectionCard
           eyebrow="Core Document 2"
-          title="Credit report"
+          title="Credit report or credit information"
           icon={ShieldCheck}
           description={LEASE_DOCS[1].description}
           bullets={[
@@ -149,7 +154,7 @@ export default function LeaseDocumentsGuidePage() {
 
         <GuideSectionCard
           eyebrow="Core Document 3"
-          title="Employment letter"
+          title="Employment letter for renting"
           icon={FileSignature}
           description={LEASE_DOCS[2].description}
           bullets={[
@@ -167,7 +172,7 @@ export default function LeaseDocumentsGuidePage() {
 
         <GuideSectionCard
           eyebrow="Core Document 4"
-          title="References"
+          title="References for a tenant application"
           icon={Users}
           description={LEASE_DOCS[3].description}
           bullets={[
@@ -195,7 +200,7 @@ export default function LeaseDocumentsGuidePage() {
 
       <CTASection
         title="Prepare your rental package before the right listing appears"
-        description="Download the Ontario rental application, organize your supporting documents, and browse GTA lease listings with a cleaner process and less last-minute stress."
+        description="Download the Ontario rental application, organize the documents needed to rent, and browse GTA lease listings with a cleaner process and less last-minute stress."
         links={[
           { href: "/listings", label: "Browse Lease Listings" },
           { href: "/guides/rental-application-ontario", label: "Open Rental Application Guide", variant: "secondary" }

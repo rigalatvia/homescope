@@ -91,12 +91,12 @@ export default function LeasingGuidePage() {
         { href: "/listings", label: "Listings", description: "Search homes and condos for lease across the GTA." },
         {
           href: "/guides/lease-documents",
-          label: "Lease Documents for Ontario Rentals",
-          description: "Prepare the supporting paperwork that often matters during applications."
+          label: "Documents Needed to Rent in Canada",
+          description: "Prepare the supporting paperwork that often matters during rental applications."
         },
         {
           href: "/guides/rental-application-ontario",
-          label: "Rental Application Ontario",
+          label: "Ontario Rental Application Form 410 PDF",
           description: "Download and review Form 410 before serious showings."
         }
       ]}
@@ -276,7 +276,7 @@ export default function LeasingGuidePage() {
               href="/guides/lease-documents"
               className="inline-flex rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
             >
-              Lease Document Checklist
+              Documents Needed to Rent
             </Link>
             <Link
               href="/guides/rental-application-ontario"

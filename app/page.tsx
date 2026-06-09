@@ -27,8 +27,8 @@ const FEATURED_GUIDES = [
   },
   {
     href: "/guides/lease-documents",
-    title: "Lease Documents for Ontario Rentals",
-    description: "The supporting documents renters often need before they apply.",
+    title: "Documents Needed to Rent in Canada",
+    description: "The supporting documents renters often need before applying in Canada and Ontario.",
     icon: FolderKanban
   }
 ] as const;

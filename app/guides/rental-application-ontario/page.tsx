@@ -31,6 +31,16 @@ const faqItems = [
       "Form 410 is a residential rental application form commonly used in Ontario to collect applicant information, rental history, employment details, references, and consent signatures."
   },
   {
+    question: "Is Form 410 a tenant application form for Ontario rentals?",
+    answer:
+      "Yes. Renters commonly use Form 410 as an Ontario tenant application form when preparing personal details, rental history, employment information, references, and consent sections before applying."
+  },
+  {
+    question: "What documents should I prepare with Ontario Form 410?",
+    answer:
+      "Prepare photo ID, proof of income, employment confirmation, credit information where requested, landlord references, and personal references so the application package is easier to submit."
+  },
+  {
     question: "Should I prepare my rental application before booking a showing?",
     answer:
       "Preparing in advance can help you move faster if you find a rental you want. It does not guarantee approval, but it can make your application package easier to submit quickly."
@@ -39,10 +49,10 @@ const faqItems = [
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Rental Application Ontario - Download Residential Form 410 | HomeScope GTA"
+    absolute: "Ontario Rental Application Form 410 PDF | Tenant Application"
   },
   description:
-    "Download the Ontario Residential Rental Application Form 410 and learn what documents renters may need when applying to lease a property in Ontario."
+    "Download and review Ontario Rental Application Form 410. Learn what tenant application details and documents renters may need before applying in Ontario."
 };
 
 export default function RentalApplicationOntarioPage() {
@@ -57,12 +67,12 @@ export default function RentalApplicationOntarioPage() {
 
   return (
     <GuidePageLayout
-      title="Rental Application Ontario - Download Residential Form 410"
-      intro="Renters in Ontario often prepare their application package before they start viewing homes so they can move quickly when the right lease opportunity appears. This page gives you a helpful overview and a direct download for the residential rental application resource."
+      title="Ontario Rental Application Form 410 PDF"
+      intro="Looking for the Ontario rental application or tenant application form? Review Form 410 before serious showings so you understand the fields, signatures, and supporting documents landlords may request."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
-        { label: "Rental Application Ontario - Download Residential Form 410" }
+        { label: "Ontario Rental Application Form 410 PDF" }
       ]}
       relatedLinks={[
         { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
@@ -75,8 +85,8 @@ export default function RentalApplicationOntarioPage() {
         },
         {
           href: "/guides/lease-documents",
-          label: "Lease Documents for Ontario Rentals",
-          description: "Review the supporting documents renters commonly prepare."
+          label: "Documents Needed to Rent in Canada",
+          description: "Review the supporting documents renters commonly prepare before applying."
         },
         {
           href: "/guides/organize-real-estate-documents-canada",
@@ -85,7 +95,7 @@ export default function RentalApplicationOntarioPage() {
         }
       ]}
       articleSchema={{
-        title: "Rental Application Ontario - Download Residential Form 410",
+        title: "Ontario Rental Application Form 410 PDF",
         description: metadata.description as string,
         url
       }}
@@ -99,25 +109,25 @@ export default function RentalApplicationOntarioPage() {
       />
 
       <LeaseApplicationDownloadCard
-        title="Ontario Residential Rental Application Form 410"
-        description="Download the Ontario rental application form so you can review the fields, prepare your supporting documents, and keep a ready-to-submit leasing package."
+        title="Download Ontario Rental Application Form 410 PDF"
+        description="Download the Ontario rental application form so you can review tenant details, references, employment fields, signatures, and supporting documents before you apply."
         href="/forms/410-rental-application-ontario.pdf"
-        buttonLabel="Download Rental Application"
+        buttonLabel="Download Form 410 PDF"
       />
 
       <div className="mt-10 grid gap-5">
         <GuideSectionCard
           eyebrow="Overview"
-          title="What is this form?"
+          title="What is Ontario Rental Application Form 410?"
           icon={FileSignature}
-          description="This PDF is a residential rental application resource commonly used in Ontario leasing situations. It gives renters a practical way to review the details a landlord or listing representative may request during the application process."
+          description="Form 410 is a residential rental application resource commonly used in Ontario leasing situations. Renters use it to review the personal details, rental history, employment information, references, and consent sections a landlord or listing representative may request."
         />
 
         <GuideSectionCard
           eyebrow="Form Fields"
-          title="What information is typically included?"
+          title="What information is on a tenant application form in Ontario?"
           icon={FolderKanban}
-          description="Based on the structure of the form, applicants are commonly asked to prepare a broad picture of their identity, rental history, work situation, and financial background."
+          description="A tenant application form in Ontario commonly asks applicants to prepare a clear picture of identity, rental history, work situation, references, and financial background."
           bullets={[
             "Applicant names and personal details",
             "Current and previous addresses",
@@ -151,9 +161,9 @@ export default function RentalApplicationOntarioPage() {
 
         <GuideSectionCard
           eyebrow="Support File"
-          title="Helpful documents to prepare for leasing"
+          title="Documents to prepare with Form 410"
           icon={BriefcaseBusiness}
-          description="The form is only one part of a strong rental application package. Supporting documents often matter just as much."
+          description="Form 410 is only one part of a strong rental application package. Supporting documents often matter just as much when a landlord reviews your file."
           bullets={[
             "Photo identification",
             "Employment letter or proof of income",
