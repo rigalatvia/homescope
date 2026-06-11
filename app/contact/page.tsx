@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { ContactForm } from "@/components/contact/contact-form";
-import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Contact HomeScope GTA",
   description:
     "Contact HomeScope GTA for help with homes for sale, rentals, school-area searches, and private showing requests across the Greater Toronto Area.",
-  alternates: {
-    canonical: `${SITE_CONFIG.baseUrl}/contact`
-  }
-};
+  path: "/contact"
+});
 
 export default function ContactPage() {
   return (

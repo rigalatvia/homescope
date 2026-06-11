@@ -18,6 +18,7 @@ import {
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const faqItems = [
   {
@@ -47,13 +48,13 @@ const faqItems = [
   }
 ];
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "Ontario Rental Application Form 410 PDF | Tenant Application"
-  },
+export const metadata: Metadata = buildPageMetadata({
+  title: "Ontario Rental Application Form 410 PDF | Tenant Application",
   description:
-    "Download and review Ontario Rental Application Form 410. Learn what tenant application details and documents renters may need before applying in Ontario."
-};
+    "Download and review Ontario Rental Application Form 410. Learn what tenant application details and documents renters may need before applying in Ontario.",
+  path: "/guides/rental-application-ontario",
+  type: "article"
+});
 
 export default function RentalApplicationOntarioPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/rental-application-ontario`;
@@ -99,6 +100,7 @@ export default function RentalApplicationOntarioPage() {
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Leasing Prep"

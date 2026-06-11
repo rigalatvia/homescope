@@ -22,6 +22,7 @@ import {
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const LEASING_STEPS = [
   { title: "Prepare Your Documents", description: "Get your rental paperwork together early so you are ready when a property matches your budget and timing." },
@@ -34,14 +35,13 @@ const LEASING_STEPS = [
   { title: "Move In", description: "Confirm move-in logistics and complete your final walkthrough." }
 ];
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Ontario Leasing Guide 2026 - Rental Applications, Documents & Tenant Tips | HomeScope GTA",
   description:
     "Learn how Ontario rental applications work, what documents landlords request, and how to improve approval chances before you lease a home. Updated 2026.",
-  alternates: {
-    canonical: "/guides/leasing"
-  }
-};
+  path: "/guides/leasing",
+  type: "article"
+});
 
 const TABLE_OF_CONTENTS = [
   { href: "#leasing-overview", label: "Ontario rental application form explained" },

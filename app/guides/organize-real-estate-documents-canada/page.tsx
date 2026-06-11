@@ -9,6 +9,7 @@ import {
 } from "@/components/guides/guide-content-blocks";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const faqItems = [
   {
@@ -28,13 +29,13 @@ const faqItems = [
   }
 ];
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "How to Organize Real Estate Documents Canada | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
-  },
+export const metadata: Metadata = buildPageMetadata({
+  title: "How to Organize Real Estate Documents Canada | HomeScope GTA - Real Estate Listings & Document Hub Ontario",
   description:
-    "Learn how to organize real estate documents in Canada using a simple system for buyers, renters, and homeowners."
-};
+    "Learn how to organize real estate documents in Canada using a simple system for buyers, renters, and homeowners.",
+  path: "/guides/organize-real-estate-documents-canada",
+  type: "article"
+});
 
 export default function OrganizeRealEstateDocumentsCanadaPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/organize-real-estate-documents-canada`;
@@ -80,6 +81,7 @@ export default function OrganizeRealEstateDocumentsCanadaPage() {
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Organization System"

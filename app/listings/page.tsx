@@ -47,6 +47,20 @@ export async function generateMetadata({
     alternates: {
       canonical: `${SITE_CONFIG.baseUrl}/listings`
     },
+    openGraph: {
+      title,
+      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+      url: `${SITE_CONFIG.baseUrl}/listings`,
+      siteName: SITE_CONFIG.name,
+      type: "website",
+      images: ["/og-image.png"]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+      images: ["/og-image.png"]
+    },
     robots: hasSearchFilters
       ? {
           index: false,

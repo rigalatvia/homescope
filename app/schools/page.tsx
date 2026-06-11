@@ -16,14 +16,52 @@ export const revalidate = 3600;
 const NEARBY_LISTINGS_DISPLAY_LIMIT = 24;
 const SCHOOL_RESULTS_DISPLAY_LIMIT = 75;
 
-export const metadata: Metadata = {
-  title: "GTA School Search, Rankings & Nearby Homes",
-  description:
-    "Search schools across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Compare rankings, board details, and nearby homes on HomeScope GTA.",
-  alternates: {
-    canonical: `${SITE_CONFIG.baseUrl}/schools`
-  }
-};
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}): Promise<Metadata> {
+  const hasSchoolFilters = Object.values(searchParams).some((value) => {
+    if (typeof value === "string") return value.trim().length > 0;
+    if (Array.isArray(value)) return value.some((item) => item.trim().length > 0);
+    return false;
+  });
+
+  return {
+    title: "GTA School Search, Rankings & Nearby Homes",
+    description:
+      "Search schools across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Compare rankings, board details, and nearby homes on HomeScope GTA.",
+    alternates: {
+      canonical: `${SITE_CONFIG.baseUrl}/schools`
+    },
+    openGraph: {
+      title: "GTA School Search, Rankings & Nearby Homes",
+      description:
+        "Search schools across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Compare rankings, board details, and nearby homes on HomeScope GTA.",
+      url: `${SITE_CONFIG.baseUrl}/schools`,
+      siteName: SITE_CONFIG.name,
+      type: "website",
+      images: ["/og-image.png"]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "GTA School Search, Rankings & Nearby Homes",
+      description:
+        "Search schools across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Compare rankings, board details, and nearby homes on HomeScope GTA.",
+      images: ["/og-image.png"]
+    },
+    robots: hasSchoolFilters
+      ? {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true
+          }
+        }
+      : undefined
+  };
+}
 
 export default async function SchoolsPage({
   searchParams
@@ -488,13 +526,9 @@ function buildSchoolSearchHref(
   }
 ): string {
   const params = new URLSearchParams();
-  if (options.query) params.set("q", options.query);
-  if (options.municipality) params.set("municipality", options.municipality);
-  if (options.level) params.set("level", options.level);
-  params.set("school", school.slug);
   params.set("radiusKm", String(options.radiusKm));
 
-  return `/schools?${params.toString()}`;
+  return `/schools/${school.slug}?${params.toString()}`;
 }
 
 function titleCase(value: string): string {

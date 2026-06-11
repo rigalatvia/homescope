@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_CONFIG } from "@/config/site";
 import { PRIMARY_MARKET_PAGES } from "@/lib/locations/markets";
 import { getAllPublicListings } from "@/lib/listings/service";
+import { getSchools } from "@/lib/schools/service";
 
 const STATIC_ROUTES = [
   "",
@@ -41,5 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65
   }));
 
-  return [...staticPages, ...locationPages, ...listingPages];
+  const schools = await getSchools();
+  const schoolPages: MetadataRoute.Sitemap = schools.map((school) => ({
+    url: `${SITE_CONFIG.baseUrl}/schools/${school.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8
+  }));
+
+  return [...staticPages, ...locationPages, ...schoolPages, ...listingPages];
 }

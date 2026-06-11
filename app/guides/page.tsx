@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/guides/breadcrumbs";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const GUIDE_CARDS = [
   {
@@ -103,13 +104,12 @@ const PRIORITY_GUIDE_HREFS = new Set([
   "/guides/lease-documents"
 ]);
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "Ontario Real Estate Guides | HomeScope GTA - Real Estate Listings & Document Hub Ontario"
-  },
+export const metadata: Metadata = buildPageMetadata({
+  title: "Ontario Real Estate Guides | HomeScope GTA - Real Estate Listings & Document Hub Ontario",
   description:
-    "Explore Ontario real estate guides for first-time buyers, Toronto purchase documents, rental applications, and organizing property paperwork."
-};
+    "Explore Ontario real estate guides for first-time buyers, Toronto purchase documents, rental applications, and organizing property paperwork.",
+  path: "/guides"
+});
 
 export default function GuidesPage() {
   const featuredGuide = GUIDE_CARDS[0];

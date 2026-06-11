@@ -19,6 +19,7 @@ import {
 } from "@/components/guides/guide-content-blocks";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const faqItems = [
   {
@@ -38,16 +39,13 @@ const faqItems = [
   }
 ];
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "Documents Needed to Buy a House in Toronto | HomeScope GTA"
-  },
+export const metadata: Metadata = buildPageMetadata({
+  title: "Documents Needed to Buy a House in Toronto | HomeScope GTA",
   description:
     "A clear Toronto buyer document checklist covering ID, income records, mortgage paperwork, property documents, legal files, and closing records.",
-  alternates: {
-    canonical: "/guides/documents-needed-buy-house-toronto"
-  }
-};
+  path: "/guides/documents-needed-buy-house-toronto",
+  type: "article"
+});
 
 export default function DocumentsNeededToBuyHouseTorontoPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/documents-needed-buy-house-toronto`;
@@ -93,6 +91,7 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Buyer Document Checklist"

@@ -10,6 +10,7 @@ import {
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { LeaseApplicationDownloadCard } from "@/components/guides/lease-application-download-card";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const LEASE_DOCS = [
   {
@@ -30,14 +31,13 @@ const LEASE_DOCS = [
   }
 ];
 
-export const metadata: Metadata = {
-  title: "Documents Needed to Rent in Canada & Ontario Checklist",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Documents Needed to Rent in Canada & Ontario Checklist | HomeScope GTA",
   description:
     "See documents needed to rent in Canada and Ontario, including proof of income, credit report, employment letter, references, ID, and Form 410.",
-  alternates: {
-    canonical: "/guides/lease-documents"
-  }
-};
+  path: "/guides/lease-documents",
+  type: "article"
+});
 
 export default function LeaseDocumentsGuidePage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/lease-documents`;
@@ -98,6 +98,7 @@ export default function LeaseDocumentsGuidePage() {
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Rental File Checklist"

@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: "Listing Not Found" };
   }
 
-  const title = `${listing.title} in ${listing.city}`;
-  const description = `${formatPrice(listing.price)}, ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType} in ${listing.city}. View photos, listing details, and request a private showing.`;
+  const title = `${formatListingAddress(listing.address, listing.city)} - ${formatPrice(listing.price)} | ${listing.bedrooms} Bed ${listing.propertyType} | HomeScope GTA`;
+  const description = `${formatListingAddress(listing.address, listing.city, listing.postalCode)}. ${formatPrice(listing.price)}, ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType}. View photos, listing details, and request a private showing.`;
   const url = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const primaryImage = listing.images[0];
 
@@ -261,6 +261,24 @@ function buildListingJsonLd(input: {
           value: input.price
         }
       ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: input.title,
+      description: input.description,
+      url: input.url,
+      image: input.image,
+      category: input.propertyType,
+      offers: {
+        "@type": "Offer",
+        price: input.price,
+        priceCurrency: "CAD",
+        availability: "https://schema.org/InStock",
+        url: input.url,
+        businessFunction:
+          input.transactionType === "lease" ? "https://schema.org/LeaseOut" : "https://schema.org/Sell"
+      }
     }
   ];
 }

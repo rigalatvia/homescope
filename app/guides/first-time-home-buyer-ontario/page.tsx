@@ -18,6 +18,7 @@ import { CTASection } from "@/components/guides/cta-section";
 import { FAQSection } from "@/components/guides/faq-section";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const faqItems = [
   {
@@ -53,16 +54,13 @@ const quickRoadmap = [
   "Prepare for closing and possession"
 ];
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "First-Time Home Buyer Checklist Ontario | HomeScope GTA"
-  },
+export const metadata: Metadata = buildPageMetadata({
+  title: "First-Time Home Buyer Checklist Ontario | HomeScope GTA",
   description:
     "A simple first-time home buyer checklist for Ontario. Learn how to prepare your budget, mortgage pre-approval, showings, offers, closing steps, and documents before buying a home.",
-  alternates: {
-    canonical: "/guides/first-time-home-buyer-ontario"
-  }
-};
+  path: "/guides/first-time-home-buyer-ontario",
+  type: "article"
+});
 
 export default function FirstTimeHomeBuyerOntarioPage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/first-time-home-buyer-ontario`;

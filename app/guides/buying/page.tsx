@@ -9,6 +9,7 @@ import {
 } from "@/components/guides/guide-content-blocks";
 import { GuidePageLayout } from "@/components/guides/guide-page-layout";
 import { SITE_CONFIG } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const BUYING_STEPS = [
   { title: "Get Pre-Approved", description: "Confirm your budget early so your search stays focused and realistic." },
@@ -21,10 +22,13 @@ const BUYING_STEPS = [
   { title: "Closing", description: "Complete legal paperwork, transfer funds, and take possession of your new home." }
 ];
 
-export const metadata: Metadata = {
-  title: "Ontario Home Buying Guide",
-  description: "Learn the steps to buy a home in Ontario, from mortgage pre-approval and showings to offers, inspections, and closing."
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Ontario Home Buying Guide | HomeScope GTA",
+  description:
+    "Learn the steps to buy a home in Ontario, from mortgage pre-approval and showings to offers, inspections, and closing.",
+  path: "/guides/buying",
+  type: "article"
+});
 
 export default function BuyingGuidePage() {
   const url = `${SITE_CONFIG.baseUrl}/guides/buying`;
@@ -75,6 +79,7 @@ export default function BuyingGuidePage() {
         description: metadata.description as string,
         url
       }}
+      faqItems={faqItems}
     >
       <GuideQuickChecklist
         eyebrow="Buyer Journey"
