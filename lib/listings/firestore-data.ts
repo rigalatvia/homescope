@@ -12,6 +12,7 @@ import {
   getListingStatsByMunicipality as getMLSListingStatsByMunicipality,
   getMonthlyMarketStatsByMunicipality as getMLSMonthlyMarketStatsByMunicipality,
   getListingsNearCoordinate as getMLSListingsNearCoordinate,
+  getPublicListingByMlsNumber as getMLSListingByMlsNumber,
   getPublicListingBySlug as getMLSListingBySlug,
   getPublicListings as getPublicMLSListings
 } from "@/lib/mls/sync/publicQueries";
@@ -90,6 +91,13 @@ function toIndexedListingSort(sort: ListingFilters["sort"]): "price_asc" | "pric
 
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {
   const listing = await getMLSListingBySlug(slug);
+  if (!listing) return null;
+  const mapped = mapMLSListingToUIListing(listing);
+  return mapped.isPubliclyAdvertisable ? mapped : null;
+}
+
+export async function getPublicListingByMlsNumber(mlsNumber: string): Promise<Listing | null> {
+  const listing = await getMLSListingByMlsNumber(mlsNumber);
   if (!listing) return null;
   const mapped = mapMLSListingToUIListing(listing);
   return mapped.isPubliclyAdvertisable ? mapped : null;

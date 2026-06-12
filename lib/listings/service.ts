@@ -8,6 +8,7 @@ import {
   getListingStatsByMunicipality as getListingStatsByMunicipalityFromFirestore,
   getMonthlyMarketStatsByMunicipality as getMonthlyMarketStatsByMunicipalityFromFirestore,
   getListingsNearCoordinate as getListingsNearCoordinateFromFirestore,
+  getPublicListingByMlsNumber as getPublicListingByMlsNumberFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
@@ -23,6 +24,22 @@ export async function getPublicListings(
 ): Promise<PaginatedListings> {
   const includeAllItems = options?.includeAllItems === true;
   const school = filters.schoolSlug ? await getSchoolForListingFilter(filters.schoolSlug) : undefined;
+
+  if (filters.mlsNumber) {
+    const listing = await getPublicListingByMlsNumberFromFirestore(filters.mlsNumber);
+    const filtered = listing ? applyListingFilters([listing], filters, { school }) : [];
+    const sorted = sortListingsForBrowsing(addSchoolDistances(filtered, school), filters.sort, school);
+    const paginated = paginateListings(sorted, filters);
+
+    if (!includeAllItems) {
+      return {
+        ...paginated,
+        allItems: undefined
+      };
+    }
+
+    return paginated;
+  }
 
   if (school?.latitude != null && school.longitude != null && filters.schoolSlug) {
     const listings = await getNearbyListingCandidates({
@@ -257,6 +274,7 @@ function normalizePropertyType(value: string): string {
 
 function canUseIndexedSearch(filters: ListingFilters): boolean {
   if (filters.addressContains) return false;
+  if (filters.mlsNumber) return false;
   if (filters.propertyType) return false;
   if (filters.bedrooms != null) return false;
   if (filters.bathrooms != null) return false;

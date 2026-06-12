@@ -81,6 +81,24 @@ export async function getPublicListingBySlug(slug: string): Promise<MLSListingFi
   return sanitizePublicListing(listing);
 }
 
+export async function getPublicListingByMlsNumber(mlsNumber: string): Promise<MLSListingFirestoreDocument | null> {
+  const normalizedMlsNumber = mlsNumber.trim().toUpperCase();
+  if (!normalizedMlsNumber) return null;
+
+  const firestore = getFirebaseAdminFirestore();
+  const snapshot = await firestore
+    .collection(LISTINGS_COLLECTION)
+    .where("mlsNumber", "==", normalizedMlsNumber)
+    .where("isVisible", "==", true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const listing = snapshot.docs[0]!.data() as MLSListingFirestoreDocument;
+  if (!listing.municipality || !allowedMunicipalities.includes(listing.municipality)) return null;
+  return sanitizePublicListing(listing);
+}
+
 export async function getFeaturedListings(limit = 6): Promise<MLSListingFirestoreDocument[]> {
   const listings = await getPublicListings(limit * 3);
   return listings
