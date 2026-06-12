@@ -67,7 +67,7 @@ export async function saveSearchRecord(db: Firestore, input: SaveSearchInput): P
     label,
     path: input.path,
     queryString: input.queryString,
-    filters: input.filters,
+    filters: sanitizeListingFilters(input.filters),
     resultsTotal: input.resultsTotal,
     alertsEnabled: input.alertsEnabled ?? true,
     alertFrequency: input.alertFrequency || "daily",
@@ -78,6 +78,20 @@ export async function saveSearchRecord(db: Firestore, input: SaveSearchInput): P
   });
 
   return docRef.id;
+}
+
+function sanitizeListingFilters(filters: ListingFilters): Record<string, string | number> {
+  return Object.entries(filters).reduce<Record<string, string | number>>((cleanFilters, [key, value]) => {
+    if (typeof value === "string" && value.trim()) {
+      cleanFilters[key] = value;
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      cleanFilters[key] = value;
+    }
+
+    return cleanFilters;
+  }, {});
 }
 
 export async function updateSavedSearchAlerts(
