@@ -59,6 +59,9 @@ export function SiteHeader() {
             <Link href="/schools" className="transition hover:text-brand-900">
               Schools
             </Link>
+            <Link href="/about" className="transition hover:text-brand-900">
+              About
+            </Link>
             <div className="relative">
               <button
                 type="button"
@@ -126,6 +129,9 @@ export function SiteHeader() {
           </Link>
           <Link href="/schools" className="transition hover:text-brand-900">
             Schools
+          </Link>
+          <Link href="/about" className="transition hover:text-brand-900">
+            About
           </Link>
           <details ref={mobileGuidesRef} className="group relative">
             <summary className="cursor-pointer list-none transition hover:text-brand-900">Guides</summary>

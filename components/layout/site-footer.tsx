@@ -31,6 +31,9 @@ export function SiteFooter() {
               <Link href="/guides" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 Guides
               </Link>
+              <Link href="/about" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
+                About
+              </Link>
               <Link href="/contact" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 Contact Us
               </Link>

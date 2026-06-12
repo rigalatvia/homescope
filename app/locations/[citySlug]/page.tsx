@@ -6,6 +6,7 @@ import { ListingCard } from "@/components/listings/listing-card";
 import { SITE_CONFIG } from "@/config/site";
 import { PRIMARY_MARKET_PAGES, getMarketBySlug } from "@/lib/locations/markets";
 import { getListingsByMunicipality } from "@/lib/listings/service";
+import type { Listing } from "@/types/listing";
 
 export const revalidate = 60;
 
@@ -45,9 +46,10 @@ export default async function LocationPage({ params }: { params: { citySlug: str
   const market = getMarketBySlug(params.citySlug);
   if (!market) notFound();
 
-  const listings = (await getListingsByMunicipality(market.city)).slice(0, 6);
-  const saleCount = listings.filter((listing) => listing.transactionType === "sale").length;
-  const leaseCount = listings.filter((listing) => listing.transactionType === "lease").length;
+  const cityListings = await getListingsByMunicipality(market.city);
+  const listings = selectRepresentativeListings(cityListings, 6);
+  const saleCount = cityListings.filter((listing) => listing.transactionType === "sale").length;
+  const leaseCount = cityListings.filter((listing) => listing.transactionType === "lease").length;
   const pageUrl = `${SITE_CONFIG.baseUrl}/locations/${market.slug}`;
   const listingSearchUrl = `/listings?city=${encodeURIComponent(market.city)}`;
   const schoolSearchUrl = `/schools?municipality=${encodeURIComponent(market.city)}`;
@@ -89,7 +91,7 @@ export default async function LocationPage({ params }: { params: { citySlug: str
           <aside className="rounded-2xl border border-brand-100 bg-brand-50/70 p-5">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">At a Glance</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Metric label="Featured" value={String(listings.length)} />
+              <Metric label="Active" value={String(cityListings.length)} />
               <Metric label="For Sale" value={String(saleCount)} />
               <Metric label="For Lease" value={String(leaseCount)} />
               <Metric label="Schools" value="Directory" />
@@ -112,7 +114,7 @@ export default async function LocationPage({ params }: { params: { citySlug: str
           <div>
             <h2 className="font-heading text-3xl text-brand-900">Featured {market.city} Listings</h2>
             <p className="mt-2 max-w-2xl text-brand-700">
-              Start with a few current public listings, then open the full search for more filters.
+              Start with a representative mix of current public listings, then open the full search for more filters.
             </p>
           </div>
           <Link
@@ -166,6 +168,64 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">{label}</p>
       <p className="mt-1 text-lg font-semibold text-brand-900">{value}</p>
     </div>
+  );
+}
+
+function selectRepresentativeListings(listings: Listing[], limit: number): Listing[] {
+  const selected: Listing[] = [];
+  const seen = new Set<string>();
+  const saleListings = listings.filter((listing) => listing.transactionType === "sale");
+  const leaseListings = listings.filter((listing) => listing.transactionType === "lease");
+
+  addPriceBandSample(selected, seen, saleListings, Math.min(4, limit));
+  addPriceBandSample(selected, seen, leaseListings, Math.min(2, limit - selected.length));
+
+  if (selected.length < limit) {
+    addPriceBandSample(selected, seen, listings, limit - selected.length);
+  }
+
+  return selected.slice(0, limit);
+}
+
+function addPriceBandSample(
+  selected: Listing[],
+  seen: Set<string>,
+  listings: Listing[],
+  count: number
+) {
+  if (count <= 0 || listings.length === 0) return;
+
+  const sorted = [...listings].sort((a, b) => a.price - b.price);
+  const candidateIndexes = getPriceBandIndexes(sorted.length);
+  const targetLength = selected.length + count;
+
+  for (const index of candidateIndexes) {
+    if (selected.length >= targetLength) return;
+    const listing = sorted[index];
+    if (!listing || seen.has(listing.id)) continue;
+    seen.add(listing.id);
+    selected.push(listing);
+  }
+
+  for (const listing of sorted) {
+    if (selected.length >= targetLength) return;
+    if (seen.has(listing.id)) continue;
+    seen.add(listing.id);
+    selected.push(listing);
+  }
+}
+
+function getPriceBandIndexes(length: number): number[] {
+  if (length <= 0) return [];
+  if (length === 1) return [0];
+
+  return Array.from(
+    new Set([
+      0,
+      Math.floor((length - 1) * 0.33),
+      Math.floor((length - 1) * 0.66),
+      length - 1
+    ])
   );
 }
 

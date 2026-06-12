@@ -6,6 +6,7 @@ import { getSchools } from "@/lib/schools/service";
 
 const STATIC_ROUTES = [
   "",
+  "/about",
   "/listings",
   "/schools",
   "/guides",
