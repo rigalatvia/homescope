@@ -42,7 +42,7 @@ export function SiteHeader() {
   }, [pathname, closeAllGuidesMenus]);
 
   return (
-    <header className="border-b border-brand-100 bg-white/95 backdrop-blur">
+    <header className="relative isolate z-[1000] border-b border-brand-100 bg-white/95 backdrop-blur">
       <div className="site-container flex items-center justify-between gap-4 py-3 sm:py-4">
         <Link
           href="/"
@@ -74,7 +74,7 @@ export function SiteHeader() {
                 <ChevronDown className="h-4 w-4" />
               </button>
               <div
-                className={`absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-soft transition ${
+                className={`absolute right-0 top-full z-[1001] mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-2xl ring-1 ring-brand-100/70 transition ${
                   isDesktopGuidesOpen ? "visible opacity-100" : "invisible opacity-0"
                 }`}
               >
@@ -136,7 +136,7 @@ export function SiteHeader() {
           </Link>
           <details ref={mobileGuidesRef} className="group relative">
             <summary className="cursor-pointer list-none transition hover:text-brand-900">Guides</summary>
-            <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-soft">
+            <div className="absolute left-0 top-full z-[1001] mt-2 w-72 rounded-xl border border-brand-100 bg-white p-2 shadow-2xl ring-1 ring-brand-100/70">
               {guideItems.map((item) => (
                 <Link
                   key={item.href}

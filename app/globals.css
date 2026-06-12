@@ -20,6 +20,11 @@ body {
   font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
+main {
+  position: relative;
+  z-index: 0;
+}
+
 .site-container {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
