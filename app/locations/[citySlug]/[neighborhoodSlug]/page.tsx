@@ -7,6 +7,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { getMarketBySlug } from "@/lib/locations/markets";
 import { NEIGHBORHOOD_PAGES, getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
 import { getListingsByMunicipality } from "@/lib/listings/service";
+import { calculateDistanceKm } from "@/lib/schools/geo";
 import { getSchools } from "@/lib/schools/service";
 import { formatPrice } from "@/lib/utils/format";
 import type { Listing } from "@/types/listing";
@@ -70,7 +71,11 @@ export default async function NeighborhoodPage({
   const neighborhoodListings = cityListings.filter((listing) => listingMatchesNeighborhood(listing, neighborhood.searchAliases));
   const featuredListings = selectRepresentativeListings(neighborhoodListings, 6);
   const priceStats = getPriceStats(neighborhoodListings);
-  const topSchools = getTopSchools(await getSchools({ municipality: market.city }), 5);
+  const nearbySchools = getNearbySchoolsForNeighborhood(
+    await getSchools({ municipality: market.city }),
+    neighborhoodListings,
+    5
+  );
   const pageUrl = `${SITE_CONFIG.baseUrl}/locations/${market.slug}/${neighborhood.slug}`;
   const listingSearchUrl = `/listings?city=${encodeURIComponent(market.city)}`;
   const jsonLd = buildNeighborhoodJsonLd({
@@ -194,11 +199,11 @@ export default async function NeighborhoodPage({
             <h2 className="font-heading text-3xl text-brand-900">Schools To Research</h2>
           </div>
           <p className="mt-3 text-sm leading-6 text-brand-700">
-            Start with these ranked {market.city} schools, then verify boundaries and eligibility directly with the
-            school board before relying on any address.
+            Start with schools near the matched {neighborhood.name} listing cluster, then verify boundaries and
+            eligibility directly with the school board before relying on any address.
           </p>
           <div className="mt-5 grid gap-3">
-            {topSchools.map((school) => (
+            {nearbySchools.map(({ school, distanceKm }) => (
               <Link
                 key={school.slug}
                 href={`/schools/${school.slug}`}
@@ -207,7 +212,10 @@ export default async function NeighborhoodPage({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="font-semibold text-brand-900">{school.name}</h3>
-                    <p className="mt-1 text-sm text-brand-700">{school.board}</p>
+                    <p className="mt-1 text-sm text-brand-700">
+                      {school.board}
+                      {distanceKm != null ? ` | ${formatDistance(distanceKm)} from area center` : ""}
+                    </p>
                   </div>
                   <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-800">
                     <School className="h-3.5 w-3.5" />
@@ -296,7 +304,53 @@ function median(values: number[]): number | undefined {
   return Math.round((sorted[middle - 1] + sorted[middle]) / 2);
 }
 
-function getTopSchools(schools: SchoolType[], limit: number): SchoolType[] {
+function getNearbySchoolsForNeighborhood(
+  schools: SchoolType[],
+  listings: Listing[],
+  limit: number
+): Array<{ school: SchoolType; distanceKm?: number }> {
+  const center = getListingClusterCenter(listings);
+  if (!center) {
+    return getRankedSchools(schools, limit).map((school) => ({ school }));
+  }
+
+  const schoolsWithDistance = schools
+    .filter((school) => school.latitude != null && school.longitude != null)
+    .map((school) => ({
+      school,
+      distanceKm: calculateDistanceKm(center.latitude, center.longitude, school.latitude!, school.longitude!)
+    }))
+    .filter((item) => item.distanceKm <= 5)
+    .sort((a, b) => {
+      const distanceDelta = a.distanceKm - b.distanceKm;
+      if (Math.abs(distanceDelta) > 0.75) return distanceDelta;
+      const scoreDelta = (b.school.ranking?.score ?? -1) - (a.school.ranking?.score ?? -1);
+      if (scoreDelta !== 0) return scoreDelta;
+      return a.school.name.localeCompare(b.school.name);
+    })
+    .slice(0, limit);
+
+  if (schoolsWithDistance.length > 0) return schoolsWithDistance;
+
+  return getRankedSchools(schools, limit).map((school) => ({ school }));
+}
+
+function getListingClusterCenter(listings: Listing[]): { latitude: number; longitude: number } | undefined {
+  const geocodedListings = listings.filter(
+    (listing) => listing.latitude != null && listing.longitude != null
+  );
+
+  if (geocodedListings.length === 0) return undefined;
+
+  return {
+    latitude:
+      geocodedListings.reduce((total, listing) => total + listing.latitude!, 0) / geocodedListings.length,
+    longitude:
+      geocodedListings.reduce((total, listing) => total + listing.longitude!, 0) / geocodedListings.length
+  };
+}
+
+function getRankedSchools(schools: SchoolType[], limit: number): SchoolType[] {
   return [...schools]
     .sort((a, b) => {
       const scoreDelta = (b.ranking?.score ?? -1) - (a.ranking?.score ?? -1);
@@ -308,6 +362,10 @@ function getTopSchools(schools: SchoolType[], limit: number): SchoolType[] {
 
 function formatScore(score: number): string {
   return Number.isInteger(score) ? score.toFixed(0) : score.toFixed(1);
+}
+
+function formatDistance(distanceKm: number): string {
+  return `${distanceKm < 1 ? distanceKm.toFixed(1) : distanceKm.toFixed(1)} km`;
 }
 
 function normalize(value: string): string {

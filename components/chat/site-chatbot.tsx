@@ -22,10 +22,11 @@ function buildInitialMessage(): LocalChatMessage {
     id: "chatbot-welcome",
     role: "assistant",
     content:
-      "Hi, I’m the HomeScope GTA assistant. I can help with rental application forms, lease documents, buyer checklists, showing requests, and the guides on this site.",
+      "Hi, I'm the HomeScope GTA assistant. I can help with listings, city and neighbourhood pages, schools, market reports, land transfer tax, buyer/renter guides, and showing requests.",
     suggestedLinks: [
-      { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" },
-      { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" }
+      { href: "/listings", label: "Browse Listings" },
+      { href: "/schools", label: "Search Schools" },
+      { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator" }
     ]
   };
 }
@@ -44,9 +45,10 @@ function createLocalMessage(
 }
 
 const STARTER_QUESTIONS = [
-  "What documents do I need for an Ontario rental application?",
-  "How does a showing request work?",
-  "What should first-time buyers prepare in Ontario?"
+  "How do I search homes near a school?",
+  "Where can I see local market reports?",
+  "Which neighbourhood pages are available?",
+  "Estimate land transfer tax for Toronto"
 ];
 
 export function SiteChatbot() {
@@ -190,9 +192,9 @@ export function SiteChatbot() {
                     <Sparkles className="h-3.5 w-3.5" />
                     HomeScope Assistant
                   </div>
-                  <h2 className="mt-3 font-heading text-2xl">Ask about forms, guides, and showing requests</h2>
+                  <h2 className="mt-3 font-heading text-2xl">Ask about listings, schools, reports, and guides</h2>
                   <p className="mt-2 text-sm leading-6 text-brand-50">
-                    I can point visitors to the right HomeScope GTA guide and explain what documents or steps usually matter next.
+                    I can point visitors to the right HomeScope GTA page and explain what tools or next steps usually matter.
                   </p>
                 </div>
                 <button
@@ -242,7 +244,7 @@ export function SiteChatbot() {
                 <div className="flex justify-start">
                   <div className="inline-flex items-center gap-2 rounded-3xl border border-brand-100 bg-white px-4 py-3 text-sm text-brand-700">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Looking through the site…
+                    Looking through the site...
                   </div>
                 </div>
               ) : null}
@@ -274,7 +276,7 @@ export function SiteChatbot() {
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={handleKeyDown}
                   rows={2}
-                  placeholder="Ask about documents, rental applications, or how showing requests work…"
+                  placeholder="Ask about listings, schools, market reports, taxes, or showings..."
                   className="min-h-[64px] flex-1 resize-none rounded-2xl border border-brand-200 px-4 py-3 text-sm text-brand-900 outline-none transition focus:border-brand-400"
                 />
                 <button

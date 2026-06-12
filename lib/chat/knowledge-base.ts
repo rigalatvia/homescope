@@ -11,6 +11,182 @@ interface ChatKnowledgeArticle {
 
 const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
   {
+    id: "listing-search",
+    title: "GTA Listing Search",
+    href: "/listings",
+    keywords: [
+      "listing",
+      "listings",
+      "homes for sale",
+      "homes for lease",
+      "rentals",
+      "condos",
+      "townhomes",
+      "freehold",
+      "price",
+      "beds",
+      "bathrooms",
+      "map search"
+    ],
+    summary: "Searches current public listings across the GTA by city, price, beds, baths, property type, and map area.",
+    answer: [
+      "Use the listing search when you want to compare active homes by city, price, property type, bedrooms, bathrooms, and location.",
+      "HomeScope GTA supports homes for sale and lease across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto, with listing detail pages for photos, property facts, and showing requests."
+    ]
+  },
+  {
+    id: "city-pages",
+    title: "City Market Pages",
+    href: "/locations/vaughan",
+    keywords: [
+      "city",
+      "cities",
+      "vaughan",
+      "richmond hill",
+      "aurora",
+      "newmarket",
+      "king",
+      "toronto",
+      "active listings",
+      "for sale",
+      "for lease",
+      "city listings",
+      "market"
+    ],
+    summary: "Links visitors to city pages with live active, sale, lease, school, featured listing, and neighbourhood sections.",
+    answer: [
+      "The city pages are useful when you want a market-level view before narrowing your search.",
+      "Each city page shows current listing counts, sale and lease inventory, schools, featured listings, neighbourhood links, and a path into the full listing search."
+    ]
+  },
+  {
+    id: "neighborhood-pages",
+    title: "Neighbourhood Pages",
+    href: "/locations/richmond-hill/jefferson",
+    keywords: [
+      "neighbourhood",
+      "neighborhood",
+      "area",
+      "community",
+      "maple",
+      "patterson",
+      "thornhill",
+      "kleinburg",
+      "woodbridge",
+      "oak ridges",
+      "jefferson",
+      "mill pond",
+      "crosby",
+      "bayview hill",
+      "westbrook",
+      "stonehaven",
+      "downtown toronto",
+      "scarborough",
+      "north york",
+      "etobicoke"
+    ],
+    summary: "Highlights neighbourhood-level listing pages with local inventory, price snapshots, nearby schools, and current homes.",
+    answer: [
+      "Neighbourhood pages help narrow a city search to a more specific community, such as Patterson, Maple, Jefferson, Oak Ridges, Stonehaven-Wyndham, or North York.",
+      "They show current matched listings, a price snapshot, and nearby schools selected from the local listing cluster when location data is available."
+    ]
+  },
+  {
+    id: "school-search",
+    title: "School Search and School Profile Pages",
+    href: "/schools",
+    keywords: [
+      "school",
+      "schools",
+      "ranking",
+      "ratings",
+      "board",
+      "school board",
+      "near school",
+      "homes near",
+      "aurora high",
+      "bayview secondary",
+      "fraser",
+      "catchment"
+    ],
+    summary: "Searches schools, rankings, board details, dedicated school URLs, and nearby homes.",
+    answer: [
+      "The school search is one of the strongest HomeScope GTA tools if schools are part of the home search.",
+      "Visitors can search school records, open dedicated school profile pages, review rating and board information, and continue into nearby homes. Always verify boundaries and eligibility directly with the school board before relying on an address."
+    ]
+  },
+  {
+    id: "market-reports",
+    title: "Monthly Market Reports",
+    href: "/market-reports/aurora/june-2026",
+    keywords: [
+      "market report",
+      "monthly report",
+      "housing market",
+      "average price",
+      "days live",
+      "new listings",
+      "inventory",
+      "stats",
+      "statistics",
+      "june 2026",
+      "vaughan",
+      "richmond hill",
+      "aurora",
+      "newmarket",
+      "king",
+      "toronto",
+      "editable report",
+      "admin"
+    ],
+    summary: "Explains dynamic city market reports with live listing metrics and editable commentary.",
+    answer: [
+      "Monthly market reports combine automatic listing-data metrics with editable commentary.",
+      "The numbers come from currently visible HomeScope GTA listing data, while the report title, intro, market summary, buyer takeaway, seller takeaway, and notes can be edited from the admin market reports screen."
+    ]
+  },
+  {
+    id: "land-transfer-tax",
+    title: "Ontario Land Transfer Tax Calculator",
+    href: "/guides/land-transfer-tax-calculator-ontario",
+    keywords: [
+      "land transfer tax",
+      "ltt",
+      "mltt",
+      "toronto land transfer",
+      "closing costs",
+      "first time buyer rebate",
+      "tax calculator",
+      "ontario tax"
+    ],
+    summary: "Calculates Ontario and Toronto land transfer tax estimates with first-time buyer rebate options.",
+    answer: [
+      "The land transfer tax calculator estimates Ontario land transfer tax and, when Toronto is selected, the additional municipal land transfer tax.",
+      "It also includes first-time buyer rebate toggles so buyers can get a clearer planning estimate before reviewing closing costs with their lawyer or mortgage professional."
+    ]
+  },
+  {
+    id: "about-homescope",
+    title: "About HomeScope GTA",
+    href: "/about",
+    keywords: [
+      "about",
+      "who",
+      "team",
+      "trust",
+      "company",
+      "homescope gta",
+      "brokerage",
+      "reco",
+      "contact"
+    ],
+    summary: "Explains who HomeScope GTA is, what the platform does, and important trust/compliance notes.",
+    answer: [
+      "The About page explains that HomeScope GTA is a real estate search and education platform built around listings, school-area research, guides, and document organization.",
+      "It also gives visitors a clearer trust page without naming individual people or brokerage details."
+    ]
+  },
+  {
     id: "rental-application",
     title: "Ontario Rental Application Form 410",
     href: "/guides/rental-application-ontario",
@@ -115,7 +291,7 @@ export function buildChatResponse(message: string): {
   const topMatches = scored.length > 0 ? scored.slice(0, 3).map((item) => item.article) : KNOWLEDGE_BASE.slice(0, 3);
   const primary = topMatches[0]!;
 
-  const intro = `Here’s the most relevant information I found on HomeScope GTA for that question about ${primary.title.toLowerCase()}:`;
+  const intro = `Here's the most relevant information I found on HomeScope GTA for that question about ${primary.title.toLowerCase()}:`;
   const body = primary.answer.join(" ");
   const supporting =
     topMatches.length > 1
@@ -123,7 +299,7 @@ export function buildChatResponse(message: string): {
           .slice(1)
           .map((item) => item.title)
           .join(" and ")} for related details.`
-      : "If you want, ask me a more specific question about leasing, rental forms, buyer documents, or showing requests.";
+      : "Ask me a more specific question about listings, schools, market reports, neighbourhoods, leasing, buyer documents, or showing requests.";
 
   return {
     reply: `${intro}\n\n${body}\n\n${supporting}`,
