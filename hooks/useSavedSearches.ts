@@ -1,16 +1,9 @@
 "use client";
 
-import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { db } from "@/lib/firebase";
 import {
-  mapSavedSearchDocument,
-  removeSavedSearchRecord,
-  saveSearchRecord,
-  updateSavedSearchAlerts,
   type SaveSearchInput,
   type SavedSearchAlertFrequency,
-  type SavedSearchDocument,
   type SavedSearchRecord
 } from "@/lib/savedSearches";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,7 +36,7 @@ export function SavedSearchesProvider({ children }: { children: React.ReactNode 
       return;
     }
 
-    if (!user || !db) {
+    if (!user) {
       setSavedSearches([]);
       setLoading(false);
       setError(null);
@@ -51,43 +44,75 @@ export function SavedSearchesProvider({ children }: { children: React.ReactNode 
     }
 
     setLoading(true);
-    const savedSearchesQuery = query(collection(db, "savedSearches"), where("userId", "==", user.uid));
 
-    const unsubscribe = onSnapshot(
-      savedSearchesQuery,
-      (snapshot) => {
-        const nextSearches = snapshot.docs
-          .map((searchDoc) => mapSavedSearchDocument(searchDoc.id, searchDoc.data() as SavedSearchDocument))
-          .sort((left, right) => toMillis(right.createdAt) - toMillis(left.createdAt));
+    let isActive = true;
 
-        setSavedSearches(nextSearches);
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/saved-searches", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const payload = (await response.json()) as {
+          success?: boolean;
+          savedSearches?: SavedSearchRecord[];
+          error?: string;
+        };
+
+        if (!response.ok || payload.success !== true || !Array.isArray(payload.savedSearches)) {
+          throw new Error(payload.error || "Unable to load saved searches.");
+        }
+
+        if (!isActive) return;
+        setSavedSearches(payload.savedSearches);
         setLoading(false);
         setError(null);
-      },
-      (snapshotError) => {
-        console.error("[savedSearches] Failed to watch saved searches", snapshotError);
+      } catch (loadError) {
+        console.error("[savedSearches] Failed to load saved searches", loadError);
+        if (!isActive) return;
         setSavedSearches([]);
         setLoading(false);
         setError("Something went wrong loading your saved searches.");
       }
-    );
+    })();
 
-    return () => unsubscribe();
+    return () => {
+      isActive = false;
+    };
   }, [authLoading, user]);
 
   const saveSearch = useCallback(
     async (input: Omit<SaveSearchInput, "userId" | "userEmail">) => {
-      if (!user || !db) {
+      if (!user) {
         throw new Error("Sign in to save this search.");
       }
 
       setPendingIds((current) => addUnique(current, "new"));
       try {
-        await saveSearchRecord(db, {
-          ...input,
-          userId: user.uid,
-          userEmail: user.email
+        const token = await user.getIdToken();
+        const response = await fetch("/api/saved-searches", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            ...input,
+            userId: user.uid,
+            userEmail: user.email
+          })
         });
+        const payload = (await response.json()) as {
+          success?: boolean;
+          savedSearch?: SavedSearchRecord;
+          error?: string;
+        };
+
+        if (!response.ok || payload.success !== true || !payload.savedSearch) {
+          throw new Error(payload.error || "Unable to save search.");
+        }
+
+        setSavedSearches((current) => [payload.savedSearch!, ...current]);
       } finally {
         setPendingIds((current) => current.filter((pendingId) => pendingId !== "new"));
       }
@@ -97,18 +122,36 @@ export function SavedSearchesProvider({ children }: { children: React.ReactNode 
 
   const removeSearch = useCallback(
     async (searchId: string) => {
-      if (!user || !db) {
+      if (!user) {
         throw new Error("Sign in to manage saved searches.");
       }
 
       setPendingIds((current) => addUnique(current, searchId));
+      const previousSearches = savedSearches;
+      setSavedSearches((current) => current.filter((search) => search.id !== searchId));
       try {
-        await removeSavedSearchRecord(db, searchId);
+        const token = await user.getIdToken();
+        const response = await fetch("/api/saved-searches", {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: searchId })
+        });
+        const payload = (await response.json()) as { success?: boolean; error?: string };
+
+        if (!response.ok || payload.success !== true) {
+          throw new Error(payload.error || "Unable to remove saved search.");
+        }
+      } catch (removeError) {
+        setSavedSearches(previousSearches);
+        throw removeError;
       } finally {
         setPendingIds((current) => current.filter((pendingId) => pendingId !== searchId));
       }
     },
-    [user]
+    [savedSearches, user]
   );
 
   const updateAlerts = useCallback(
@@ -116,18 +159,42 @@ export function SavedSearchesProvider({ children }: { children: React.ReactNode 
       searchId: string,
       options: { alertsEnabled: boolean; alertFrequency: SavedSearchAlertFrequency }
     ) => {
-      if (!user || !db) {
+      if (!user) {
         throw new Error("Sign in to manage saved searches.");
       }
 
       setPendingIds((current) => addUnique(current, searchId));
+      const previousSearches = savedSearches;
+      setSavedSearches((current) =>
+        current.map((search) =>
+          search.id === searchId
+            ? { ...search, alertsEnabled: options.alertsEnabled, alertFrequency: options.alertFrequency }
+            : search
+        )
+      );
       try {
-        await updateSavedSearchAlerts(db, searchId, options);
+        const token = await user.getIdToken();
+        const response = await fetch("/api/saved-searches", {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: searchId, ...options })
+        });
+        const payload = (await response.json()) as { success?: boolean; error?: string };
+
+        if (!response.ok || payload.success !== true) {
+          throw new Error(payload.error || "Unable to update saved search.");
+        }
+      } catch (updateError) {
+        setSavedSearches(previousSearches);
+        throw updateError;
       } finally {
         setPendingIds((current) => current.filter((pendingId) => pendingId !== searchId));
       }
     },
-    [user]
+    [savedSearches, user]
   );
 
   const value = useMemo<SavedSearchesContextValue>(
@@ -158,10 +225,4 @@ export function useSavedSearches(): SavedSearchesContextValue {
 
 function addUnique(items: string[], value: string): string[] {
   return items.includes(value) ? items : [...items, value];
-}
-
-function toMillis(value: string | null): number {
-  if (!value) return 0;
-  const timestamp = new Date(value).getTime();
-  return Number.isFinite(timestamp) ? timestamp : 0;
 }

@@ -49,7 +49,7 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
     } catch (error) {
       console.error("[savedSearches] Failed to save search", error);
       setStatusMessage("");
-      setErrorMessage("We could not save this search right now. Please try again.");
+      setErrorMessage(error instanceof Error ? error.message : "We could not save this search right now. Please try again.");
     }
   };
 
