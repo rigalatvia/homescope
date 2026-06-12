@@ -22,7 +22,7 @@ function buildInitialMessage(): LocalChatMessage {
     id: "chatbot-welcome",
     role: "assistant",
     content:
-      "Hi, I'm the HomeScope GTA assistant. I can help with listings, city and neighbourhood pages, schools, market reports, land transfer tax, buyer/renter guides, and showing requests.",
+      "Hi, I'm the HomeScope GTA assistant. I can help you use the site, search listings, compare saved homes, manage alerts, understand schools, use calculators, and request showings.",
     suggestedLinks: [
       { href: "/listings", label: "Browse Listings" },
       { href: "/schools", label: "Search Schools" },
@@ -45,10 +45,10 @@ function createLocalMessage(
 }
 
 const STARTER_QUESTIONS = [
+  "How do I use this website?",
   "How do I search homes near a school?",
-  "Where can I see local market reports?",
-  "Estimate mortgage payments for a GTA home",
-  "Estimate land transfer tax for Toronto"
+  "How do saved searches and alerts work?",
+  "How do I compare saved homes?"
 ];
 
 export function SiteChatbot() {
@@ -192,9 +192,9 @@ export function SiteChatbot() {
                     <Sparkles className="h-3.5 w-3.5" />
                     HomeScope Assistant
                   </div>
-                  <h2 className="mt-3 font-heading text-2xl">Ask about listings, schools, reports, and guides</h2>
+                  <h2 className="mt-3 font-heading text-2xl">Ask how to use HomeScope GTA</h2>
                   <p className="mt-2 text-sm leading-6 text-brand-50">
-                    I can point visitors to the right HomeScope GTA page and explain what tools or next steps usually matter.
+                    I can explain the site tools, point visitors to the right page, and help with listings, schools, alerts, calculators, notes, and showings.
                   </p>
                 </div>
                 <button
@@ -276,7 +276,7 @@ export function SiteChatbot() {
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={handleKeyDown}
                   rows={2}
-                  placeholder="Ask about listings, schools, market reports, taxes, or showings..."
+                  placeholder="Ask how to search, save, compare, set alerts, or request a showing..."
                   className="min-h-[64px] flex-1 resize-none rounded-2xl border border-brand-200 px-4 py-3 text-sm text-brand-900 outline-none transition focus:border-brand-400"
                 />
                 <button

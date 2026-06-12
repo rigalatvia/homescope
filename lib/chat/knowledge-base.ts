@@ -11,6 +11,168 @@ interface ChatKnowledgeArticle {
 
 const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
   {
+    id: "how-to-use-site",
+    title: "How to Use HomeScope GTA",
+    href: "/about",
+    keywords: [
+      "how to use",
+      "use website",
+      "use site",
+      "what can i do",
+      "features",
+      "functionality",
+      "help",
+      "start",
+      "where do i begin",
+      "navigate",
+      "website"
+    ],
+    summary: "Explains the main HomeScope GTA workflows and where visitors should start.",
+    answer: [
+      "Start with Listings if you want to search active homes, Schools if school-area research matters, Guides if you need buyer or renter education, and Dashboard if you are signed in and want to manage saved homes, saved searches, alerts, notes, and showing activity.",
+      "The most common flow is: filter listings, open a property detail page, save homes you like, save searches for alerts, compare saved homes in the dashboard, add private notes, and request a showing when a listing is worth a closer look."
+    ]
+  },
+  {
+    id: "how-to-search-listings",
+    title: "How to Search Listings",
+    href: "/listings",
+    keywords: [
+      "how search",
+      "search listings",
+      "filter listings",
+      "find homes",
+      "find house",
+      "city filter",
+      "price filter",
+      "bedroom filter",
+      "bathroom filter",
+      "property type",
+      "mls number",
+      "address search",
+      "apply filters",
+      "clear filters"
+    ],
+    summary: "Explains how visitors use listing filters and listing detail pages.",
+    answer: [
+      "Use the Listings page to filter by city, sale or lease, price range, bedrooms, bathrooms, property type, address text, MLS number, and school proximity.",
+      "After applying filters, open any listing card to see photos, details, mortgage estimates for sale listings, related guides, save controls, and the showing request form."
+    ]
+  },
+  {
+    id: "how-to-use-map-search",
+    title: "How to Use Map Search",
+    href: "/map-search",
+    keywords: [
+      "map",
+      "map search",
+      "search map area",
+      "map area",
+      "interactive map",
+      "open map",
+      "clear map area",
+      "markers",
+      "neighbourhood map",
+      "neighborhood map"
+    ],
+    summary: "Explains the separate map-search route and map-area filtering.",
+    answer: [
+      "Use Map Search when you want to browse listings visually. The regular Listings page stays lighter, while the Map page loads the heavier interactive map tools only when you choose them.",
+      "Filter first if you want, then move or zoom the map and choose Search This Map Area. Use Clear Map Area to remove the map boundary and return to broader results."
+    ]
+  },
+  {
+    id: "accounts-dashboard",
+    title: "Accounts and Dashboard",
+    href: "/dashboard",
+    keywords: [
+      "account",
+      "sign in",
+      "google sign in",
+      "dashboard",
+      "saved",
+      "my dashboard",
+      "login",
+      "log in",
+      "profile",
+      "where are saved homes"
+    ],
+    summary: "Explains sign-in and dashboard functionality.",
+    answer: [
+      "Sign in with Google to unlock the Dashboard. The dashboard is where saved homes, saved searches, listing alerts, private notes, comparison tools, and showing requests are managed.",
+      "If you are not signed in, you can still browse listings, schools, locations, reports, calculators, and guides, but saved-home and saved-search tools need an account."
+    ]
+  },
+  {
+    id: "saved-homes-notes-comparison",
+    title: "Saved Homes, Notes, and Comparison",
+    href: "/dashboard#saved-homes",
+    keywords: [
+      "saved homes",
+      "save home",
+      "favorite",
+      "favourite",
+      "heart",
+      "compare",
+      "comparison",
+      "side by side",
+      "notes",
+      "private notes",
+      "showing notes",
+      "pros cons",
+      "shortlist"
+    ],
+    summary: "Explains how users save homes, compare listings, and keep private notes.",
+    answer: [
+      "Use the Save button on listing cards or listing detail pages to keep homes in your dashboard. In Saved Homes, you can select up to four saved listings and compare them side by side.",
+      "The comparison view includes price, beds, baths, square feet, property type, city, neighbourhood, taxes or fees when available, school proximity when available, a monthly estimate, and your private notes. Notes are only stored for your account."
+    ]
+  },
+  {
+    id: "saved-searches-alerts-help",
+    title: "Saved Searches and Listing Alerts",
+    href: "/dashboard#saved-searches",
+    keywords: [
+      "saved search",
+      "save search",
+      "alerts",
+      "email alerts",
+      "listing alerts",
+      "new listing alert",
+      "daily alerts",
+      "weekly alerts",
+      "pause alerts",
+      "search notification",
+      "notify me"
+    ],
+    summary: "Explains saved searches and alert behavior.",
+    answer: [
+      "After filtering Listings or Map Search, choose Save Search + Alerts to save that exact search to your account. Saved searches store your filters and can be reopened from the dashboard.",
+      "Alerts are designed to notify you when new or updated listings match the saved filters. The first scheduled run baselines the search, and later runs email matching updates based on the alert frequency you choose."
+    ]
+  },
+  {
+    id: "how-to-request-showing",
+    title: "How to Request a Showing",
+    href: "/contact",
+    keywords: [
+      "request showing",
+      "book showing",
+      "schedule showing",
+      "view property",
+      "private showing",
+      "contact",
+      "lead form",
+      "tour",
+      "visit"
+    ],
+    summary: "Explains the listing showing request flow.",
+    answer: [
+      "Open a listing detail page and use the showing request form. The form sends the listing details along with your contact information and preferred timing.",
+      "After submission, watch for an email from info@homescopegta.ca and check your junk folder if you do not see it. Rental requests may involve document readiness before a showing is finalized."
+    ]
+  },
+  {
     id: "listing-search",
     title: "GTA Listing Search",
     href: "/listings",
