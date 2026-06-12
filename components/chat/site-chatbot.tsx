@@ -26,7 +26,7 @@ function buildInitialMessage(): LocalChatMessage {
     suggestedLinks: [
       { href: "/listings", label: "Browse Listings" },
       { href: "/schools", label: "Search Schools" },
-      { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator" }
+      { href: "/guides/mortgage-payment-calculator-ontario", label: "Mortgage Calculator" }
     ]
   };
 }
@@ -47,7 +47,7 @@ function createLocalMessage(
 const STARTER_QUESTIONS = [
   "How do I search homes near a school?",
   "Where can I see local market reports?",
-  "Which neighbourhood pages are available?",
+  "Estimate mortgage payments for a GTA home",
   "Estimate land transfer tax for Toronto"
 ];
 

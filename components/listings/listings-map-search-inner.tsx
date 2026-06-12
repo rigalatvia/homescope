@@ -5,6 +5,7 @@ import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import L from "leaflet";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -33,6 +34,9 @@ export function ListingsMapSearchInner({
   initialListings,
   initialBounds
 }: ListingsMapSearchInnerProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [draftBounds, setDraftBounds] = useState(initialBounds || {});
   const loadedListings = useMemo(() => initialListings ?? [], [initialListings]);
 
@@ -78,16 +82,70 @@ export function ListingsMapSearchInner({
     lng: average(mappableListings.map((listing) => listing.longitude))
   };
   const mapViewCount = mappableListings.filter((listing) => withinBounds(listing, draftBounds)).length;
+  const hasDraftBounds =
+    draftBounds.minLatitude != null &&
+    draftBounds.maxLatitude != null &&
+    draftBounds.minLongitude != null &&
+    draftBounds.maxLongitude != null;
+  const hasAppliedBounds =
+    initialBounds?.minLatitude != null ||
+    initialBounds?.maxLatitude != null ||
+    initialBounds?.minLongitude != null ||
+    initialBounds?.maxLongitude != null;
+
+  const applyMapArea = () => {
+    if (!hasDraftBounds) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("minLatitude", String(draftBounds.minLatitude));
+    params.set("maxLatitude", String(draftBounds.maxLatitude));
+    params.set("minLongitude", String(draftBounds.minLongitude));
+    params.set("maxLongitude", String(draftBounds.maxLongitude));
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const clearMapArea = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("minLatitude");
+    params.delete("maxLatitude");
+    params.delete("minLongitude");
+    params.delete("maxLongitude");
+    params.set("page", "1");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
 
   return (
     <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-brand-900">Map Search</p>
-        <p className="text-xs text-brand-600">
-          {mappableListings.length} mapped of {loadedListings.length} listings on this page | {mapViewCount} in current map view
-          {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
-          {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
-        </p>
+        <div>
+          <p className="text-sm font-semibold text-brand-900">Map Search</p>
+          <p className="text-xs text-brand-600">
+            {mappableListings.length} mapped of {loadedListings.length} loaded listings | {mapViewCount} in current map view
+            {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
+            {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={applyMapArea}
+            disabled={!hasDraftBounds}
+            className="rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Search This Map Area
+          </button>
+          {hasAppliedBounds ? (
+            <button
+              type="button"
+              onClick={clearMapArea}
+              className="rounded-full border border-brand-200 px-4 py-2 text-xs font-semibold text-brand-800 transition hover:border-brand-400"
+            >
+              Clear Map Area
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="h-[24rem] overflow-hidden rounded-xl border border-brand-100">
         <MapContainer center={[center.lat, center.lng]} zoom={11} scrollWheelZoom={false} className="h-full w-full">

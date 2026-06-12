@@ -8,6 +8,7 @@ import {
   fetchSavedListings,
   removeHomeRecord,
   saveHomeRecord,
+  updateSavedHomeNotes,
   type SavedHomeDocument,
   type SavedHomeListing,
   type SavedHomeRecord
@@ -22,6 +23,7 @@ interface SavedHomesContextValue {
   error: string | null;
   saveHome: (listingId: string) => Promise<void>;
   removeHome: (listingId: string) => Promise<void>;
+  updateNotes: (listingId: string, notes: string) => Promise<void>;
   toggleSave: (listingId: string) => Promise<void>;
   isSaved: (listingId: string) => boolean;
   isPending: (listingId: string) => boolean;
@@ -65,7 +67,9 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
               id: savedHome.id,
               userId: data.userId,
               listingId: data.listingId,
-              createdAt: toIsoString(data.createdAt)
+              notes: typeof data.notes === "string" ? data.notes : "",
+              createdAt: toIsoString(data.createdAt),
+              updatedAt: toIsoString(data.updatedAt)
             } satisfies SavedHomeRecord;
           })
           .sort((left, right) => toMillis(right.createdAt) - toMillis(left.createdAt));
@@ -110,6 +114,7 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
           activeEntries.map((savedHome) => ({
             listingId: savedHome.listingId,
             createdAt: savedHome.createdAt,
+            notes: savedHome.notes,
             listing: listingMap.get(savedHome.listingId) ?? null
           }))
         );
@@ -121,6 +126,7 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
           activeEntries.map((savedHome) => ({
             listingId: savedHome.listingId,
             createdAt: savedHome.createdAt,
+            notes: savedHome.notes,
             listing: null
           }))
         );
@@ -145,7 +151,9 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
         id: docId,
         userId: user.uid,
         listingId: trimmedListingId,
-        createdAt: new Date().toISOString()
+        notes: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: null
       };
 
       setPendingListingIds((current) => addUnique(current, trimmedListingId));
@@ -161,6 +169,44 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
       }
     },
     [user]
+  );
+
+  const updateNotes = useCallback(
+    async (listingId: string, notes: string) => {
+      if (!user || !db) {
+        throw new Error("Sign in to save notes.");
+      }
+
+      const trimmedListingId = listingId.trim();
+      const trimmedNotes = notes.slice(0, 3000);
+      const previousSavedHomes = savedHomes;
+      const previousSavedListings = savedListings;
+
+      setPendingListingIds((current) => addUnique(current, trimmedListingId));
+      setSavedHomes((current) =>
+        current.map((savedHome) =>
+          savedHome.listingId === trimmedListingId
+            ? { ...savedHome, notes: trimmedNotes, updatedAt: new Date().toISOString() }
+            : savedHome
+        )
+      );
+      setSavedListings((current) =>
+        current.map((savedHome) =>
+          savedHome.listingId === trimmedListingId ? { ...savedHome, notes: trimmedNotes } : savedHome
+        )
+      );
+
+      try {
+        await updateSavedHomeNotes(db, user.uid, trimmedListingId, trimmedNotes);
+      } catch (updateError) {
+        setSavedHomes(previousSavedHomes);
+        setSavedListings(previousSavedListings);
+        throw updateError;
+      } finally {
+        setPendingListingIds((current) => current.filter((pendingId) => pendingId !== trimmedListingId));
+      }
+    },
+    [savedHomes, savedListings, user]
   );
 
   const removeHome = useCallback(
@@ -212,11 +258,12 @@ export function SavedHomesProvider({ children }: { children: React.ReactNode }) 
       error,
       saveHome,
       removeHome,
+      updateNotes,
       toggleSave,
       isSaved: (listingId: string) => savedHomeIds.includes(listingId),
       isPending: (listingId: string) => pendingListingIds.includes(listingId)
     }),
-    [error, loading, pendingListingIds, removeHome, saveHome, savedHomeIds, savedHomes, savedListings, toggleSave]
+    [error, loading, pendingListingIds, removeHome, saveHome, savedHomeIds, savedHomes, savedListings, toggleSave, updateNotes]
   );
 
   return createElement(SavedHomesContext.Provider, { value }, children);

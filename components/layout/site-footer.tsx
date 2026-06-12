@@ -62,6 +62,12 @@ export function SiteFooter() {
                 Land Transfer Tax Calculator
               </Link>
               <Link
+                href="/guides/mortgage-payment-calculator-ontario"
+                className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
+              >
+                Mortgage Payment Calculator
+              </Link>
+              <Link
                 href="/guides/leasing"
                 className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
               >

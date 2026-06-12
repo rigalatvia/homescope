@@ -5,6 +5,7 @@ import { LeadCaptureModal } from "@/components/leads/lead-capture-modal";
 import { BackToListingsButton } from "@/components/listings/back-to-listings-button";
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
+import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
 import { formatPrice } from "@/lib/utils/format";
 import { getPublicListingBySlug } from "@/lib/listings/service";
 import { SITE_CONFIG } from "@/config/site";
@@ -80,6 +81,7 @@ export default async function ListingDetailPage({
         ]
       : [
           { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
+          { href: "/guides/mortgage-payment-calculator-ontario", label: "Mortgage Payment Calculator" },
           { href: "/guides/documents-needed-buy-house-toronto", label: "Buyer Documents Guide" },
           { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" }
         ];
@@ -113,6 +115,10 @@ export default async function ListingDetailPage({
           </div>
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>
+
+          {listing.transactionType === "sale" ? (
+            <MortgagePaymentCalculator initialPrice={listing.price} compact />
+          ) : null}
 
           <section className="rounded-2xl border border-brand-100 bg-brand-50/50 p-5 shadow-soft">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Helpful Guide</p>

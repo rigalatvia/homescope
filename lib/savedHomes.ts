@@ -15,19 +15,24 @@ import type { Listing } from "@/types/listing";
 export interface SavedHomeDocument {
   userId: string;
   listingId: string;
+  notes?: string;
   createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
 }
 
 export interface SavedHomeRecord {
   id: string;
   userId: string;
   listingId: string;
+  notes: string;
   createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface SavedHomeListing {
   listingId: string;
   createdAt: string | null;
+  notes: string;
   listing: Listing | null;
 }
 
@@ -56,6 +61,29 @@ export async function saveHomeRecord(db: Firestore, userId: string, listingId: s
 
 export async function removeHomeRecord(db: Firestore, userId: string, listingId: string): Promise<void> {
   await deleteDoc(doc(db, SAVED_HOMES_COLLECTION, buildSavedHomeDocumentId(userId, listingId.trim())));
+}
+
+export async function updateSavedHomeNotes(
+  db: Firestore,
+  userId: string,
+  listingId: string,
+  notes: string
+): Promise<void> {
+  const trimmedListingId = listingId.trim();
+  if (!trimmedListingId) {
+    throw new Error("Listing reference is missing.");
+  }
+
+  await setDoc(
+    doc(db, SAVED_HOMES_COLLECTION, buildSavedHomeDocumentId(userId, trimmedListingId)),
+    {
+      userId,
+      listingId: trimmedListingId,
+      notes: notes.slice(0, 3000),
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 }
 
 export async function getUserSavedHomeIds(db: Firestore, userId: string): Promise<string[]> {

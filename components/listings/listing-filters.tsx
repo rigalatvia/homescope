@@ -66,7 +66,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     filters.schoolSlug || "",
     filters.schoolRadiusKm ?? ""
   ].join("|");
-  const clearFiltersUrl = `/listings?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
+  const clearFiltersUrl = `${pathname}?transactionType=${DEFAULT_TRANSACTION_TYPE}&minPrice=${DEFAULT_MIN_PRICE}&maxPrice=${DEFAULT_MAX_PRICE}`;
 
   useEffect(() => {
     setCityValue(filters.city || "");

@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import Link from "next/link";
+import { MapPinned } from "lucide-react";
 import { SITE_CONFIG } from "@/config/site";
 import { ListingFilters } from "@/components/listings/listing-filters";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingsPagination } from "@/components/listings/listings-pagination";
 import { ListingReturnMemory } from "@/components/listings/listing-return-memory";
+import { SaveSearchButton } from "@/components/listings/save-search-button";
 import { SearchTracker } from "@/components/listings/search-tracker";
 import { parseListingFilters } from "@/lib/listings/filters";
 import { getPublicListings } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
-
-const ListingsMapSearch = dynamic(
-  () => import("@/components/listings/listings-map-search").then((module) => module.ListingsMapSearch),
-  { ssr: false }
-);
 
 export const revalidate = 60;
 
@@ -43,13 +40,13 @@ export async function generateMetadata({
 
   return {
     title,
-    description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+    description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and school area on HomeScope GTA.`,
     alternates: {
       canonical: `${SITE_CONFIG.baseUrl}/listings`
     },
     openGraph: {
       title,
-      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and school area on HomeScope GTA.`,
       url: `${SITE_CONFIG.baseUrl}/listings`,
       siteName: SITE_CONFIG.name,
       type: "website",
@@ -58,7 +55,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and map area on HomeScope GTA.`,
+      description: `Browse ${descriptionTransaction} in ${descriptionCity}. Filter by price, beds, baths, property type, and school area on HomeScope GTA.`,
       images: ["/og-image.png"]
     },
     robots: hasSearchFilters
@@ -110,27 +107,30 @@ export default async function ListingsPage({
     <section className="site-container py-12">
       <ListingReturnMemory currentUrl={currentListingsUrl} />
       <SearchTracker filters={filters} resultsTotal={results.total} />
-      <h1 className="font-heading text-4xl text-brand-900">Find Your Next Home in the GTA</h1>
-      <p className="mt-2 text-brand-700">
-        Browse available homes in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-4xl text-brand-900">Find Your Next Home in the GTA</h1>
+          <p className="mt-2 text-brand-700">
+            Browse available homes in Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto.
+          </p>
+        </div>
+        <Link
+          href={buildMapSearchUrl(searchParams)}
+          className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-5 py-2 text-sm font-semibold text-brand-900 shadow-sm transition hover:border-brand-400 hover:bg-brand-50"
+        >
+          <MapPinned className="h-4 w-4" />
+          Open Map Search
+        </Link>
+      </div>
 
       <div className="mt-6">
         <ListingFilters filters={filters} schools={schools} />
       </div>
-      <div className="mt-4">
-        <ListingsMapSearch
-          initialListings={results.items}
-          initialBounds={{
-            minLatitude: filters.minLatitude,
-            maxLatitude: filters.maxLatitude,
-            minLongitude: filters.minLongitude,
-            maxLongitude: filters.maxLongitude
-          }}
-        />
-      </div>
 
-      <p className="mt-6 text-sm text-brand-700">{results.total} listing(s) found</p>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-brand-700">{results.total} listing(s) found</p>
+        <SaveSearchButton filters={filters} resultsTotal={results.total} />
+      </div>
 
       {results.items.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-brand-100 bg-white p-10 text-center shadow-soft">
@@ -164,6 +164,14 @@ function hasActiveSearchParams(searchParams: { [key: string]: string | string[] 
 }
 
 function buildCurrentListingsUrl(searchParams: { [key: string]: string | string[] | undefined }): string {
+  return buildUrlWithSearchParams("/listings", searchParams);
+}
+
+function buildMapSearchUrl(searchParams: { [key: string]: string | string[] | undefined }): string {
+  return buildUrlWithSearchParams("/map-search", searchParams);
+}
+
+function buildUrlWithSearchParams(basePath: string, searchParams: { [key: string]: string | string[] | undefined }): string {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(searchParams)) {
@@ -175,5 +183,5 @@ function buildCurrentListingsUrl(searchParams: { [key: string]: string | string[
   }
 
   const query = params.toString();
-  return query ? `/listings?${query}` : "/listings";
+  return query ? `${basePath}?${query}` : basePath;
 }

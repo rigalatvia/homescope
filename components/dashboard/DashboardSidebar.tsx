@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, House, LayoutDashboard, LogOut } from "lucide-react";
+import { Bell, Heart, House, LayoutDashboard, LogOut } from "lucide-react";
 import type { User } from "firebase/auth";
 
 interface DashboardSidebarProps {
@@ -45,6 +45,13 @@ export function DashboardSidebar({ user, onSignOut }: DashboardSidebarProps) {
         >
           <Heart className="h-4 w-4" />
           Saved Homes
+        </Link>
+        <Link
+          href="/dashboard#saved-searches"
+          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 hover:text-brand-900"
+        >
+          <Bell className="h-4 w-4" />
+          Saved Searches
         </Link>
         <Link
           href="/dashboard#my-showings"

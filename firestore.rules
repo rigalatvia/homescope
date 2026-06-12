@@ -24,6 +24,26 @@ service cloud.firestore {
                     && request.resource.data.listingId == resource.data.listingId;
     }
 
+    match /savedSearches/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.label is string
+                    && request.resource.data.path is string
+                    && request.resource.data.queryString is string
+                    && request.resource.data.filters is map
+                    && request.resource.data.alertsEnabled is bool
+                    && request.resource.data.alertFrequency in ["instant", "daily", "weekly"];
+
+      allow read, delete: if request.auth != null
+                          && resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.alertsEnabled is bool
+                    && request.resource.data.alertFrequency in ["instant", "daily", "weekly"];
+    }
+
     // Private operational collections: server only
     match /listingSnapshots/{docId} {
       allow read, write: if false;

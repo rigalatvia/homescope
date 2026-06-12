@@ -166,6 +166,29 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
     ]
   },
   {
+    id: "mortgage-payment-calculator",
+    title: "Ontario Mortgage Payment Calculator",
+    href: "/guides/mortgage-payment-calculator-ontario",
+    keywords: [
+      "mortgage calculator",
+      "mortgage payment",
+      "monthly payment",
+      "carrying cost",
+      "affordability",
+      "down payment",
+      "interest rate",
+      "amortization",
+      "mortgage term",
+      "property tax",
+      "condo fees"
+    ],
+    summary: "Estimates monthly mortgage principal, interest, and common carrying costs for Ontario and GTA homes.",
+    answer: [
+      "The mortgage payment calculator estimates monthly principal and interest from purchase price, down payment, rate, amortization, and term.",
+      "It also lets visitors add monthly property tax, condo fees, and heating estimates so they can compare a broader monthly carrying cost before reviewing financing with a mortgage professional."
+    ]
+  },
+  {
     id: "about-homescope",
     title: "About HomeScope GTA",
     href: "/about",

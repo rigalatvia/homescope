@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BriefcaseBusiness, ClipboardCheck, FolderKanban, KeyRound } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Calculator, ClipboardCheck, KeyRound } from "lucide-react";
 import { FeaturedListingsPreview } from "@/components/home/featured-listings-preview";
 import { HeroSection } from "@/components/home/hero";
 import { ServiceAreasSection } from "@/components/home/service-areas";
@@ -20,16 +20,16 @@ const FEATURED_GUIDES = [
     icon: BriefcaseBusiness
   },
   {
+    href: "/guides/mortgage-payment-calculator-ontario",
+    title: "Ontario Mortgage Payment Calculator",
+    description: "Estimate payments, down payment, and monthly carrying costs before comparing homes.",
+    icon: Calculator
+  },
+  {
     href: "/guides/leasing",
     title: "Ontario Leasing Guide",
     description: "A practical leasing flow from showings and applications to signing and move-in.",
     icon: KeyRound
-  },
-  {
-    href: "/guides/lease-documents",
-    title: "Documents Needed to Rent in Canada",
-    description: "The supporting documents renters often need before applying in Canada and Ontario.",
-    icon: FolderKanban
   }
 ] as const;
 

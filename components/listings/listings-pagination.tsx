@@ -5,13 +5,14 @@ interface ListingsPaginationProps {
   page: number;
   totalPages: number;
   filters: ListingFilters;
+  basePath?: string;
 }
 
-export function ListingsPagination({ page, totalPages, filters }: ListingsPaginationProps) {
+export function ListingsPagination({ page, totalPages, filters, basePath = "/listings" }: ListingsPaginationProps) {
   if (totalPages <= 1) return null;
 
-  const prev = page > 1 ? buildUrl(page - 1, filters) : null;
-  const next = page < totalPages ? buildUrl(page + 1, filters) : null;
+  const prev = page > 1 ? buildUrl(page - 1, filters, basePath) : null;
+  const next = page < totalPages ? buildUrl(page + 1, filters, basePath) : null;
 
   return (
     <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-3">
@@ -36,7 +37,7 @@ export function ListingsPagination({ page, totalPages, filters }: ListingsPagina
   );
 }
 
-function buildUrl(page: number, filters: ListingFilters): string {
+function buildUrl(page: number, filters: ListingFilters, basePath: string): string {
   const params = new URLSearchParams();
   if (filters.city) params.set("city", filters.city);
   if (filters.transactionType) params.set("transactionType", filters.transactionType);
@@ -59,5 +60,5 @@ function buildUrl(page: number, filters: ListingFilters): string {
   if (filters.schoolSlug) params.set("schoolSlug", filters.schoolSlug);
   if (filters.schoolRadiusKm != null) params.set("schoolRadiusKm", String(filters.schoolRadiusKm));
   params.set("page", String(page));
-  return `/listings?${params.toString()}`;
+  return `${basePath}?${params.toString()}`;
 }

@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BookOpenText,
   BriefcaseBusiness,
+  Calculator,
   ClipboardCheck,
   Compass,
   FileArchive,
@@ -39,6 +40,13 @@ const GUIDE_CARDS = [
     icon: Landmark,
     title: "Ontario Land Transfer Tax Calculator",
     description: "Estimate Ontario and Toronto land transfer tax, including first-time buyer rebates."
+  },
+  {
+    href: "/guides/mortgage-payment-calculator-ontario",
+    category: "Mortgage Calculator",
+    icon: Calculator,
+    title: "Ontario Mortgage Payment Calculator",
+    description: "Estimate monthly mortgage payments, down payment, and common carrying costs for GTA homes."
   },
   {
     href: "/guides/organize-real-estate-documents-canada",
@@ -109,6 +117,7 @@ const PRIORITY_GUIDE_HREFS = new Set([
   "/guides/first-time-home-buyer-ontario",
   "/guides/documents-needed-buy-house-toronto",
   "/guides/land-transfer-tax-calculator-ontario",
+  "/guides/mortgage-payment-calculator-ontario",
   "/guides/leasing",
   "/guides/lease-documents"
 ]);

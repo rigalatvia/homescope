@@ -6,13 +6,30 @@ import { Search, MapPinned, ShieldCheck } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { MyShowingsSection } from "@/components/dashboard/MyShowingsSection";
 import { SavedHomesSection } from "@/components/dashboard/SavedHomesSection";
+import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedHomes } from "@/hooks/useSavedHomes";
+import { useSavedSearches } from "@/hooks/useSavedSearches";
 
 export function DashboardShell() {
   const { user, loading, signOutUser } = useAuth();
-  const { savedListings, loading: savedHomesLoading, error, removeHome } = useSavedHomes();
+  const {
+    savedListings,
+    loading: savedHomesLoading,
+    error,
+    removeHome,
+    updateNotes,
+    isPending: isSavedHomePending
+  } = useSavedHomes();
+  const {
+    savedSearches,
+    loading: savedSearchesLoading,
+    error: savedSearchesError,
+    removeSearch,
+    updateAlerts,
+    isPending: isSavedSearchPending
+  } = useSavedSearches();
 
   if (loading) {
     return (
@@ -36,7 +53,7 @@ export function DashboardShell() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Dashboard Access</p>
           <h1 className="mt-3 font-heading text-4xl text-brand-900 sm:text-5xl">Sign in to view your dashboard</h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-brand-700">
-            Save homes and keep track of your showing requests.
+            Save homes, searches, alerts, and showing requests.
           </p>
           <div className="mt-8 flex justify-center">
             <SignInButton
@@ -72,6 +89,17 @@ export function DashboardShell() {
             loading={savedHomesLoading}
             error={error}
             onRemove={removeHome}
+            onUpdateNotes={updateNotes}
+            isPending={isSavedHomePending}
+          />
+
+          <SavedSearchesSection
+            savedSearches={savedSearches}
+            loading={savedSearchesLoading}
+            error={savedSearchesError}
+            isPending={isSavedSearchPending}
+            onUpdateAlerts={updateAlerts}
+            onRemove={removeSearch}
           />
 
           <MyShowingsSection user={user} />

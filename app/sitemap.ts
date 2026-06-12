@@ -15,6 +15,7 @@ const STATIC_ROUTES = [
   "/guides/first-time-home-buyer-ontario",
   "/guides/documents-needed-buy-house-toronto",
   "/guides/land-transfer-tax-calculator-ontario",
+  "/guides/mortgage-payment-calculator-ontario",
   "/guides/organize-real-estate-documents-canada",
   "/guides/rental-application-ontario",
   "/guides/buying",
