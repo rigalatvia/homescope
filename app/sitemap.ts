@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { SITE_CONFIG } from "@/config/site";
 import { PRIMARY_MARKET_PAGES } from "@/lib/locations/markets";
+import { NEIGHBORHOOD_PAGES } from "@/lib/locations/neighborhoods";
+import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
 import { getAllPublicListings } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
 
@@ -12,6 +14,7 @@ const STATIC_ROUTES = [
   "/guides",
   "/guides/first-time-home-buyer-ontario",
   "/guides/documents-needed-buy-house-toronto",
+  "/guides/land-transfer-tax-calculator-ontario",
   "/guides/organize-real-estate-documents-canada",
   "/guides/rental-application-ontario",
   "/guides/buying",
@@ -35,6 +38,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85
   }));
 
+  const neighborhoodPages: MetadataRoute.Sitemap = NEIGHBORHOOD_PAGES.map((neighborhood) => ({
+    url: `${SITE_CONFIG.baseUrl}/locations/${neighborhood.city.toLowerCase().replace(/\s+/g, "-")}/${neighborhood.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "daily",
+    priority: 0.75
+  }));
+
+  const marketReportPages: MetadataRoute.Sitemap = PRIMARY_MARKET_PAGES.map((market) => ({
+    url: `${SITE_CONFIG.baseUrl}/market-reports/${market.slug}/${CURRENT_MARKET_REPORT.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.75
+  }));
+
   const listings = await getAllPublicListings();
   const listingPages = listings.map((listing) => ({
     url: `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`,
@@ -51,5 +68,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8
   }));
 
-  return [...staticPages, ...locationPages, ...schoolPages, ...listingPages];
+  return [...staticPages, ...locationPages, ...neighborhoodPages, ...marketReportPages, ...schoolPages, ...listingPages];
 }

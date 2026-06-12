@@ -11,6 +11,7 @@ import {
   FolderKanban,
   Home,
   KeyRound,
+  Landmark,
   Search,
   Sparkles
 } from "lucide-react";
@@ -31,6 +32,13 @@ const GUIDE_CARDS = [
     icon: BriefcaseBusiness,
     title: "Documents Needed to Buy a House in Toronto",
     description: "A buyer-focused document guide for Toronto purchases, mortgage approvals, and closing."
+  },
+  {
+    href: "/guides/land-transfer-tax-calculator-ontario",
+    category: "Closing Costs",
+    icon: Landmark,
+    title: "Ontario Land Transfer Tax Calculator",
+    description: "Estimate Ontario and Toronto land transfer tax, including first-time buyer rebates."
   },
   {
     href: "/guides/organize-real-estate-documents-canada",
@@ -100,6 +108,7 @@ const GUIDE_PATHS = [
 const PRIORITY_GUIDE_HREFS = new Set([
   "/guides/first-time-home-buyer-ontario",
   "/guides/documents-needed-buy-house-toronto",
+  "/guides/land-transfer-tax-calculator-ontario",
   "/guides/leasing",
   "/guides/lease-documents"
 ]);

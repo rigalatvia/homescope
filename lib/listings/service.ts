@@ -5,6 +5,8 @@ import {
   getPublicListingsPage as getPublicListingsPageFromFirestore,
   getPublicListingsByIds as getPublicListingsByIdsFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
+  getListingStatsByMunicipality as getListingStatsByMunicipalityFromFirestore,
+  getMonthlyMarketStatsByMunicipality as getMonthlyMarketStatsByMunicipalityFromFirestore,
   getListingsNearCoordinate as getListingsNearCoordinateFromFirestore,
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
@@ -127,9 +129,22 @@ export async function getFeaturedListings(): Promise<Listing[]> {
   return ordered;
 }
 
-export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
-  const listings = await getListingsByMunicipalityFromFirestore(city);
+export async function getListingsByMunicipality(city: string, limit = 200): Promise<Listing[]> {
+  const listings = await getListingsByMunicipalityFromFirestore(city, limit);
   return sortListingsWithFeaturedPriority(listings);
+}
+
+export async function getListingStatsByMunicipality(city: string) {
+  return getListingStatsByMunicipalityFromFirestore(city);
+}
+
+export async function getMonthlyMarketStatsByMunicipality(options: {
+  municipality: string;
+  monthStartIso: string;
+  nextMonthStartIso: string;
+  asOfIso: string;
+}) {
+  return getMonthlyMarketStatsByMunicipalityFromFirestore(options);
 }
 
 export async function getNearbyListingCandidates(options: {

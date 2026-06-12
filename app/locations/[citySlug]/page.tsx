@@ -5,7 +5,10 @@ import { ArrowRight, CheckCircle2, GraduationCap, Home } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
 import { SITE_CONFIG } from "@/config/site";
 import { PRIMARY_MARKET_PAGES, getMarketBySlug } from "@/lib/locations/markets";
-import { getListingsByMunicipality } from "@/lib/listings/service";
+import { getNeighborhoodsByCity } from "@/lib/locations/neighborhoods";
+import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
+import { getListingStatsByMunicipality, getListingsByMunicipality } from "@/lib/listings/service";
+import { getSchools } from "@/lib/schools/service";
 import type { Listing } from "@/types/listing";
 
 export const revalidate = 60;
@@ -46,13 +49,16 @@ export default async function LocationPage({ params }: { params: { citySlug: str
   const market = getMarketBySlug(params.citySlug);
   if (!market) notFound();
 
-  const cityListings = await getListingsByMunicipality(market.city);
+  const [cityListings, listingStats, citySchools] = await Promise.all([
+    getListingsByMunicipality(market.city, 1000),
+    getListingStatsByMunicipality(market.city),
+    getSchools({ municipality: market.city })
+  ]);
   const listings = selectRepresentativeListings(cityListings, 6);
-  const saleCount = cityListings.filter((listing) => listing.transactionType === "sale").length;
-  const leaseCount = cityListings.filter((listing) => listing.transactionType === "lease").length;
   const pageUrl = `${SITE_CONFIG.baseUrl}/locations/${market.slug}`;
   const listingSearchUrl = `/listings?city=${encodeURIComponent(market.city)}`;
   const schoolSearchUrl = `/schools?municipality=${encodeURIComponent(market.city)}`;
+  const neighborhoods = getNeighborhoodsByCity(market.city);
   const jsonLd = buildLocationJsonLd({
     city: market.city,
     title: market.title,
@@ -79,6 +85,12 @@ export default async function LocationPage({ params }: { params: { citySlug: str
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
+                href={`/market-reports/${market.slug}/${CURRENT_MARKET_REPORT.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                {CURRENT_MARKET_REPORT.label} Market Stats
+              </Link>
+              <Link
                 href={schoolSearchUrl}
                 className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
               >
@@ -91,10 +103,10 @@ export default async function LocationPage({ params }: { params: { citySlug: str
           <aside className="rounded-2xl border border-brand-100 bg-brand-50/70 p-5">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">At a Glance</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Metric label="Active" value={String(cityListings.length)} />
-              <Metric label="For Sale" value={String(saleCount)} />
-              <Metric label="For Lease" value={String(leaseCount)} />
-              <Metric label="Schools" value="Directory" />
+              <Metric label="Active" value={String(listingStats.activeCount)} />
+              <Metric label="For Sale" value={String(listingStats.saleCount)} />
+              <Metric label="For Lease" value={String(listingStats.leaseCount)} />
+              <Metric label="Schools" value={String(citySchools.length)} />
             </div>
           </aside>
         </div>
@@ -108,6 +120,35 @@ export default async function LocationPage({ params }: { params: { citySlug: str
           ))}
         </div>
       </div>
+
+      {neighborhoods.length > 0 ? (
+        <section className="py-10 sm:py-12">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-heading text-3xl text-brand-900">Explore {market.city} Neighborhoods</h2>
+              <p className="mt-2 max-w-2xl text-brand-700">
+                Compare current listings, school research starting points, and price stats in popular local areas.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {neighborhoods.map((neighborhood) => (
+              <Link
+                key={neighborhood.slug}
+                href={`/locations/${market.slug}/${neighborhood.slug}`}
+                className="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-brand-300"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">
+                  {market.city} Area
+                </p>
+                <h3 className="mt-3 font-heading text-2xl text-brand-900">{neighborhood.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-brand-700">{neighborhood.intro}</p>
+                <span className="mt-4 inline-flex text-sm font-semibold text-brand-900">View neighborhood</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="py-10 sm:py-12">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

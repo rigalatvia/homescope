@@ -19,6 +19,7 @@ export function SiteHeader() {
     { href: "/guides", label: "All Guides" },
     { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
     { href: "/guides/documents-needed-buy-house-toronto", label: "Toronto Buyer Documents" },
+    { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator" },
     { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" },
     { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" },
     { href: "/guides/leasing", label: "Leasing Guide" },

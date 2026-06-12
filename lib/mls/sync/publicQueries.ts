@@ -1,7 +1,7 @@
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { allowedMunicipalities } from "@/lib/mls/config";
 import type { MLSListingFirestoreDocument } from "@/lib/mls/types";
-import type { Query } from "firebase-admin/firestore";
+import { AggregateField, type Query } from "firebase-admin/firestore";
 
 const LISTINGS_COLLECTION = "listings";
 
@@ -22,6 +22,19 @@ export interface PublicListingsPageResult {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+export interface MunicipalityListingStats {
+  activeCount: number;
+  saleCount: number;
+  leaseCount: number;
+}
+
+export interface MunicipalityMonthlyMarketStats extends MunicipalityListingStats {
+  averageSalePrice: number | null;
+  averageLeasePrice: number | null;
+  newListingsCount: number;
+  averageDaysOnMarket: number | null;
 }
 
 export interface NearbyListingsQuery {
@@ -110,6 +123,97 @@ export async function getListingsByMunicipality(
   return snapshot.docs.map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument));
 }
 
+export async function getListingStatsByMunicipality(
+  municipality: string
+): Promise<MunicipalityListingStats> {
+  if (!allowedMunicipalities.includes(municipality as (typeof allowedMunicipalities)[number])) {
+    return { activeCount: 0, saleCount: 0, leaseCount: 0 };
+  }
+
+  const firestore = getFirebaseAdminFirestore();
+  const baseQuery = firestore
+    .collection(LISTINGS_COLLECTION)
+    .where("isVisible", "==", true)
+    .where("municipality", "==", municipality);
+
+  const [activeSnapshot, saleSnapshot, leaseSnapshot] = await Promise.all([
+    baseQuery.count().get(),
+    baseQuery.where("transactionType", "==", "sale").count().get(),
+    baseQuery.where("transactionType", "==", "lease").count().get()
+  ]);
+
+  return {
+    activeCount: activeSnapshot.data().count,
+    saleCount: saleSnapshot.data().count,
+    leaseCount: leaseSnapshot.data().count
+  };
+}
+
+export async function getMonthlyMarketStatsByMunicipality(options: {
+  municipality: string;
+  monthStartIso: string;
+  nextMonthStartIso: string;
+  asOfIso: string;
+}): Promise<MunicipalityMonthlyMarketStats> {
+  const { municipality, monthStartIso, nextMonthStartIso, asOfIso } = options;
+  if (!allowedMunicipalities.includes(municipality as (typeof allowedMunicipalities)[number])) {
+    return {
+      activeCount: 0,
+      saleCount: 0,
+      leaseCount: 0,
+      averageSalePrice: null,
+      averageLeasePrice: null,
+      newListingsCount: 0,
+      averageDaysOnMarket: null
+    };
+  }
+
+  const firestore = getFirebaseAdminFirestore();
+  const baseQuery = firestore
+    .collection(LISTINGS_COLLECTION)
+    .where("isVisible", "==", true)
+    .where("municipality", "==", municipality);
+  const saleQuery = baseQuery.where("transactionType", "==", "sale");
+  const leaseQuery = baseQuery.where("transactionType", "==", "lease");
+
+  const [activeSnapshot, saleSnapshot, leaseSnapshot, saleAverageSnapshot, leaseAverageSnapshot, createdAtSnapshot] =
+    await Promise.all([
+      baseQuery.count().get(),
+      saleQuery.count().get(),
+      leaseQuery.count().get(),
+      saleQuery.aggregate({ averagePrice: AggregateField.average("price") }).get(),
+      leaseQuery.aggregate({ averagePrice: AggregateField.average("price") }).get(),
+      baseQuery.select("createdAt").get()
+    ]);
+
+  const asOfTime = new Date(asOfIso).getTime();
+  const monthStartTime = new Date(monthStartIso).getTime();
+  const nextMonthStartTime = new Date(nextMonthStartIso).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const dayValues = createdAtSnapshot.docs
+    .map((doc) => new Date((doc.data() as { createdAt?: string }).createdAt || "").getTime())
+    .filter((createdAt) => Number.isFinite(createdAt) && createdAt <= asOfTime)
+    .map((createdAt) => Math.max(0, Math.round((asOfTime - createdAt) / dayMs)));
+  const newListingsCount = createdAtSnapshot.docs
+    .map((doc) => new Date((doc.data() as { createdAt?: string }).createdAt || "").getTime())
+    .filter(
+      (createdAt) =>
+        Number.isFinite(createdAt) && createdAt >= monthStartTime && createdAt < nextMonthStartTime
+    ).length;
+
+  return {
+    activeCount: activeSnapshot.data().count,
+    saleCount: saleSnapshot.data().count,
+    leaseCount: leaseSnapshot.data().count,
+    averageSalePrice: roundNullable(saleAverageSnapshot.data().averagePrice),
+    averageLeasePrice: roundNullable(leaseAverageSnapshot.data().averagePrice),
+    newListingsCount,
+    averageDaysOnMarket: dayValues.length
+      ? Math.round(dayValues.reduce((total, value) => total + value, 0) / dayValues.length)
+      : null
+  };
+}
+
 export async function getListingsNearCoordinate(
   filters: NearbyListingsQuery
 ): Promise<MLSListingFirestoreDocument[]> {
@@ -157,6 +261,10 @@ export async function getListingsNearCoordinate(
   }
 
   return results;
+}
+
+function roundNullable(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value) : null;
 }
 
 export async function getFilteredListings(filters: {

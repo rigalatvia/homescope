@@ -9,6 +9,8 @@ import {
   getFilteredListings as getFilteredMLSListings,
   getListingsByAgentKey as getMLSListingsByAgentKey,
   getListingsByMunicipality as getMLSListingsByMunicipality,
+  getListingStatsByMunicipality as getMLSListingStatsByMunicipality,
+  getMonthlyMarketStatsByMunicipality as getMLSMonthlyMarketStatsByMunicipality,
   getListingsNearCoordinate as getMLSListingsNearCoordinate,
   getPublicListingBySlug as getMLSListingBySlug,
   getPublicListings as getPublicMLSListings
@@ -93,9 +95,22 @@ export async function getPublicListingBySlug(slug: string): Promise<Listing | nu
   return mapped.isPubliclyAdvertisable ? mapped : null;
 }
 
-export async function getListingsByMunicipality(city: string): Promise<Listing[]> {
-  const listings = await getMLSListingsByMunicipality(city, 200);
+export async function getListingsByMunicipality(city: string, limit = 200): Promise<Listing[]> {
+  const listings = await getMLSListingsByMunicipality(city, limit);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
+}
+
+export async function getListingStatsByMunicipality(city: string) {
+  return getMLSListingStatsByMunicipality(city);
+}
+
+export async function getMonthlyMarketStatsByMunicipality(options: {
+  municipality: string;
+  monthStartIso: string;
+  nextMonthStartIso: string;
+  asOfIso: string;
+}) {
+  return getMLSMonthlyMarketStatsByMunicipality(options);
 }
 
 export async function getListingsNearCoordinate(filters: {
