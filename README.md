@@ -259,17 +259,25 @@ Response includes sync counts:
 - `archived`
 - `failed`
 
-### 3-Hour Scheduled Sync
+### Hourly Scheduled Sync + Saved Search Alerts
 
 Recommended scheduler endpoint:
 - `POST /api/internal/mls-sync/scheduled`
 - required header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
-- executes full DDF sync (`ddf-treb`) and returns counts
+- executes incremental DDF sync (`ddf-treb`) and returns counts
+- stale cleanup is throttled by `MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS` so hourly runs do not reconcile the full active feed every hour
 
-Use Cloud Scheduler (or Firebase scheduled function wiring) to call this endpoint every 3 hours.
+Saved-search alert endpoint:
+- `POST /api/internal/saved-search-alerts/daily`
+- required header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
+- checks saved searches after listing data has synced
+- Instant alerts are checked on every scheduled alert run; Daily and Weekly alerts respect their saved frequency
 
-Example cron:
-- `0 */3 * * *`
+Use Cloud Scheduler (or Firebase scheduled function wiring) to call these endpoints hourly.
+
+Example crons:
+- MLS sync: `0 * * * *`
+- saved search alerts: `15 * * * *`
 
 ### DDF Environment Variables (Server-Only)
 

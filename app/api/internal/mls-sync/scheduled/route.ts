@@ -11,6 +11,7 @@ const SETTINGS_COLLECTION = "settings";
 const SCHEDULER_STATUS_DOC_ID = "mlsSchedulerStatus";
 const DEFAULT_INCREMENTAL_RUN_LIMIT = 20;
 const DEFAULT_SAFE_RUNTIME_SECONDS = 240;
+const DEFAULT_CLEANUP_INTERVAL_HOURS = 24;
 
 function buildScheduledCounts(results: Array<MLSSyncResult | null>) {
   return results.reduce(
@@ -65,6 +66,15 @@ function elapsedSeconds(startedAtMs: number): number {
   return (Date.now() - startedAtMs) / 1000;
 }
 
+function hoursSince(value: unknown): number | null {
+  if (typeof value !== "string" || !value) return null;
+
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return null;
+
+  return (Date.now() - timestamp) / (1000 * 60 * 60);
+}
+
 export async function POST(request: Request) {
   const schedulerToken = await getServerSecretValue("MLS_SCHEDULER_TOKEN");
   const requestToken = request.headers.get("x-scheduler-token");
@@ -92,6 +102,10 @@ export async function POST(request: Request) {
     "MLS_SCHEDULED_SAFE_RUNTIME_SECONDS",
     DEFAULT_SAFE_RUNTIME_SECONDS
   );
+  const cleanupIntervalHours = getPositiveIntegerEnv(
+    "MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS",
+    DEFAULT_CLEANUP_INTERVAL_HOURS
+  );
 
   try {
     try {
@@ -117,7 +131,11 @@ export async function POST(request: Request) {
       console.error("[mls-sync] Scheduled incremental step failed", error);
     }
 
-    const cleanupAttempted = !incrementalError && !incrementalIncomplete;
+    const schedulerStatusSnap = await firestore.collection(SETTINGS_COLLECTION).doc(SCHEDULER_STATUS_DOC_ID).get();
+    const schedulerStatus = schedulerStatusSnap.data() as { cleanupLastRunAt?: string } | undefined;
+    const cleanupAgeHours = hoursSince(schedulerStatus?.cleanupLastRunAt);
+    const cleanupDue = cleanupAgeHours === null || cleanupAgeHours >= cleanupIntervalHours;
+    const cleanupAttempted = !incrementalError && !incrementalIncomplete && cleanupDue;
     if (cleanupAttempted) {
       try {
         cleanupResult = await runStaleCleanup("ddf-treb");
@@ -132,7 +150,10 @@ export async function POST(request: Request) {
       buildScheduledCounts([cleanupResult])
     );
     const combinedError = [incrementalError, cleanupError].filter(Boolean).join(" | ") || null;
-    const combinedNote = incrementalIncomplete;
+    const cleanupNote = cleanupDue
+      ? null
+      : `Scheduled cleanup skipped; last cleanup ran ${cleanupAgeHours?.toFixed(1)} hour(s) ago.`;
+    const combinedNote = [incrementalIncomplete, cleanupNote].filter(Boolean).join(" | ") || null;
     const lastRunMode = cleanupAttempted ? "incremental+cleanup" : "incremental";
     const overallStatus = cleanupError || incrementalError ? "failed" : "success";
 
@@ -143,7 +164,14 @@ export async function POST(request: Request) {
         lastRunStatus: overallStatus,
         lastRunCounts: counts,
         lastError: combinedError,
-        lastNote: combinedNote
+        lastNote: combinedNote,
+        ...(cleanupAttempted
+          ? {
+              cleanupLastRunAt: new Date().toISOString(),
+              cleanupLastRunStatus: cleanupError ? "failed" : "success",
+              cleanupIntervalHours
+            }
+          : { cleanupIntervalHours })
       },
       { merge: true }
     );
@@ -153,7 +181,7 @@ export async function POST(request: Request) {
         {
           error: "Scheduled MLS sync completed with errors.",
           detail: combinedError,
-          schedule: "daily_3am",
+          schedule: "hourly_incremental",
           mode: lastRunMode,
           counts,
           partial: Boolean(incrementalIncomplete),
@@ -170,7 +198,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        schedule: "daily_3am",
+        schedule: "hourly_incremental",
         mode: lastRunMode,
         counts,
         partial: Boolean(incrementalIncomplete),

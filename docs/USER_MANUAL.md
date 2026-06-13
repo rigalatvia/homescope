@@ -438,7 +438,8 @@ That means:
 
 - check `/admin`
 - check `/admin/sync`
-- confirm nightly incremental status succeeded
+- confirm hourly incremental status is succeeding
+- confirm saved-search alert scheduler is succeeding
 - check new leads
 - check new contacts
 

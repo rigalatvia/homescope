@@ -43,8 +43,10 @@ flowchart TD
     D --> I["Toronto Board DDF Feed"]
     E --> F
     J["Cloud Scheduler"] --> K["/api/internal/mls-sync/scheduled"]
+    J --> L["/api/internal/saved-search-alerts/daily"]
     K --> I
     K --> F
+    L --> F
     C --> F
 ```
 
@@ -754,9 +756,19 @@ Required header:
 
 - `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
 
-Current documented schedule in UI behavior:
+Current scheduler setup:
 
-- nightly incremental is expected operationally
+- hourly MLS incremental sync:
+  - `POST https://homescopegta.ca/api/internal/mls-sync/scheduled`
+  - header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
+  - cron: `0 * * * *`
+- hourly saved-search alerts, after MLS sync:
+  - `POST https://homescopegta.ca/api/internal/saved-search-alerts/daily`
+  - header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
+  - cron: `15 * * * *`
+
+The saved-search alert job should run about 10-15 minutes after MLS sync so Instant alerts can react to newly synced data.
+The MLS scheduled endpoint is safe to run hourly; active-feed stale cleanup is throttled by `MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS` and defaults to once every 24 hours.
 
 #### Step 8. Run initial sync
 
