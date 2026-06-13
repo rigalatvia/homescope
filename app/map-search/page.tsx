@@ -8,6 +8,7 @@ import { ListingsMapSearch } from "@/components/listings/listings-map-search";
 import { ListingsPagination } from "@/components/listings/listings-pagination";
 import { SaveSearchButton } from "@/components/listings/save-search-button";
 import { SearchTracker } from "@/components/listings/search-tracker";
+import { SITE_CONFIG } from "@/config/site";
 import { parseListingFilters } from "@/lib/listings/filters";
 import { getPublicListings } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
@@ -19,11 +20,14 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "GTA Map Search",
   description: "Search GTA homes for sale and lease with an interactive map on HomeScope GTA.",
+  alternates: {
+    canonical: `${SITE_CONFIG.baseUrl}/map-search`
+  },
   robots: {
-    index: false,
+    index: true,
     follow: true,
     googleBot: {
-      index: false,
+      index: true,
       follow: true
     }
   }

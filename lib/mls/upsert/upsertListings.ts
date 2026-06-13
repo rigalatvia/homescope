@@ -105,10 +105,10 @@ function pickTrackedFields(doc: MLSListingFirestoreDocument): Partial<MLSListing
   return {
     price: doc.price,
     status: doc.status,
-    propertyType: doc.propertyType,
-    commonInterest: doc.commonInterest,
-    structureType: doc.structureType,
-    propertyAttached: doc.propertyAttached,
+    propertyType: doc.propertyType ?? null,
+    commonInterest: doc.commonInterest ?? null,
+    structureType: doc.structureType ?? null,
+    propertyAttached: doc.propertyAttached ?? null,
     publicRemarks: doc.publicRemarks,
     isVisible: doc.isVisible,
     hiddenReason: doc.hiddenReason
