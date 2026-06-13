@@ -54,7 +54,7 @@ export default function MortgagePaymentCalculatorOntarioPage() {
       relatedLinks={[
         { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
         { href: "/guides", label: "All Guides", description: "Browse more Ontario buyer and renter resources." },
-        { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator", description: "Estimate another major Ontario closing cost." },
+        { href: "/tools/land-transfer-tax-calculator", label: "Land Transfer Tax Calculator", description: "Estimate another major Ontario closing cost." },
         { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist", description: "See where payment planning fits into the buying process." },
         { href: "/listings", label: "Listings", description: "Search active GTA listings while comparing affordability." }
       ]}
@@ -123,7 +123,7 @@ export default function MortgagePaymentCalculatorOntarioPage() {
         description="Use the calculator beside current listings so price, payment, and closing-cost planning stay connected."
         links={[
           { href: "/listings", label: "Browse Listings" },
-          { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator", variant: "secondary" }
+          { href: "/tools/land-transfer-tax-calculator", label: "Land Transfer Tax Calculator", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>

@@ -78,7 +78,7 @@ export default async function ListingDetailPage({
         ]
       : [
           { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
-          { href: "/guides/mortgage-payment-calculator-ontario", label: "Mortgage Payment Calculator" },
+          { href: "/tools/mortgage-calculator", label: "Mortgage Payment Calculator" },
           { href: "/guides/documents-needed-buy-house-toronto", label: "Buyer Documents Guide" },
           { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" }
         ];

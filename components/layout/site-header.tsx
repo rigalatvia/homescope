@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Heart, LayoutDashboard, MapPinned } from "lucide-react";
+import { ChevronDown, Heart, LayoutDashboard, MapPinned, Wrench } from "lucide-react";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,8 +19,6 @@ export function SiteHeader() {
     { href: "/guides", label: "All Guides" },
     { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist" },
     { href: "/guides/documents-needed-buy-house-toronto", label: "Toronto Buyer Documents" },
-    { href: "/guides/land-transfer-tax-calculator-ontario", label: "Land Transfer Tax Calculator" },
-    { href: "/guides/mortgage-payment-calculator-ontario", label: "Mortgage Payment Calculator" },
     { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" },
     { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" },
     { href: "/guides/leasing", label: "Leasing Guide" },
@@ -61,6 +59,10 @@ export function SiteHeader() {
             <Link href="/map-search" className="inline-flex items-center gap-1 transition hover:text-brand-900">
               <MapPinned className="h-4 w-4" />
               Map
+            </Link>
+            <Link href="/tools" className="inline-flex items-center gap-1 transition hover:text-brand-900">
+              <Wrench className="h-4 w-4" />
+              Tools
             </Link>
             <Link href="/schools" className="transition hover:text-brand-900">
               Schools
@@ -136,6 +138,10 @@ export function SiteHeader() {
           <Link href="/map-search" className="inline-flex items-center gap-1 transition hover:text-brand-900">
             <MapPinned className="h-4 w-4" />
             Map
+          </Link>
+          <Link href="/tools" className="inline-flex items-center gap-1 transition hover:text-brand-900">
+            <Wrench className="h-4 w-4" />
+            Tools
           </Link>
           <Link href="/schools" className="transition hover:text-brand-900">
             Schools

@@ -26,7 +26,7 @@ function buildInitialMessage(): LocalChatMessage {
     suggestedLinks: [
       { href: "/listings", label: "Browse Listings" },
       { href: "/schools", label: "Search Schools" },
-      { href: "/guides/mortgage-payment-calculator-ontario", label: "Mortgage Calculator" }
+      { href: "/tools/mortgage-calculator", label: "Mortgage Calculator" }
     ]
   };
 }

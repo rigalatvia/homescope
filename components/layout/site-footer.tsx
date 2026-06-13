@@ -31,6 +31,9 @@ export function SiteFooter() {
               <Link href="/guides" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 Guides
               </Link>
+              <Link href="/tools" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
+                Tools
+              </Link>
               <Link href="/about" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 About
               </Link>
@@ -56,13 +59,13 @@ export function SiteFooter() {
                 Toronto Buyer Documents
               </Link>
               <Link
-                href="/guides/land-transfer-tax-calculator-ontario"
+                href="/tools/land-transfer-tax-calculator"
                 className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
               >
                 Land Transfer Tax Calculator
               </Link>
               <Link
-                href="/guides/mortgage-payment-calculator-ontario"
+                href="/tools/mortgage-calculator"
                 className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
               >
                 Mortgage Payment Calculator

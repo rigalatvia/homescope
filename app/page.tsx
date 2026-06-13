@@ -20,7 +20,7 @@ const FEATURED_GUIDES = [
     icon: BriefcaseBusiness
   },
   {
-    href: "/guides/mortgage-payment-calculator-ontario",
+    href: "/tools/mortgage-calculator",
     title: "Ontario Mortgage Payment Calculator",
     description: "Estimate payments, down payment, and monthly carrying costs before comparing homes.",
     icon: Calculator

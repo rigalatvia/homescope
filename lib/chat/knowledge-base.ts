@@ -29,8 +29,29 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
     ],
     summary: "Explains the main HomeScope GTA workflows and where visitors should start.",
     answer: [
-      "Start with Listings if you want to search active homes, Schools if school-area research matters, Guides if you need buyer or renter education, and Dashboard if you are signed in and want to manage saved homes, saved searches, alerts, notes, and showing activity.",
+      "Start with Listings if you want to search active homes, Schools if school-area research matters, Tools if you want calculators or interactive search helpers, Guides if you need buyer or renter education, and Dashboard if you are signed in and want to manage saved homes, saved searches, alerts, notes, and showing activity.",
       "The most common flow is: filter listings, open a property detail page, save homes you like, save searches for alerts, compare saved homes in the dashboard, add private notes, and request a showing when a listing is worth a closer look."
+    ]
+  },
+  {
+    id: "tools-hub",
+    title: "Real Estate Tools",
+    href: "/tools",
+    keywords: [
+      "tools",
+      "calculator",
+      "calculators",
+      "mortgage calculator",
+      "land transfer tax calculator",
+      "map search",
+      "compare homes",
+      "notes",
+      "listing tools"
+    ],
+    summary: "Links visitors to calculators and interactive HomeScope GTA tools.",
+    answer: [
+      "The Tools page gathers HomeScope GTA's interactive features in one place: mortgage calculator, land transfer tax calculator, map search, saved search alerts, saved-home comparison, and private notes.",
+      "Use Tools when you want to calculate, compare, save, or organize. Use Guides when you want educational reading and checklists."
     ]
   },
   {
@@ -311,7 +332,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
   {
     id: "land-transfer-tax",
     title: "Ontario Land Transfer Tax Calculator",
-    href: "/guides/land-transfer-tax-calculator-ontario",
+    href: "/tools/land-transfer-tax-calculator",
     keywords: [
       "land transfer tax",
       "ltt",
@@ -331,7 +352,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
   {
     id: "mortgage-payment-calculator",
     title: "Ontario Mortgage Payment Calculator",
-    href: "/guides/mortgage-payment-calculator-ontario",
+    href: "/tools/mortgage-calculator",
     keywords: [
       "mortgage calculator",
       "mortgage payment",

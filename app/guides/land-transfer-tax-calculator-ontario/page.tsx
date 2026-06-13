@@ -57,6 +57,7 @@ export default function LandTransferTaxCalculatorOntarioPage() {
       ]}
       relatedLinks={[
         { href: "/", label: "Home", description: "Return to the main HomeScope GTA experience." },
+        { href: "/tools/mortgage-calculator", label: "Mortgage Calculator", description: "Estimate monthly carrying costs after closing costs." },
         { href: "/guides", label: "All Guides", description: "Browse more Ontario buyer and renter resources." },
         { href: "/guides/first-time-home-buyer-ontario", label: "First-Time Buyer Checklist", description: "See where land transfer tax fits into the buying process." },
         { href: "/guides/documents-needed-buy-house-toronto", label: "Toronto Buyer Documents", description: "Prepare mortgage and legal paperwork before closing." },
