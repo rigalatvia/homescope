@@ -10,6 +10,7 @@ const STATIC_ROUTES = [
   "",
   "/about",
   "/listings",
+  "/map-search",
   "/schools",
   "/guides",
   "/guides/first-time-home-buyer-ontario",

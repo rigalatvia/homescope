@@ -55,12 +55,12 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
   }
 
   async fetchAllListings(options?: MLSFetchOptions): Promise<RawMLSFeedListing[]> {
-    const responseItems = await this.fetchPaginated(undefined, options);
+    const responseItems = await this.fetchPaginated(undefined, options, undefined, true);
     return responseItems.map((item, index) => this.mapDdfRecordToRawListing(item, index));
   }
 
   async fetchAllListingsPage(options?: MLSFetchOptions): Promise<MLSFetchedPage<RawMLSFeedListing>> {
-    const page = await this.fetchPage(undefined, options);
+    const page = await this.fetchPage(undefined, options, undefined, true);
     return {
       items: page.items.map((item, index) => this.mapDdfRecordToRawListing(item, index)),
       nextCursor: page.nextCursor
@@ -239,11 +239,9 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
     baseFilterOverride?: string | null,
     forceCurrentListingsEndpoint = false
   ): string {
-    // Use the replication feed for both full and incremental syncs so we can
-    // receive non-active transitions/tombstones, not just current active rows.
-    // Cleanup may force the current listings endpoint while still avoiding a
-    // redundant StandardStatus filter; the feed surface already decides which
-    // listing statuses it exposes.
+    // The replication endpoint exposes PropertyIdentifier rows and rejects
+    // full Property filters such as PropertySubType. Use the current listings
+    // endpoint whenever a caller needs full listing records.
     const baseUrl = forceCurrentListingsEndpoint ? this.config.listingsUrl : this.config.replicationUrl;
     const url = new URL(baseUrl);
     url.searchParams.set(this.config.topParam, String(pageSize));
