@@ -6,11 +6,15 @@ import { createListingSlug } from "@/lib/mls/utils/slug";
 
 export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): NormalizedMLSListing {
   const transactionType = raw.transactionType?.trim() || null;
-  const propertyType = deriveOwnershipType(raw.commonInterest, raw.propertyClass, raw.propertyType);
   const commonInterest = raw.commonInterest?.trim() || null;
   const style = raw.style?.trim() || null;
   const publicRemarks = sanitizePublicRemarks(raw.publicRemarks);
-  const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, style, publicRemarks);
+  const propertyType = deriveDisplayPropertyType({
+    commonInterest,
+    structureType: raw.structureType,
+    propertyAttached: raw.propertyAttached
+  });
+  const propertyClass = derivePropertyClass(raw.propertyClass, transactionType, propertyType, commonInterest, style, publicRemarks);
 
   const normalized: NormalizedMLSListing = {
     listingId: `${raw.sourceSystem}:${raw.sourceListingKey}`,
@@ -40,6 +44,8 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
     livingAreaMaximum: parseNullableNumber(raw.livingAreaMaximum),
     propertyType,
     commonInterest,
+    structureType: raw.structureType ?? null,
+    propertyAttached: raw.propertyAttached ?? null,
     style,
     publicRemarks,
     images: mapImageUrls(raw),
@@ -92,11 +98,24 @@ function derivePropertyClass(
   rawPropertyClass: string | null | undefined,
   transactionType: string | null,
   propertyType: string | null,
+  commonInterest: string | null,
   style: string | null,
   publicRemarks: string | null
 ): NormalizedMLSListing["propertyClass"] {
   const normalizedRaw = (rawPropertyClass || "").trim().toLowerCase();
+  const common = (commonInterest || "").trim().toLowerCase();
+  const isLease = /\blease\b|\brent\b|\bfor rent\b|\bleased\b/.test(
+    [transactionType, rawPropertyClass, propertyType, commonInterest, style, publicRemarks].filter(Boolean).join(" ").toLowerCase()
+  );
+
   if (containsCommercialKeywords(normalizedRaw)) return null;
+
+  if (common.includes("condo") || common.includes("strata")) {
+    return isLease ? "Residential Condo & Other Lease" : "Residential Condo & Other";
+  }
+  if (common.includes("freehold")) {
+    return isLease ? "Residential Freehold Lease" : "Residential Freehold";
+  }
 
   if (normalizedRaw.includes("residential freehold lease")) return "Residential Freehold Lease";
   if (normalizedRaw.includes("residential freehold")) return "Residential Freehold";
@@ -124,7 +143,6 @@ function derivePropertyClass(
   const text = [rawPropertyClass, transactionType, propertyType, style, publicRemarks].filter(Boolean).join(" ").toLowerCase();
   if (containsCommercialKeywords(text)) return null;
 
-  const isLease = /\blease\b|\brent\b|\bfor rent\b|\bleased\b/.test(text);
   const looksCondo = /\bcondo\b|\bapartment\b|\bcondominium\b|\bapt\b|\bco-op\b/.test(text);
   const looksFreehold =
     /\bdetached\b|\bsemi-detached\b|\btownhouse\b|\btownhome\b|\blink\b|\bfreehold\b|\btriplex\b|\bduplex\b|\bfourplex\b|\bsingle[-\s]family\b|\bhouse\b|\bmulti[-\s]family\b/.test(
@@ -230,25 +248,23 @@ function parseListingStatus(value: string | null | undefined): MLSListingStatus 
   return "draft";
 }
 
-function deriveOwnershipType(
-  commonInterest: string | null | undefined,
-  rawPropertyClass: string | null | undefined,
-  rawPropertyType: string | null | undefined
-): string | null {
-  const common = (commonInterest || "").trim().toLowerCase();
-  if (common.includes("condo") || common.includes("strata")) return "Condo";
-  if (common.includes("freehold")) return "Freehold";
+function deriveDisplayPropertyType(input: {
+  commonInterest: string | null;
+  structureType: string[] | null | undefined;
+  propertyAttached: boolean | null | undefined;
+}): string | null {
+  const commonInterest = (input.commonInterest || "").trim().toLowerCase();
+  const structureType = (input.structureType ?? []).join(" ").trim().toLowerCase();
+  const isCondoOwnership = commonInterest.includes("condo") || commonInterest.includes("strata");
+  const isFreeholdOwnership = commonInterest.includes("freehold");
+  const isRowTownhouse = /\brow\b|\btown\s?house\b|\btownhome\b/.test(structureType);
+  const isHouse = /\bhouse\b/.test(structureType);
 
-  const propertyClass = (rawPropertyClass || "").trim().toLowerCase();
-  if (propertyClass.includes("condo")) return "Condo";
-  if (propertyClass.includes("freehold")) return "Freehold";
-
-  const propertyType = (rawPropertyType || "").trim().toLowerCase();
-  if (propertyType.includes("condo")) return "Condo";
-  if (propertyType.includes("detached") || propertyType.includes("semi") || propertyType.includes("townhouse")) {
-    return "Freehold";
-  }
-
+  if (isRowTownhouse) return isCondoOwnership ? "Condo Townhouse" : "Townhouse";
+  if (isHouse && isFreeholdOwnership && input.propertyAttached === true) return "Semi-Detached";
+  if (isHouse && isFreeholdOwnership && input.propertyAttached === false) return "Detached";
+  if (isCondoOwnership) return "Condo";
+  if (isFreeholdOwnership) return "Freehold";
   return null;
 }
 

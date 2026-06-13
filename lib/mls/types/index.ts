@@ -79,6 +79,8 @@ export interface RawMLSFeedListing {
   livingAreaMaximum?: number | string | null;
   propertyType?: string | null;
   commonInterest?: string | null;
+  structureType?: string[] | null;
+  propertyAttached?: boolean | null;
   style?: string | null;
   publicRemarks?: string | null;
   images?: MLSListingMedia[] | null;
@@ -119,6 +121,8 @@ export interface NormalizedMLSListing {
   livingAreaMaximum: number | null;
   propertyType: string | null;
   commonInterest: string | null;
+  structureType: string[] | null;
+  propertyAttached: boolean | null;
   style: string | null;
   publicRemarks: string | null;
   images: string[];

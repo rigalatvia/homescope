@@ -10,7 +10,15 @@ import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 import type { School } from "@/types/school";
 
-const PROPERTY_TYPES: PropertyType[] = ["Condo", "Freehold"];
+const PROPERTY_TYPES: PropertyType[] = [
+  "Detached",
+  "Semi-Detached",
+  "Townhouse",
+  "Condo Townhouse",
+  "Condo",
+  "Apartment",
+  "Freehold"
+];
 const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
 const LEASE_MIN_PRICE = 500;
 const LEASE_MAX_PRICE = 4000;

@@ -47,8 +47,7 @@ export async function getPublicListings(filters?: ListingFilters): Promise<Listi
     return mappedListings.filter((listing) => listing.transactionType === filters.transactionType);
   }
   if (filters?.propertyType) {
-    const selectedType = normalizePropertyType(filters.propertyType);
-    return mappedListings.filter((listing) => normalizePropertyType(listing.propertyType) === selectedType);
+    return mappedListings.filter((listing) => propertyTypeMatchesFilter(listing.propertyType, filters.propertyType!));
   }
 
   return mappedListings;
@@ -83,6 +82,16 @@ export async function getPublicListingsPage(filters: ListingFilters): Promise<{
 
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function propertyTypeMatchesFilter(listingType: string, selectedType: string): boolean {
+  const listing = normalizePropertyType(listingType);
+  const selected = normalizePropertyType(selectedType);
+  if (listing === selected) return true;
+  if (selected === "freehold") return ["detached", "semi-detached", "townhouse", "house", "freehold"].includes(listing);
+  if (selected === "townhouse") return ["townhouse", "condo townhouse"].includes(listing);
+  if (selected === "condo") return ["condo", "apartment", "condo townhouse"].includes(listing);
+  return false;
 }
 
 function toIndexedListingSort(sort: ListingFilters["sort"]): "price_asc" | "price_desc" | "newest" | undefined {
@@ -225,6 +234,9 @@ function filterPhotoUrls(urls: string[]): string[] {
 }
 
 function mapOwnershipType(raw: MLSListingFirestoreDocument): string {
+  const displayType = (raw.propertyType || "").trim();
+  if (displayType) return displayType;
+
   const commonInterest = (raw.commonInterest || "").trim().toLowerCase();
   if (commonInterest.includes("condo") || commonInterest.includes("strata")) return "Condo";
   if (commonInterest.includes("freehold")) return "Freehold";

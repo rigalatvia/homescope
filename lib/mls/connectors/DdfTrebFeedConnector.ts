@@ -434,6 +434,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         "BuildingTypeName"
       ]),
       commonInterest: pickString(record, ["CommonInterest"]),
+      structureType: pickStringArray(record, ["StructureType", "BuildingType", "BuildingTypeName"]),
+      propertyAttached: pickBoolean(record, ["PropertyAttachedYN"]),
       style: pickString(record, ["ArchitecturalStyle", "Style"]),
       publicRemarks: pickString(record, ["PublicRemarks", "Remarks", "Description"]),
       images: mapImages(record),
@@ -485,6 +487,20 @@ function pickNumber(record: JsonObject, keys: string[]): number | null {
       const parsed = Number(value.replace(/[,$]/g, ""));
       if (Number.isFinite(parsed)) return parsed;
     }
+  }
+  return null;
+}
+
+function pickStringArray(record: JsonObject, keys: string[]): string[] | null {
+  for (const key of keys) {
+    const value = record[key];
+    if (Array.isArray(value)) {
+      const items = value
+        .map((item) => (typeof item === "string" ? item.trim() : typeof item === "number" ? String(item) : ""))
+        .filter(Boolean);
+      if (items.length > 0) return items;
+    }
+    if (typeof value === "string" && value.trim()) return [value.trim()];
   }
   return null;
 }

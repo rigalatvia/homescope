@@ -90,7 +90,7 @@ export function applyListingFilters(
     }
     if (
       filters.propertyType &&
-      listing.propertyType.trim().toLowerCase() !== filters.propertyType.trim().toLowerCase()
+      !propertyTypeMatchesFilter(listing.propertyType, filters.propertyType)
     ) {
       return false;
     }
@@ -170,6 +170,20 @@ function parseSchoolRadiusKm(value?: string): number | undefined {
 
 function normalizeMls(value: string): string {
   return value.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function normalizePropertyType(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function propertyTypeMatchesFilter(listingType: string, selectedType: string): boolean {
+  const listing = normalizePropertyType(listingType);
+  const selected = normalizePropertyType(selectedType);
+  if (listing === selected) return true;
+  if (selected === "freehold") return ["detached", "semi-detached", "townhouse", "house", "freehold"].includes(listing);
+  if (selected === "townhouse") return ["townhouse", "condo townhouse"].includes(listing);
+  if (selected === "condo") return ["condo", "apartment", "condo townhouse"].includes(listing);
+  return false;
 }
 
 function hasMapBounds(filters: ListingFilters): boolean {

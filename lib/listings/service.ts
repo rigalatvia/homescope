@@ -69,8 +69,7 @@ export async function getPublicListings(
     let allItems: Listing[] | undefined;
 
     if (filters.propertyType) {
-      const selectedType = normalizePropertyType(filters.propertyType);
-      items = items.filter((listing) => normalizePropertyType(listing.propertyType) === selectedType);
+      items = items.filter((listing) => propertyTypeMatchesFilter(listing.propertyType, filters.propertyType!));
     }
 
     if (includeAllItems) {
@@ -270,6 +269,16 @@ function toMillis(value: string): number {
 
 function normalizePropertyType(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function propertyTypeMatchesFilter(listingType: string, selectedType: string): boolean {
+  const listing = normalizePropertyType(listingType);
+  const selected = normalizePropertyType(selectedType);
+  if (listing === selected) return true;
+  if (selected === "freehold") return ["detached", "semi-detached", "townhouse", "house", "freehold"].includes(listing);
+  if (selected === "townhouse") return ["townhouse", "condo townhouse"].includes(listing);
+  if (selected === "condo") return ["condo", "apartment", "condo townhouse"].includes(listing);
+  return false;
 }
 
 function canUseIndexedSearch(filters: ListingFilters): boolean {

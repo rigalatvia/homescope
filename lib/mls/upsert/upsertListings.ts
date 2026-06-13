@@ -3,7 +3,17 @@ import { mlsSyncConfig } from "@/lib/mls/config";
 import { createListingSnapshot, getListingById, touchListingLastSeen, upsertListingDocument } from "@/lib/mls/upsert/repository";
 import { logSyncInfo } from "@/lib/mls/utils/logger";
 
-const TRACKED_FIELDS: Array<keyof MLSListingFirestoreDocument> = ["price", "status", "publicRemarks", "isVisible", "hiddenReason"];
+const TRACKED_FIELDS: Array<keyof MLSListingFirestoreDocument> = [
+  "price",
+  "status",
+  "propertyType",
+  "commonInterest",
+  "structureType",
+  "propertyAttached",
+  "publicRemarks",
+  "isVisible",
+  "hiddenReason"
+];
 
 export async function upsertNormalizedListings(listings: NormalizedMLSListing[], nowIso: string): Promise<{
   created: number;
@@ -22,7 +32,15 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
     const existing = await getListingById(listing.listingId);
     const doc = toFirestoreDoc(listing, nowIso, existing);
 
-    if (existing && existing.rawSourceHash === doc.rawSourceHash && existing.isVisible === doc.isVisible) {
+    if (
+      existing &&
+      existing.rawSourceHash === doc.rawSourceHash &&
+      existing.isVisible === doc.isVisible &&
+      existing.propertyType === doc.propertyType &&
+      existing.commonInterest === doc.commonInterest &&
+      areStringArraysEqual(existing.structureType, doc.structureType) &&
+      existing.propertyAttached === doc.propertyAttached
+    ) {
       await touchListingLastSeen(doc.listingId, nowIso);
       unchanged += 1;
       continue;
@@ -87,10 +105,21 @@ function pickTrackedFields(doc: MLSListingFirestoreDocument): Partial<MLSListing
   return {
     price: doc.price,
     status: doc.status,
+    propertyType: doc.propertyType,
+    commonInterest: doc.commonInterest,
+    structureType: doc.structureType,
+    propertyAttached: doc.propertyAttached,
     publicRemarks: doc.publicRemarks,
     isVisible: doc.isVisible,
     hiddenReason: doc.hiddenReason
   };
+}
+
+function areStringArraysEqual(left: string[] | null, right: string[] | null): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
 }
 
 function mapSnapshotReason(
