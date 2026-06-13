@@ -141,6 +141,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
       "new listing alert",
       "daily alerts",
       "weekly alerts",
+      "instant alerts",
       "pause alerts",
       "search notification",
       "notify me"
@@ -148,7 +149,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
     summary: "Explains saved searches and alert behavior.",
     answer: [
       "After filtering Listings or Map Search, choose Save Search + Alerts to save that exact search to your account. Saved searches store your filters and can be reopened from the dashboard.",
-      "Alerts are designed to notify you when new or updated listings match the saved filters. The first scheduled run baselines the search, and later runs email matching updates based on the alert frequency you choose."
+      "Alerts are designed to notify you when new or updated listings match the saved filters after HomeScope GTA syncs listing data. The first scheduled run baselines the search, and later runs email matching updates on the Instant, Daily, or Weekly frequency you choose."
     ]
   },
   {

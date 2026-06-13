@@ -42,10 +42,10 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
         filters,
         resultsTotal,
         alertsEnabled: true,
-        alertFrequency: "daily"
+        alertFrequency: "instant"
       });
       setErrorMessage("");
-      setStatusMessage("Saved. Daily alerts are on for this search.");
+      setStatusMessage("Saved. Instant alerts are on for this search.");
     } catch (error) {
       console.error("[savedSearches] Failed to save search", error);
       setStatusMessage("");
@@ -76,7 +76,7 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
           <div className="w-full max-w-sm rounded-[1.75rem] border border-brand-100 bg-white p-6 shadow-soft">
             <p className="font-heading text-3xl text-brand-900">Sign in to save this search.</p>
             <p className="mt-3 text-sm leading-7 text-brand-700">
-              Saved searches keep your filters ready and prepare daily new-listing alerts for your account.
+              Saved searches keep your filters ready and prepare instant new-listing alerts for your account.
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <SignInButton

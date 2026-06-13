@@ -128,7 +128,7 @@ function mapAdminSavedSearch(id: string, data: AdminSavedSearchDocument): AdminS
     filters: data.filters || {},
     resultsTotal: typeof data.resultsTotal === "number" ? data.resultsTotal : 0,
     alertsEnabled: data.alertsEnabled !== false,
-    alertFrequency: data.alertFrequency || "daily",
+    alertFrequency: parseAlertFrequency(data.alertFrequency),
     lastAlertCheckedAt: toIsoString(data.lastAlertCheckedAt),
     lastAlertListingIds: Array.isArray(data.lastAlertListingIds) ? data.lastAlertListingIds : [],
     createdAt: toIsoString(data.createdAt),
@@ -138,13 +138,19 @@ function mapAdminSavedSearch(id: string, data: AdminSavedSearchDocument): AdminS
 
 function shouldCheckSearch(search: AdminSavedSearchRecord, now: Date): boolean {
   if (!search.lastAlertCheckedAt) return true;
-  if (search.alertFrequency === "instant" || search.alertFrequency === "daily") return true;
 
   const lastChecked = new Date(search.lastAlertCheckedAt);
   if (!Number.isFinite(lastChecked.getTime())) return true;
 
-  const daysSinceLastCheck = (now.getTime() - lastChecked.getTime()) / (1000 * 60 * 60 * 24);
-  return daysSinceLastCheck >= 7;
+  const hoursSinceLastCheck = (now.getTime() - lastChecked.getTime()) / (1000 * 60 * 60);
+  if (search.alertFrequency === "instant") return true;
+  if (search.alertFrequency === "daily") return hoursSinceLastCheck >= 24;
+  return hoursSinceLastCheck >= 24 * 7;
+}
+
+function parseAlertFrequency(value: unknown): SavedSearchAlertFrequency {
+  if (value === "instant" || value === "weekly") return value;
+  return "daily";
 }
 
 function getRecentAlertListings(listings: Listing[], lastCheckedAt: string | null): Listing[] {

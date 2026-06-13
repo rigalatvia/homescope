@@ -20,13 +20,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        schedule: "daily_saved_search_alerts",
+        schedule: "saved_search_alerts",
         summary
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("[savedSearchAlerts] Daily trigger failed", error);
-    return NextResponse.json({ error: "Daily saved search alert run failed." }, { status: 500 });
+    console.error("[savedSearchAlerts] Trigger failed", error);
+    return NextResponse.json({ error: "Saved search alert run failed." }, { status: 500 });
   }
 }
