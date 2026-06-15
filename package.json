@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:seo": "node -r ./tests/register-ts.cjs ./tests/listing-metadata.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

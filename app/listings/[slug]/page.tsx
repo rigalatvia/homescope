@@ -8,6 +8,7 @@ import { ListingGallery } from "@/components/listings/gallery";
 import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
 import { formatPrice } from "@/lib/utils/format";
 import { getPublicListingBySlug } from "@/lib/listings/service";
+import { buildListingMetadata, formatListingAddress } from "@/lib/seo/listing-metadata";
 import { SITE_CONFIG } from "@/config/site";
 
 export const revalidate = 60;
@@ -18,29 +19,42 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: "Listing Not Found" };
   }
 
-  const title = `${formatListingAddress(listing.address, listing.city)} - ${formatPrice(listing.price)} | ${listing.bedrooms} Bed ${listing.propertyType} | HomeScope GTA`;
-  const description = `${formatListingAddress(listing.address, listing.city, listing.postalCode)}. ${formatPrice(listing.price)}, ${listing.bedrooms} bed, ${listing.bathrooms} bath ${listing.propertyType}. View photos, listing details, and request a private showing.`;
-  const url = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
-  const primaryImage = listing.images[0];
+  const listingMetadata = buildListingMetadata(
+    {
+      address: listing.address,
+      city: listing.city,
+      postalCode: listing.postalCode,
+      price: listing.price,
+      bedrooms: listing.bedrooms,
+      bathrooms: listing.bathrooms,
+      propertyType: listing.propertyType,
+      listingUrlSlug: listing.listingUrlSlug,
+      primaryImage: listing.images[0],
+      description: listing.description
+    },
+    SITE_CONFIG.baseUrl
+  );
 
   return {
-    title,
-    description,
+    title: {
+      absolute: listingMetadata.title
+    },
+    description: listingMetadata.description,
     alternates: {
-      canonical: url
+      canonical: listingMetadata.canonicalUrl
     },
     openGraph: {
-      title,
-      description,
-      url,
+      title: listingMetadata.openGraph.title,
+      description: listingMetadata.openGraph.description,
+      url: listingMetadata.openGraph.url,
       type: "article",
-      images: primaryImage ? [{ url: `${primaryImage}?auto=format&fit=crop&w=1200&q=80` }] : undefined
+      images: listingMetadata.openGraph.image ? [{ url: listingMetadata.openGraph.image }] : undefined
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-      images: primaryImage ? [`${primaryImage}?auto=format&fit=crop&w=1200&q=80`] : undefined
+      title: listingMetadata.twitter.title,
+      description: listingMetadata.twitter.description,
+      images: listingMetadata.twitter.image ? [listingMetadata.twitter.image] : undefined
     }
   };
 }
@@ -169,11 +183,6 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="mt-1 font-semibold text-brand-900 whitespace-nowrap">{value}</p>
     </div>
   );
-}
-
-function formatListingAddress(address: string, city: string, postalCode?: string): string {
-  const parts = [address, city, postalCode].filter((part): part is string => Boolean(part && part.trim()));
-  return parts.join(", ");
 }
 
 function buildListingJsonLd(input: {
