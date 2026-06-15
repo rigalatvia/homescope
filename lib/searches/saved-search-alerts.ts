@@ -49,6 +49,7 @@ interface SavedSearchAlertSummary {
 }
 
 const ALERT_LOOKBACK_LIMIT = 8;
+const ALERT_NOTIFIED_HISTORY_LIMIT = 50;
 
 export async function runSavedSearchAlerts(): Promise<SavedSearchAlertSummary> {
   const firestore = getFirebaseAdminFirestore();
@@ -83,13 +84,22 @@ export async function runSavedSearchAlerts(): Promise<SavedSearchAlertSummary> {
         pageSize: 24
       };
       const results = await getPublicListings(filters);
-      const recentListings = getRecentAlertListings(results.items, search.lastAlertCheckedAt);
+      const recentListings = getRecentAlertListings(
+        results.items,
+        search.lastAlertCheckedAt,
+        search.lastAlertListingIds
+      );
       const currentListingIds = results.items.slice(0, ALERT_LOOKBACK_LIMIT).map((listing) => listing.id);
+      const nextAlertListingIds = buildNextAlertListingIds(
+        search.lastAlertListingIds,
+        currentListingIds,
+        recentListings
+      );
 
       await docSnapshot.ref.set(
         {
           lastAlertCheckedAt: FieldValue.serverTimestamp(),
-          lastAlertListingIds: currentListingIds,
+          lastAlertListingIds: nextAlertListingIds,
           updatedAt: FieldValue.serverTimestamp()
         },
         { merge: true }
@@ -153,17 +163,34 @@ function parseAlertFrequency(value: unknown): SavedSearchAlertFrequency {
   return "daily";
 }
 
-function getRecentAlertListings(listings: Listing[], lastCheckedAt: string | null): Listing[] {
+function getRecentAlertListings(
+  listings: Listing[],
+  lastCheckedAt: string | null,
+  lastAlertListingIds: string[]
+): Listing[] {
   if (!lastCheckedAt) return [];
 
   const checkedAt = new Date(lastCheckedAt).getTime();
   if (!Number.isFinite(checkedAt)) return [];
+  const alreadyNotified = new Set(lastAlertListingIds);
 
   return listings.filter((listing) => {
+    if (alreadyNotified.has(listing.id)) return false;
     const createdAt = new Date(listing.createdAt).getTime();
-    const updatedAt = new Date(listing.updatedAt).getTime();
-    return createdAt > checkedAt || updatedAt > checkedAt;
+    return Number.isFinite(createdAt) && createdAt > checkedAt;
   });
+}
+
+function buildNextAlertListingIds(
+  previousListingIds: string[],
+  currentListingIds: string[],
+  recentListings: Listing[]
+): string[] {
+  const recentListingIds = recentListings.map((listing) => listing.id);
+  return Array.from(new Set([...recentListingIds, ...currentListingIds, ...previousListingIds])).slice(
+    0,
+    ALERT_NOTIFIED_HISTORY_LIMIT
+  );
 }
 
 function buildSavedSearchAlertEmail(search: AdminSavedSearchRecord, listings: Listing[]) {
