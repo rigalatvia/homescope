@@ -13,14 +13,7 @@ import { formatPrice } from "@/lib/utils/format";
 import type { Listing } from "@/types/listing";
 import type { School as SchoolType } from "@/types/school";
 
-export const revalidate = 3600;
-
-export function generateStaticParams() {
-  return NEIGHBORHOOD_PAGES.map((neighborhood) => ({
-    citySlug: neighborhood.city.toLowerCase().replace(/\s+/g, "-"),
-    neighborhoodSlug: neighborhood.slug
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params

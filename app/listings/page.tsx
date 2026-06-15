@@ -12,7 +12,7 @@ import { parseListingFilters } from "@/lib/listings/filters";
 import { getPublicListings } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   searchParams

@@ -10,11 +10,7 @@ import { getMarketReportContent } from "@/lib/market/report-content";
 import { getListingsByMunicipality, getMonthlyMarketStatsByMunicipality } from "@/lib/listings/service";
 import { formatPrice } from "@/lib/utils/format";
 
-export const revalidate = 3600;
-
-export function generateStaticParams() {
-  return getMarketReportParams();
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params

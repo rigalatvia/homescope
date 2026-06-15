@@ -11,13 +11,7 @@ import { getListingStatsByMunicipality, getListingsByMunicipality } from "@/lib/
 import { getSchools } from "@/lib/schools/service";
 import type { Listing } from "@/types/listing";
 
-export const revalidate = 60;
-
-export function generateStaticParams() {
-  return PRIMARY_MARKET_PAGES.map((market) => ({
-    citySlug: market.slug
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { citySlug: string } }): Promise<Metadata> {
   const market = getMarketBySlug(params.citySlug);

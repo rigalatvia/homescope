@@ -6,6 +6,8 @@ import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
 import { getAllPublicListings } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
 
+export const dynamic = "force-dynamic";
+
 const STATIC_ROUTES = [
   "",
   "/about",
