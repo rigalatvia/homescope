@@ -7,9 +7,10 @@ import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
 import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
 import { formatPrice } from "@/lib/utils/format";
-import { getPublicListingBySlug } from "@/lib/listings/service";
+import { getPublicListingBySlug, getSimilarListingsForListing } from "@/lib/listings/service";
 import { buildListingMetadata, formatListingAddress } from "@/lib/seo/listing-metadata";
 import { SITE_CONFIG } from "@/config/site";
+import type { Listing } from "@/types/listing";
 
 export const revalidate = 60;
 
@@ -67,6 +68,7 @@ export default async function ListingDetailPage({
   const listing = await getPublicListingBySlug(params.slug);
   if (!listing) notFound();
 
+  const similarListings = await getSimilarListingsForListing(listing, 8);
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
   const listingJsonLd = buildListingJsonLd({
@@ -160,6 +162,10 @@ export default async function ListingDetailPage({
             </div>
           </section>
 
+          {similarListings.length > 0 ? (
+            <SimilarHomesSection currentListing={listing} listings={similarListings} />
+          ) : null}
+
           <LeadCaptureModal
             listingId={listing.id}
             listingMlsNumber={listing.mlsNumber}
@@ -171,6 +177,33 @@ export default async function ListingDetailPage({
             listingTransactionType={listing.transactionType}
           />
         </div>
+      </div>
+    </section>
+  );
+}
+
+function SimilarHomesSection({ currentListing, listings }: { currentListing: Listing; listings: Listing[] }) {
+  const areaLabel = currentListing.area && currentListing.area !== "GTA" ? currentListing.area : currentListing.city;
+
+  return (
+    <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Similar Homes Nearby</p>
+      <h2 className="mt-2 font-heading text-2xl text-brand-900">More homes in {areaLabel}</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {listings.map((similarListing) => (
+          <a
+            key={similarListing.id}
+            href={`/listings/${similarListing.listingUrlSlug}`}
+            className="rounded-xl border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300 hover:bg-white"
+          >
+            <span className="block text-sm font-semibold leading-6 text-brand-900">
+              {formatListingAddress(similarListing.address, similarListing.city)}
+            </span>
+            <span className="mt-2 block text-sm text-brand-700">
+              {formatPrice(similarListing.price)} | {similarListing.bedrooms} bed | {similarListing.propertyType}
+            </span>
+          </a>
+        ))}
       </div>
     </section>
   );

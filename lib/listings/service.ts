@@ -185,6 +185,39 @@ export async function getPublicListingsByIds(listingIds: string[]): Promise<List
   return getPublicListingsByIdsFromFirestore(listingIds);
 }
 
+export async function getSimilarListingsForListing(listing: Listing, limit = 8): Promise<Listing[]> {
+  const cityCandidates = await getListingsByMunicipality(listing.city, 250);
+  const candidateMap = new Map<string, Listing>();
+
+  for (const candidate of cityCandidates) {
+    candidateMap.set(candidate.id, candidate);
+  }
+
+  if (candidateMap.size < limit + 1 && listing.price > 0) {
+    const priceWindow = getPriceWindow(listing.price);
+    const priceBandCandidates = await getPublicListings(
+      {
+        transactionType: listing.transactionType,
+        minPrice: priceWindow.min,
+        maxPrice: priceWindow.max,
+        page: 1,
+        pageSize: 50
+      },
+      { includeAllItems: true }
+    );
+
+    for (const candidate of priceBandCandidates.allItems ?? priceBandCandidates.items) {
+      candidateMap.set(candidate.id, candidate);
+    }
+  }
+
+  return Array.from(candidateMap.values())
+    .filter((candidate) => candidate.id !== listing.id)
+    .filter((candidate) => candidate.transactionType === listing.transactionType)
+    .sort((left, right) => compareSimilarListings(listing, left, right))
+    .slice(0, limit);
+}
+
 async function sortListingsWithFeaturedPriority(listings: Listing[]): Promise<Listing[]> {
   const settings = await getSiteSettings();
   return sortByFeaturedIds(listings, settings.featuredListingIds);
@@ -265,6 +298,47 @@ function getDistanceToSchool(listing: Listing, school: School): number {
 function toMillis(value: string): number {
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function compareSimilarListings(source: Listing, left: Listing, right: Listing): number {
+  const leftScore = getSimilarityBucket(source, left);
+  const rightScore = getSimilarityBucket(source, right);
+  if (leftScore !== rightScore) return leftScore - rightScore;
+
+  const leftPriceDiff = Math.abs(left.price - source.price);
+  const rightPriceDiff = Math.abs(right.price - source.price);
+  if (leftPriceDiff !== rightPriceDiff) return leftPriceDiff - rightPriceDiff;
+
+  return toMillis(right.updatedAt) - toMillis(left.updatedAt);
+}
+
+function getSimilarityBucket(source: Listing, candidate: Listing): number {
+  const sourceArea = normalizeComparable(source.area);
+  const candidateArea = normalizeComparable(candidate.area);
+  if (sourceArea && candidateArea && sourceArea === candidateArea) return 0;
+  if (normalizeComparable(source.city) === normalizeComparable(candidate.city)) return 1;
+  if (isWithinPriceWindow(source.price, candidate.price)) return 2;
+  return 3;
+}
+
+function normalizeComparable(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "gta" || normalized === "unknown" ? "" : normalized;
+}
+
+function getPriceWindow(price: number): { min: number; max: number } {
+  const lowerMultiplier = price < 10000 ? 0.7 : 0.75;
+  const upperMultiplier = price < 10000 ? 1.3 : 1.25;
+  return {
+    min: Math.max(0, Math.floor(price * lowerMultiplier)),
+    max: Math.ceil(price * upperMultiplier)
+  };
+}
+
+function isWithinPriceWindow(sourcePrice: number, candidatePrice: number): boolean {
+  if (sourcePrice <= 0 || candidatePrice <= 0) return false;
+  const window = getPriceWindow(sourcePrice);
+  return candidatePrice >= window.min && candidatePrice <= window.max;
 }
 
 function normalizePropertyType(value: string): string {
