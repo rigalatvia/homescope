@@ -129,6 +129,17 @@ export default async function ListingDetailPage({
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>
 
+          <LeadCaptureModal
+            listingId={listing.id}
+            listingMlsNumber={listing.mlsNumber}
+            listingTitle={listing.title}
+            listingAddress={fullAddress}
+            listingCity={listing.city}
+            listingUrl={listingUrl}
+            listingImageUrl={listing.images[0]}
+            listingTransactionType={listing.transactionType}
+          />
+
           {listing.transactionType === "sale" ? (
             <MortgagePaymentCalculator initialPrice={listing.price} compact />
           ) : null}
@@ -165,17 +176,6 @@ export default async function ListingDetailPage({
           {similarListings.length > 0 ? (
             <SimilarHomesSection currentListing={listing} listings={similarListings} />
           ) : null}
-
-          <LeadCaptureModal
-            listingId={listing.id}
-            listingMlsNumber={listing.mlsNumber}
-            listingTitle={listing.title}
-            listingAddress={fullAddress}
-            listingCity={listing.city}
-            listingUrl={listingUrl}
-            listingImageUrl={listing.images[0]}
-            listingTransactionType={listing.transactionType}
-          />
         </div>
       </div>
     </section>

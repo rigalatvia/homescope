@@ -193,20 +193,21 @@ export async function getSimilarListingsForListing(listing: Listing, limit = 8):
     candidateMap.set(candidate.id, candidate);
   }
 
-  if (candidateMap.size < limit + 1 && listing.price > 0) {
-    const priceWindow = getPriceWindow(listing.price);
-    const priceBandCandidates = await getPublicListings(
+  if (candidateMap.size < limit + 1) {
+    const layoutCandidates = await getPublicListings(
       {
         transactionType: listing.transactionType,
-        minPrice: priceWindow.min,
-        maxPrice: priceWindow.max,
+        bedrooms: listing.bedrooms,
+        bedroomsMatch: "exact",
+        bathrooms: listing.bathrooms,
+        bathroomsMatch: "exact",
         page: 1,
         pageSize: 50
       },
       { includeAllItems: true }
     );
 
-    for (const candidate of priceBandCandidates.allItems ?? priceBandCandidates.items) {
+    for (const candidate of layoutCandidates.allItems ?? layoutCandidates.items) {
       candidateMap.set(candidate.id, candidate);
     }
   }
@@ -305,9 +306,9 @@ function compareSimilarListings(source: Listing, left: Listing, right: Listing):
   const rightScore = getSimilarityBucket(source, right);
   if (leftScore !== rightScore) return leftScore - rightScore;
 
-  const leftPriceDiff = Math.abs(left.price - source.price);
-  const rightPriceDiff = Math.abs(right.price - source.price);
-  if (leftPriceDiff !== rightPriceDiff) return leftPriceDiff - rightPriceDiff;
+  const leftLayoutDiff = getLayoutDifference(source, left);
+  const rightLayoutDiff = getLayoutDifference(source, right);
+  if (leftLayoutDiff !== rightLayoutDiff) return leftLayoutDiff - rightLayoutDiff;
 
   return toMillis(right.updatedAt) - toMillis(left.updatedAt);
 }
@@ -317,7 +318,7 @@ function getSimilarityBucket(source: Listing, candidate: Listing): number {
   const candidateArea = normalizeComparable(candidate.area);
   if (sourceArea && candidateArea && sourceArea === candidateArea) return 0;
   if (normalizeComparable(source.city) === normalizeComparable(candidate.city)) return 1;
-  if (isWithinPriceWindow(source.price, candidate.price)) return 2;
+  if (getLayoutDifference(source, candidate) === 0) return 2;
   return 3;
 }
 
@@ -326,19 +327,8 @@ function normalizeComparable(value: string): string {
   return normalized === "gta" || normalized === "unknown" ? "" : normalized;
 }
 
-function getPriceWindow(price: number): { min: number; max: number } {
-  const lowerMultiplier = price < 10000 ? 0.7 : 0.75;
-  const upperMultiplier = price < 10000 ? 1.3 : 1.25;
-  return {
-    min: Math.max(0, Math.floor(price * lowerMultiplier)),
-    max: Math.ceil(price * upperMultiplier)
-  };
-}
-
-function isWithinPriceWindow(sourcePrice: number, candidatePrice: number): boolean {
-  if (sourcePrice <= 0 || candidatePrice <= 0) return false;
-  const window = getPriceWindow(sourcePrice);
-  return candidatePrice >= window.min && candidatePrice <= window.max;
+function getLayoutDifference(source: Listing, candidate: Listing): number {
+  return Math.abs(candidate.bedrooms - source.bedrooms) + Math.abs(candidate.bathrooms - source.bathrooms);
 }
 
 function normalizePropertyType(value: string): string {
