@@ -80,7 +80,7 @@ export function SiteFooter() {
                 href="/guides/lease-documents"
                 className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline"
               >
-                Lease Documents Checklist
+                Documents Needed to Rent
               </Link>
               <Link
                 href="/guides/rental-application-ontario"

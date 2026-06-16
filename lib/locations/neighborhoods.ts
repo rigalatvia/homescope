@@ -363,6 +363,39 @@ export function getNeighborhoodsByCity(city: string): NeighborhoodPage[] {
   return NEIGHBORHOOD_PAGES.filter((neighborhood) => normalize(neighborhood.city) === normalizedCity);
 }
 
+export function getNeighborhoodForListing(input: {
+  city: string;
+  area?: string | null;
+  title?: string | null;
+  address?: string | null;
+  description?: string | null;
+}): NeighborhoodPage | undefined {
+  const neighborhoods = getNeighborhoodsByCity(input.city);
+  const area = normalizeSearchText(input.area || "");
+  const haystack = normalizeSearchText([input.area, input.title, input.address, input.description].filter(Boolean).join(" "));
+
+  return neighborhoods.find((neighborhood) => {
+    return neighborhood.searchAliases.some((alias) => {
+      const normalizedAlias = normalizeSearchText(alias);
+      return area === normalizedAlias || haystack.includes(normalizedAlias);
+    });
+  });
+}
+
+export function getAdjacentNeighborhoods(city: string, slug: string): NeighborhoodPage[] {
+  const neighborhoods = getNeighborhoodsByCity(city);
+  const currentIndex = neighborhoods.findIndex((neighborhood) => normalize(neighborhood.slug) === normalize(slug));
+  if (currentIndex === -1) return [];
+
+  return [neighborhoods[currentIndex - 1], neighborhoods[currentIndex + 1]].filter(
+    (neighborhood): neighborhood is NeighborhoodPage => Boolean(neighborhood)
+  );
+}
+
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function normalizeSearchText(value: string): string {
+  return value.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
 }

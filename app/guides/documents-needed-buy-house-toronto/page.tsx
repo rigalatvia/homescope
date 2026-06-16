@@ -82,8 +82,8 @@ export default function DocumentsNeededToBuyHouseTorontoPage() {
         },
         {
           href: "/guides/rental-application-ontario",
-          label: "Rental Application Ontario",
-          description: "Helpful if you are renting while preparing to purchase."
+          label: "Ontario Rental Application Form 410 PDF",
+          description: "Helpful if you need the Ontario tenant application form while renting before a purchase."
         }
       ]}
       articleSchema={{

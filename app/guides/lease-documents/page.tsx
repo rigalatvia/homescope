@@ -34,7 +34,7 @@ const LEASE_DOCS = [
 export const metadata: Metadata = buildPageMetadata({
   title: "Documents Needed to Rent in Canada & Ontario Checklist | HomeScope GTA",
   description:
-    "See documents needed to rent in Canada and Ontario, including proof of income, credit report, employment letter, references, ID, and Form 410.",
+    "See documents needed to rent in Canada and Ontario, including proof of income, credit report, employment letter, references, and ID.",
   path: "/guides/lease-documents",
   type: "article"
 });
@@ -70,9 +70,9 @@ export default function LeaseDocumentsGuidePage() {
   ];
 
   return (
-    <GuidePageLayout
+      <GuidePageLayout
       title="Documents Needed to Rent in Canada and Ontario"
-      intro="Wondering what documents you need to rent in Canada or Ontario? This checklist covers the rental files renters commonly prepare before showings, tenant applications, and Form 410 submissions."
+      intro="Wondering what documents you need to rent in Canada or Ontario? This checklist covers the rental files renters commonly prepare before showings and tenant applications, including income proof, ID, credit information, employment letters, and references."
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Guides", href: "/guides" },
@@ -90,7 +90,7 @@ export default function LeaseDocumentsGuidePage() {
         {
           href: "/guides/rental-application-ontario",
           label: "Ontario Rental Application Form 410 PDF",
-          description: "Download Form 410 and review the tenant application fields in advance."
+          description: "Use the separate Form 410 page when you want the Ontario tenant application form itself."
         }
       ]}
       articleSchema={{
@@ -109,10 +109,10 @@ export default function LeaseDocumentsGuidePage() {
       />
 
       <LeaseApplicationDownloadCard
-        title="Download Ontario Rental Application Form 410"
-        description="Pair your supporting documents with a ready-to-review tenant application form so your leasing package is easier to complete when a suitable property appears."
+        title="Need the Ontario tenant application form too?"
+        description="This page owns the rental document checklist. Use the Form 410 guide when you want the Ontario rental application form and field-by-field prep."
         href="/forms/410-rental-application-ontario.pdf"
-        buttonLabel="Download Form 410"
+        buttonLabel="Download Form 410 PDF"
       />
 
       <div className="mt-10 grid gap-5">
@@ -201,10 +201,10 @@ export default function LeaseDocumentsGuidePage() {
 
       <CTASection
         title="Prepare your rental package before the right listing appears"
-        description="Download the Ontario rental application, organize the documents needed to rent, and browse GTA lease listings with a cleaner process and less last-minute stress."
+        description="Organize the documents needed to rent, review the Ontario rental application separately when needed, and browse GTA lease listings with less last-minute stress."
         links={[
           { href: "/listings", label: "Browse Lease Listings" },
-          { href: "/guides/rental-application-ontario", label: "Open Rental Application Guide", variant: "secondary" }
+          { href: "/guides/rental-application-ontario", label: "Ontario Rental Application Form 410 PDF", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>

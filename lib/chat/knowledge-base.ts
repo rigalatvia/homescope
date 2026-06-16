@@ -406,13 +406,13 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
   },
   {
     id: "lease-documents",
-    title: "Lease Documents for Ontario Rentals",
+    title: "Documents Needed to Rent in Canada",
     href: "/guides/lease-documents",
-    keywords: ["lease documents", "proof of income", "credit report", "employment letter", "references"],
-    summary: "Lists the core documents renters often gather before applying for a lease in Ontario.",
+    keywords: ["documents needed to rent", "lease documents", "proof of income", "credit report", "employment letter", "references"],
+    summary: "Lists the core documents renters often gather before applying for a lease in Canada and Ontario.",
     answer: [
       "For Ontario rentals, many landlords want supporting documents such as ID, proof of income, employment confirmation, credit-related records, and references.",
-      "HomeScope GTA also has a lease documents guide so renters can see the checklist before they start booking showings."
+      "HomeScope GTA has a Documents Needed to Rent in Canada guide so renters can see the checklist before they start booking showings."
     ]
   },
   {

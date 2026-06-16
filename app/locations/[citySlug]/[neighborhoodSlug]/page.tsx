@@ -5,7 +5,7 @@ import { ArrowRight, BarChart3, GraduationCap, Home, School } from "lucide-react
 import { ListingCard } from "@/components/listings/listing-card";
 import { SITE_CONFIG } from "@/config/site";
 import { getMarketBySlug } from "@/lib/locations/markets";
-import { NEIGHBORHOOD_PAGES, getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
+import { getAdjacentNeighborhoods, getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
 import { getListingsByMunicipality } from "@/lib/listings/service";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 import { getSchools } from "@/lib/schools/service";
@@ -71,6 +71,7 @@ export default async function NeighborhoodPage({
   );
   const pageUrl = `${SITE_CONFIG.baseUrl}/locations/${market.slug}/${neighborhood.slug}`;
   const listingSearchUrl = `/listings?city=${encodeURIComponent(market.city)}`;
+  const adjacentNeighborhoods = getAdjacentNeighborhoods(market.city, neighborhood.slug);
   const jsonLd = buildNeighborhoodJsonLd({
     title: `${neighborhood.name} ${market.city} Homes`,
     description: neighborhood.metaDescription,
@@ -170,6 +171,30 @@ export default async function NeighborhoodPage({
           </div>
         )}
       </section>
+
+      {adjacentNeighborhoods.length > 0 ? (
+        <section className="pb-10 sm:pb-12">
+          <div className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
+            <h2 className="font-heading text-3xl text-brand-900">Nearby {market.city} Neighborhoods</h2>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {adjacentNeighborhoods.map((adjacentNeighborhood) => (
+                <Link
+                  key={adjacentNeighborhood.slug}
+                  href={`/locations/${market.slug}/${adjacentNeighborhood.slug}`}
+                  className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300 hover:bg-white"
+                >
+                  <span className="block text-sm font-semibold text-brand-900">
+                    Homes in {adjacentNeighborhood.name}
+                  </span>
+                  <span className="mt-2 block text-sm leading-6 text-brand-700">
+                    Compare {adjacentNeighborhood.name} listings, schools, and price stats in {market.city}.
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
@@ -374,6 +399,30 @@ function buildNeighborhoodJsonLd(input: {
   listings: Listing[];
 }) {
   return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_CONFIG.baseUrl
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: input.city,
+          item: `${SITE_CONFIG.baseUrl}/locations/${input.city.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: input.neighborhood,
+          item: input.url
+        }
+      ]
+    },
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",

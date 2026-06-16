@@ -22,11 +22,6 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 
 const faqItems = [
   {
-    question: "What documents do I need to rent a home in Ontario?",
-    answer:
-      "Renters often prepare photo ID, proof of income, employment letters, credit information, references, and any supporting financial documents a landlord may request."
-  },
-  {
     question: "What is Form 410?",
     answer:
       "Form 410 is a residential rental application form commonly used in Ontario to collect applicant information, rental history, employment details, references, and consent signatures."
@@ -39,7 +34,7 @@ const faqItems = [
   {
     question: "What documents should I prepare with Ontario Form 410?",
     answer:
-      "Prepare photo ID, proof of income, employment confirmation, credit information where requested, landlord references, and personal references so the application package is easier to submit."
+      "Prepare the supporting documents a landlord may ask for beside Form 410, such as photo ID, proof of income, employment confirmation, credit information where requested, landlord references, and personal references."
   },
   {
     question: "Should I prepare my rental application before booking a showing?",
@@ -87,7 +82,7 @@ export default function RentalApplicationOntarioPage() {
         {
           href: "/guides/lease-documents",
           label: "Documents Needed to Rent in Canada",
-          description: "Review the supporting documents renters commonly prepare before applying."
+          description: "Use the separate rental document checklist for proof of income, ID, credit, employment, and references."
         },
         {
           href: "/guides/organize-real-estate-documents-canada",
@@ -105,7 +100,7 @@ export default function RentalApplicationOntarioPage() {
       <GuideQuickChecklist
         eyebrow="Leasing Prep"
         title="What to Have Ready Before You Apply"
-        description="A rental application is easier to complete when you have already reviewed the form and gathered the documents that support it."
+        description="This page is specifically about Form 410. A rental application is easier to complete when you have reviewed the form fields and know which support files may sit beside it."
         items={quickChecklist}
         icon={Download}
       />
@@ -165,7 +160,7 @@ export default function RentalApplicationOntarioPage() {
           eyebrow="Support File"
           title="Documents to prepare with Form 410"
           icon={BriefcaseBusiness}
-          description="Form 410 is only one part of a strong rental application package. Supporting documents often matter just as much when a landlord reviews your file."
+          description="Form 410 is the application form. For the broader checklist of rental documents, use the documents-needed-to-rent guide; this section only shows common support files to keep beside the form."
           bullets={[
             "Photo identification",
             "Employment letter or proof of income",
@@ -208,6 +203,7 @@ export default function RentalApplicationOntarioPage() {
         description="Review the Ontario rental application, organize your supporting files, and browse GTA lease listings with a package that is ready when the right home appears."
         links={[
           { href: "/listings", label: "Browse Lease Listings" },
+          { href: "/guides/lease-documents", label: "Documents Needed to Rent in Canada", variant: "secondary" },
           { href: "/", label: "Explore HomeScope GTA", variant: "secondary" }
         ]}
       />

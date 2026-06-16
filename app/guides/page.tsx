@@ -44,7 +44,7 @@ const GUIDE_CARDS = [
     category: "Rental Resource",
     icon: FileArchive,
     title: "Ontario Rental Application Form 410 PDF",
-    description: "Download Form 410 and learn which tenant application details and rental documents to prepare in advance."
+    description: "Download Form 410 and review the Ontario tenant application fields before serious showings."
   },
   {
     href: "/guides/buying",
@@ -62,7 +62,7 @@ const GUIDE_CARDS = [
   },
   {
     href: "/guides/lease-documents",
-    category: "Lease Documents",
+    category: "Rental Document Checklist",
     icon: Search,
     title: "Documents Needed to Rent in Canada",
     description: "See the core rental documents renters often gather before applying in Canada and Ontario."

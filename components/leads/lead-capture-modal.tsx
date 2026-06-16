@@ -355,7 +355,7 @@ export function LeadCaptureModal({
                     <p className="mt-2 text-sm text-brand-700">
                       Need a checklist?{" "}
                       <Link href="/guides/lease-documents" className="font-semibold text-brand-900 underline underline-offset-2">
-                        View Lease Documents
+                        View Documents Needed to Rent
                       </Link>
                     </p>
                     <label htmlFor="isReadyToProvideDocs" className="mt-3 flex items-start gap-2 text-sm text-brand-800">

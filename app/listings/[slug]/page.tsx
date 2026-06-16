@@ -6,8 +6,11 @@ import { BackToListingsButton } from "@/components/listings/back-to-listings-but
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
 import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/guides/breadcrumbs";
 import { formatPrice } from "@/lib/utils/format";
 import { getPublicListingBySlug, getSimilarListingsForListing } from "@/lib/listings/service";
+import { getMarketByCity } from "@/lib/locations/markets";
+import { getNeighborhoodForListing } from "@/lib/locations/neighborhoods";
 import { buildListingMetadata, formatListingAddress } from "@/lib/seo/listing-metadata";
 import { SITE_CONFIG } from "@/config/site";
 import type { Listing } from "@/types/listing";
@@ -71,11 +74,26 @@ export default async function ListingDetailPage({
   const similarListings = await getSimilarListingsForListing(listing, 8);
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
+  const market = getMarketByCity(listing.city);
+  const neighborhood = getNeighborhoodForListing({
+    city: listing.city,
+    area: listing.area,
+    title: listing.title,
+    address: listing.address,
+    description: listing.description
+  });
+  const breadcrumbItems = buildListingBreadcrumbItems({
+    listing,
+    marketSlug: market?.slug,
+    neighborhoodSlug: neighborhood?.slug,
+    neighborhoodName: neighborhood?.name
+  });
   const listingJsonLd = buildListingJsonLd({
     title: listing.title,
     description: listing.description,
     url: listingUrl,
     image: listing.images[0],
+    images: listing.images,
     price: listing.price,
     address: listing.address,
     city: listing.city,
@@ -83,13 +101,17 @@ export default async function ListingDetailPage({
     propertyType: listing.propertyType,
     transactionType: listing.transactionType,
     bedrooms: listing.bedrooms,
-    bathrooms: listing.bathrooms
+    bathrooms: listing.bathrooms,
+    cityUrl: market ? `${SITE_CONFIG.baseUrl}/locations/${market.slug}` : undefined,
+    neighborhoodName: neighborhood?.name,
+    neighborhoodUrl:
+      market && neighborhood ? `${SITE_CONFIG.baseUrl}/locations/${market.slug}/${neighborhood.slug}` : undefined
   });
   const relatedGuideLinks =
     listing.transactionType === "lease"
       ? [
           { href: "/guides/leasing", label: "Ontario Leasing Guide" },
-          { href: "/guides/lease-documents", label: "Lease Documents Checklist" },
+          { href: "/guides/lease-documents", label: "Documents Needed to Rent in Canada" },
           { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" }
         ]
       : [
@@ -102,6 +124,7 @@ export default async function ListingDetailPage({
   return (
     <section className="site-container py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }} />
+      <Breadcrumbs items={breadcrumbItems} />
       <div className="mb-6">
         <BackToListingsButton />
       </div>
@@ -174,7 +197,7 @@ export default async function ListingDetailPage({
           </section>
 
           {similarListings.length > 0 ? (
-            <SimilarHomesSection currentListing={listing} listings={similarListings} />
+            <SimilarHomesSection currentListing={listing} listings={similarListings} neighborhood={neighborhood} marketSlug={market?.slug} />
           ) : null}
         </div>
       </div>
@@ -182,13 +205,32 @@ export default async function ListingDetailPage({
   );
 }
 
-function SimilarHomesSection({ currentListing, listings }: { currentListing: Listing; listings: Listing[] }) {
-  const areaLabel = currentListing.area && currentListing.area !== "GTA" ? currentListing.area : currentListing.city;
+function SimilarHomesSection({
+  currentListing,
+  listings,
+  neighborhood,
+  marketSlug
+}: {
+  currentListing: Listing;
+  listings: Listing[];
+  neighborhood?: { name: string; slug: string };
+  marketSlug?: string;
+}) {
+  const areaLabel = neighborhood?.name || (currentListing.area && currentListing.area !== "GTA" ? currentListing.area : currentListing.city);
+  const neighborhoodHref = neighborhood && marketSlug ? `/locations/${marketSlug}/${neighborhood.slug}` : undefined;
 
   return (
     <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Similar Homes Nearby</p>
-      <h2 className="mt-2 font-heading text-2xl text-brand-900">More homes in {areaLabel}</h2>
+      <h2 className="mt-2 font-heading text-2xl text-brand-900">
+        {neighborhoodHref ? (
+          <Link href={neighborhoodHref} className="transition hover:text-brand-700 hover:underline">
+            More homes in {areaLabel}
+          </Link>
+        ) : (
+          <>More homes in {areaLabel}</>
+        )}
+      </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {listings.map((similarListing) => (
           <a
@@ -209,6 +251,30 @@ function SimilarHomesSection({ currentListing, listings }: { currentListing: Lis
   );
 }
 
+function buildListingBreadcrumbItems(input: {
+  listing: Listing;
+  marketSlug?: string;
+  neighborhoodSlug?: string;
+  neighborhoodName?: string;
+}): BreadcrumbItem[] {
+  return [
+    { label: "Home", href: "/" },
+    {
+      label: input.listing.city,
+      href: input.marketSlug ? `/locations/${input.marketSlug}` : undefined
+    },
+    ...(input.neighborhoodName && input.marketSlug && input.neighborhoodSlug
+      ? [
+          {
+            label: input.neighborhoodName,
+            href: `/locations/${input.marketSlug}/${input.neighborhoodSlug}`
+          }
+        ]
+      : []),
+    { label: input.listing.address }
+  ];
+}
+
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl bg-brand-50 px-2 py-3 text-center sm:px-3">
@@ -223,6 +289,7 @@ function buildListingJsonLd(input: {
   description: string;
   url: string;
   image?: string;
+  images: string[];
   price: number;
   address: string;
   city: string;
@@ -231,31 +298,89 @@ function buildListingJsonLd(input: {
   transactionType: string;
   bedrooms: number;
   bathrooms: number;
+  cityUrl?: string;
+  neighborhoodName?: string;
+  neighborhoodUrl?: string;
 }) {
+  const breadcrumbElements = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: SITE_CONFIG.baseUrl
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: input.city,
+      item: input.cityUrl || `${SITE_CONFIG.baseUrl}/listings?city=${encodeURIComponent(input.city)}`
+    },
+    ...(input.neighborhoodName && input.neighborhoodUrl
+      ? [
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: input.neighborhoodName,
+            item: input.neighborhoodUrl
+          }
+        ]
+      : []),
+    {
+      "@type": "ListItem",
+      position: input.neighborhoodName && input.neighborhoodUrl ? 4 : 3,
+      name: input.address,
+      item: input.url
+    }
+  ];
+
   return [
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Home",
-          item: SITE_CONFIG.baseUrl
+      itemListElement: breadcrumbElements
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      name: input.title,
+      description: input.description,
+      url: input.url,
+      image: input.images,
+      mainEntity: {
+        "@type": "Residence",
+        name: input.title,
+        image: input.images,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: input.address,
+          addressLocality: input.city,
+          addressRegion: "ON",
+          postalCode: input.postalCode,
+          addressCountry: "CA"
         },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Listings",
-          item: `${SITE_CONFIG.baseUrl}/listings`
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: input.title,
-          item: input.url
-        }
-      ]
+        additionalProperty: [
+          {
+            "@type": "PropertyValue",
+            name: "Property type",
+            value: input.propertyType
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Bedrooms",
+            value: input.bedrooms
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Bathrooms",
+            value: input.bathrooms
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Price",
+            value: input.price
+          }
+        ]
+      }
     },
     {
       "@context": "https://schema.org",
@@ -263,7 +388,7 @@ function buildListingJsonLd(input: {
       name: input.title,
       description: input.description,
       url: input.url,
-      image: input.image,
+      image: input.images,
       numberOfRooms: input.bedrooms,
       address: {
         "@type": "PostalAddress",
@@ -302,7 +427,7 @@ function buildListingJsonLd(input: {
       name: input.title,
       description: input.description,
       url: input.url,
-      image: input.image,
+      image: input.images,
       category: input.propertyType,
       offers: {
         "@type": "Offer",

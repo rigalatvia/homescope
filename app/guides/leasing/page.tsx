@@ -276,7 +276,7 @@ export default function LeasingGuidePage() {
               href="/guides/lease-documents"
               className="inline-flex rounded-full bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
             >
-              Documents Needed to Rent
+              Documents Needed to Rent in Canada
             </Link>
             <Link
               href="/guides/rental-application-ontario"
@@ -301,7 +301,7 @@ export default function LeasingGuidePage() {
         description="Download the application, organize your supporting files, and browse GTA lease listings with a process that feels much more under control."
         links={[
           { href: "/listings", label: "Browse Lease Listings" },
-          { href: "/guides/lease-documents", label: "View Lease Document Checklist", variant: "secondary" }
+          { href: "/guides/lease-documents", label: "Documents Needed to Rent in Canada", variant: "secondary" }
         ]}
       />
     </GuidePageLayout>

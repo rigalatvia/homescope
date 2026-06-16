@@ -22,7 +22,7 @@ export function SiteHeader() {
     { href: "/guides/organize-real-estate-documents-canada", label: "Organize Real Estate Documents" },
     { href: "/guides/rental-application-ontario", label: "Rental Application Form 410" },
     { href: "/guides/leasing", label: "Leasing Guide" },
-    { href: "/guides/lease-documents", label: "Lease Documents" }
+    { href: "/guides/lease-documents", label: "Documents Needed to Rent" }
   ];
 
   const closeMobileGuidesMenu = useCallback(() => {

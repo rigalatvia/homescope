@@ -135,9 +135,13 @@ export default async function LocationPage({ params }: { params: { citySlug: str
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">
                   {market.city} Area
                 </p>
-                <h3 className="mt-3 font-heading text-2xl text-brand-900">{neighborhood.name}</h3>
+                <h3 className="mt-3 font-heading text-2xl text-brand-900">
+                  Homes in {neighborhood.name}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-brand-700">{neighborhood.intro}</p>
-                <span className="mt-4 inline-flex text-sm font-semibold text-brand-900">View neighborhood</span>
+                <span className="mt-4 inline-flex text-sm font-semibold text-brand-900">
+                  Browse {neighborhood.name} {market.city} homes
+                </span>
               </Link>
             ))}
           </div>
@@ -272,6 +276,24 @@ function buildLocationJsonLd(input: {
   listings: Array<{ title: string; listingUrlSlug: string; price: number; city: string }>;
 }) {
   return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_CONFIG.baseUrl
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: input.city,
+          item: input.url
+        }
+      ]
+    },
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",

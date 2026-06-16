@@ -72,8 +72,8 @@ export default function OrganizeRealEstateDocumentsCanadaPage() {
         },
         {
           href: "/guides/rental-application-ontario",
-          label: "Rental Application Ontario",
-          description: "Keep leasing forms and supporting renter documents together."
+          label: "Ontario Rental Application Form 410 PDF",
+          description: "Keep the Form 410 tenant application and supporting renter files together."
         }
       ]}
       articleSchema={{
