@@ -10,6 +10,7 @@ import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
 import { getListingStatsByMunicipality, getListingsByMunicipality } from "@/lib/listings/service";
 import { getSchools } from "@/lib/schools/service";
 import type { Listing } from "@/types/listing";
+import type { School } from "@/types/school";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function LocationPage({ params }: { params: { citySlug: str
     getSchools({ municipality: market.city })
   ]);
   const listings = selectRepresentativeListings(cityListings, 6);
+  const topCitySchools = getTopRankedSchools(citySchools, 6);
   const pageUrl = `${SITE_CONFIG.baseUrl}/locations/${market.slug}`;
   const listingSearchUrl = `/listings?city=${encodeURIComponent(market.city)}`;
   const schoolSearchUrl = `/schools?municipality=${encodeURIComponent(market.city)}`;
@@ -79,7 +81,7 @@ export default async function LocationPage({ params }: { params: { citySlug: str
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href={`/market-reports/${market.slug}/${CURRENT_MARKET_REPORT.slug}`}
+                href={`/locations/${market.slug}/market`}
                 className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
               >
                 {CURRENT_MARKET_REPORT.label} Market Stats
@@ -179,6 +181,40 @@ export default async function LocationPage({ params }: { params: { citySlug: str
         )}
       </section>
 
+      {topCitySchools.length > 0 ? (
+        <section className="pb-10 sm:pb-12">
+          <div className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">School Research</p>
+                <h2 className="mt-2 font-heading text-3xl text-brand-900">Top {market.city} school pages</h2>
+              </div>
+              <Link
+                href={schoolSearchUrl}
+                className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-white"
+              >
+                View All {market.city} Schools
+                <GraduationCap className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {topCitySchools.map((school) => (
+                <Link
+                  key={school.slug}
+                  href={`/schools/${school.slug}`}
+                  className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300 hover:bg-white"
+                >
+                  <span className="block font-semibold text-brand-900">Homes near {school.name}</span>
+                  <span className="mt-1 block text-sm text-brand-700">
+                    {school.board} | {school.ranking?.score != null ? formatScore(school.ranking.score) : school.level}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
         <h2 className="font-heading text-3xl text-brand-900">Plan Your {market.city} Search</h2>
         <p className="mt-3 max-w-3xl leading-8 text-brand-700">
@@ -252,6 +288,20 @@ function addPriceBandSample(
     seen.add(listing.id);
     selected.push(listing);
   }
+}
+
+function getTopRankedSchools(schools: School[], limit: number): School[] {
+  return [...schools]
+    .sort((a, b) => {
+      const scoreDelta = (b.ranking?.score ?? -1) - (a.ranking?.score ?? -1);
+      if (scoreDelta !== 0) return scoreDelta;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, limit);
+}
+
+function formatScore(score: number): string {
+  return `${Number.isInteger(score) ? score.toFixed(0) : score.toFixed(1)}/10`;
 }
 
 function getPriceBandIndexes(length: number): number[] {

@@ -80,7 +80,8 @@ export default async function ListingDetailPage({
     area: listing.area,
     title: listing.title,
     address: listing.address,
-    description: listing.description
+    description: listing.description,
+    slug: listing.listingUrlSlug
   });
   const breadcrumbItems = buildListingBreadcrumbItems({
     listing,

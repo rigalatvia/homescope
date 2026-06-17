@@ -8,6 +8,7 @@ import type { School, SchoolSearchFilters } from "@/types/school";
 
 const DEFAULT_NEARBY_RADIUS_KM = 3;
 const DEFAULT_NEARBY_LISTING_LIMIT = 24;
+const YORK_REGION_MUNICIPALITIES = new Set(["Vaughan", "Richmond Hill", "Aurora", "Newmarket", "King"]);
 
 export async function getSchools(filters: SchoolSearchFilters = {}): Promise<School[]> {
   const directory = await getSchoolDirectory();
@@ -21,6 +22,19 @@ export function getSeedSchools(filters: SchoolSearchFilters = {}): School[] {
 export async function getSchoolBySlug(slug: string): Promise<School | undefined> {
   const directory = await getSchoolDirectory();
   return directory.find((school) => school.slug === slug);
+}
+
+export async function getTopRankedYorkRegionSchools(limit = 50): Promise<School[]> {
+  const directory = await getSchoolDirectory();
+  return directory
+    .filter((school) => YORK_REGION_MUNICIPALITIES.has(school.municipality))
+    .filter((school) => school.ranking?.score != null)
+    .sort((a, b) => {
+      const scoreDelta = (b.ranking?.score ?? -1) - (a.ranking?.score ?? -1);
+      if (scoreDelta !== 0) return scoreDelta;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, limit);
 }
 
 export function getSeedSchoolBySlug(slug: string): School | undefined {

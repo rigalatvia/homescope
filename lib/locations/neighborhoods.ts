@@ -369,10 +369,13 @@ export function getNeighborhoodForListing(input: {
   title?: string | null;
   address?: string | null;
   description?: string | null;
+  slug?: string | null;
 }): NeighborhoodPage | undefined {
   const neighborhoods = getNeighborhoodsByCity(input.city);
   const area = normalizeSearchText(input.area || "");
-  const haystack = normalizeSearchText([input.area, input.title, input.address, input.description].filter(Boolean).join(" "));
+  const haystack = normalizeSearchText(
+    [input.area, input.title, input.address, input.description, input.slug].filter(Boolean).join(" ")
+  );
 
   return neighborhoods.find((neighborhood) => {
     return neighborhood.searchAliases.some((alias) => {
