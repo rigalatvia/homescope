@@ -191,7 +191,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
     summary: "Explains the listing showing request flow.",
     answer: [
       "Open a listing detail page and use the showing request form. The form sends the listing details along with your contact information and preferred timing.",
-      "After submission, watch for an email from info@homescopegta.ca and check your junk folder if you do not see it. Rental requests may involve document readiness before a showing is finalized."
+      "After submission, watch for an email from homescopegta@gmail.com and check your junk folder if you do not see it. Rental requests may involve document readiness before a showing is finalized."
     ]
   },
   {
@@ -466,7 +466,7 @@ const KNOWLEDGE_BASE: ChatKnowledgeArticle[] = [
     keywords: ["showing request", "book showing", "confirmation email", "junk folder", "text messages"],
     summary: "Explains how showing requests are handled and what to expect after submission.",
     answer: [
-      "After a showing request is submitted, visitors should expect an email from info@homescopegta.ca and should check their junk folder if they do not see it.",
+      "After a showing request is submitted, visitors should expect an email from homescopegta@gmail.com and should check their junk folder if they do not see it.",
       "For rental listings, document review may be required before the showing is finalized."
     ]
   }

@@ -208,7 +208,7 @@ Collections used by API routes:
 Lead/contact notification recipient and subject are resolved server-side from:
 
 - `settings/site`
-  - `leadRecipientEmail` (example: `yanginzburg@gmail.com`)
+  - `leadRecipientEmail` (example: `homescopegta@gmail.com`)
   - `leadEmailSubject` (example: `Homescope GTA LEAD`)
 
 Fallback behavior if `settings/site` is missing:

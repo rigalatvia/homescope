@@ -180,7 +180,7 @@ export function LeadCaptureModal({
       setSuccessMessage(
         typeof json.message === "string"
           ? json.message
-          : "Thank you! Your request has been sent successfully. Please expect an email from info@homescopegta.ca and check your junk folder if you do not see it in the next few hours."
+          : "Thank you! Your request has been sent successfully. Please expect an email from homescopegta@gmail.com and check your junk folder if you do not see it in the next few hours."
       );
       setForm(initialForm);
       const params = new URLSearchParams({
@@ -229,7 +229,7 @@ export function LeadCaptureModal({
             </div>
             <p className="mt-1 text-xs text-brand-700 md:text-sm">We&apos;ll contact you shortly to confirm your visit.</p>
             <p className="mt-1 text-xs text-brand-700 md:text-sm">
-              Please expect an email from info@homescopegta.ca and check your junk folder if you do not see it in the next few hours.
+              Please expect an email from homescopegta@gmail.com and check your junk folder if you do not see it in the next few hours.
             </p>
 
             <p className="mt-1 text-xs text-brand-700 md:text-sm">

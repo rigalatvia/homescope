@@ -201,7 +201,7 @@ Important operational behavior:
 - after a showing request is submitted, the user is redirected to a thank-you page
 - the thank-you page is important for Google Ads conversion tracking
 - the confirmation copy tells users to expect an email from:
-  - `info@homescopegta.ca`
+  - `homescopegta@gmail.com`
 
 ## 8. Contacts
 

@@ -429,6 +429,9 @@ Current provider selection logic:
 - requires:
   - `RESEND_API_KEY`
   - `FROM_EMAIL`
+  - optional flow-specific sender overrides:
+    - `CRM_CAMPAIGN_FROM_EMAIL`
+    - `CRM_CAMPAIGN_EMAIL_PASS`
 
 If provider is missing or unsupported:
 
@@ -583,6 +586,8 @@ Default secret names include:
 - `MLS_SCHEDULER_TOKEN`
 - `RESEND_API_KEY`
 - `FROM_EMAIL`
+- `CRM_CAMPAIGN_FROM_EMAIL`
+- `CRM_CAMPAIGN_EMAIL_PASS`
 - `EMAIL_PROVIDER`
 - `EMAIL_ENABLED`
 
@@ -621,6 +626,8 @@ Important groups:
 - `LEADS_NOTIFICATION_EMAIL`
 - `LEAD_EMAIL_SUBJECT`
 - `FROM_EMAIL`
+- `CRM_CAMPAIGN_FROM_EMAIL`
+- `CRM_CAMPAIGN_EMAIL_PASS`
 - `RESEND_API_KEY`
 
 #### DDF / sync

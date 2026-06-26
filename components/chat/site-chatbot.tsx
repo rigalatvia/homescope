@@ -158,7 +158,7 @@ export function SiteChatbot() {
         ...current,
         createLocalMessage(
           "assistant",
-          "I couldn't answer right now. Please try again in a moment, or email info@homescopegta.ca if you need help."
+          "I couldn't answer right now. Please try again in a moment, or email homescopegta@gmail.com if you need help."
         )
       ]);
     } finally {

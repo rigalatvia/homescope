@@ -23,7 +23,7 @@ function sanitizeSubject(value: unknown): string {
 
 export function getDefaultSiteSettings(): SiteSettings {
   return {
-    leadRecipientEmail: sanitizeEmail(process.env.LEADS_NOTIFICATION_EMAIL) || "notifications@homescopegta.local",
+    leadRecipientEmail: sanitizeEmail(process.env.LEADS_NOTIFICATION_EMAIL) || "homescopegta@gmail.com",
     leadEmailSubject: sanitizeSubject(process.env.LEAD_EMAIL_SUBJECT) || DEFAULT_LEAD_SUBJECT,
     featuredListingIds: []
   };

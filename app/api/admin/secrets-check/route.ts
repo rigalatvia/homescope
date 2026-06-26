@@ -16,7 +16,9 @@ const DEFAULT_KEYS = [
   "EMAIL_USER",
   "EMAIL_PASS",
   "RESEND_API_KEY",
-  "FROM_EMAIL"
+  "FROM_EMAIL",
+  "CRM_CAMPAIGN_FROM_EMAIL",
+  "CRM_CAMPAIGN_EMAIL_PASS"
 ] as const;
 
 interface SecretsCheckBody {

@@ -7,6 +7,10 @@ export interface GenericEmailPayload {
   text: string;
   html: string;
   replyTo?: string;
+  senderEmail?: string;
+  senderName?: string;
+  senderAuthUser?: string;
+  senderAuthPass?: string;
 }
 
 export interface LeadEmailPayload {

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Showing Request Submitted | HomeScope GTA",
   description:
-    "Thank you for your showing request. Check your email from info@homescopegta.ca and review next steps from HomeScope GTA.",
+    "Thank you for your showing request. Check your email from homescopegta@gmail.com and review next steps from HomeScope GTA.",
   robots: {
     index: false,
     follow: false
@@ -33,7 +33,7 @@ export default function ShowingRequestThankYouPage({
           {listingTitle
             ? `We received your request for ${listingTitle}.`
             : "We received your showing request."}{" "}
-          Please expect an email from <span className="font-semibold text-brand-900">info@homescopegta.ca</span> and
+          Please expect an email from <span className="font-semibold text-brand-900">homescopegta@gmail.com</span> and
           check your junk folder if you do not see it in the next few hours.
         </p>
 

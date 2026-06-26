@@ -1,6 +1,16 @@
 import { sendDirectEmail } from "@/lib/email";
 import type { CrmTemplateRecord } from "@/types/crm";
 
+const CRM_CAMPAIGN_FROM_NAME = "Yan Ginzburg";
+
+function getCrmCampaignFromEmail(): string | undefined {
+  return process.env.CRM_CAMPAIGN_FROM_EMAIL?.trim() || process.env.FROM_EMAIL?.trim() || undefined;
+}
+
+function getCrmCampaignEmailPass(): string | undefined {
+  return process.env.CRM_CAMPAIGN_EMAIL_PASS?.trim() || undefined;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -96,7 +106,11 @@ export async function sendCrmTemplateEmail(input: {
     subject: email.subject,
     text: email.text,
     html: email.html,
-    replyTo: input.replyTo
+    replyTo: input.replyTo,
+    senderEmail: getCrmCampaignFromEmail(),
+    senderName: CRM_CAMPAIGN_FROM_NAME,
+    senderAuthUser: process.env.CRM_CAMPAIGN_FROM_EMAIL?.trim() || undefined,
+    senderAuthPass: getCrmCampaignEmailPass()
   });
 }
 

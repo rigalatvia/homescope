@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     console.error("[chat] Failed to process chatbot request", error);
     return NextResponse.json(
       {
-        error: "I could not answer right now. Please try again in a moment or contact info@homescopegta.ca."
+        error: "I could not answer right now. Please try again in a moment or contact homescopegta@gmail.com."
       },
       { status: 500 }
     );

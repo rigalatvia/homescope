@@ -16,6 +16,13 @@ interface EmailProviderSelection {
   reason: string;
 }
 
+interface EmailProviderOptions {
+  senderEmail?: string | null;
+  senderName?: string | null;
+  senderAuthUser?: string | null;
+  senderAuthPass?: string | null;
+}
+
 function buildDisplayFromAddress(fromEmail: string, fromName = DEFAULT_FROM_NAME): string {
   const trimmedEmail = fromEmail.trim();
   const trimmedName = fromName.trim();
@@ -26,7 +33,7 @@ function buildDisplayFromAddress(fromEmail: string, fromName = DEFAULT_FROM_NAME
   return `${trimmedName} <${trimmedEmail}>`;
 }
 
-async function getProviderSelection(): Promise<EmailProviderSelection> {
+async function getProviderSelection(options: EmailProviderOptions = {}): Promise<EmailProviderSelection> {
   await ensureServerSecretsLoaded();
 
   const emailEnabled = process.env.EMAIL_ENABLED === "true";
@@ -35,6 +42,10 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
   const fromEmail = process.env.FROM_EMAIL;
   const emailUser = process.env.EMAIL_USER;
   const emailPass = process.env.EMAIL_PASS;
+  const effectiveFromEmail = options.senderEmail?.trim() || fromEmail;
+  const effectiveFromName = options.senderName?.trim() || DEFAULT_FROM_NAME;
+  const effectiveEmailUser = options.senderAuthUser?.trim() || emailUser;
+  const effectiveEmailPass = options.senderAuthPass?.trim() || emailPass;
 
   if (!emailEnabled) {
     return {
@@ -45,7 +56,7 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
   }
 
   if (requestedProvider === "gmail") {
-    if (!emailUser || !emailPass) {
+    if (!effectiveEmailUser || !effectiveEmailPass) {
       return {
         provider: new MockEmailProvider(),
         mode: "mock",
@@ -53,10 +64,10 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
       };
     }
 
-    const senderAddress = buildDisplayFromAddress(fromEmail || emailUser);
+    const senderAddress = buildDisplayFromAddress(effectiveFromEmail || effectiveEmailUser, effectiveFromName);
 
     return {
-      provider: new GmailEmailProvider(emailUser, emailPass, senderAddress),
+      provider: new GmailEmailProvider(effectiveEmailUser, effectiveEmailPass, senderAddress),
       mode: "live",
       reason: "Gmail provider configured."
     };
@@ -70,7 +81,7 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
     };
   }
 
-  if (!resendApiKey || !fromEmail) {
+  if (!resendApiKey || !effectiveFromEmail) {
     return {
       provider: new MockEmailProvider(),
       mode: "mock",
@@ -79,7 +90,7 @@ async function getProviderSelection(): Promise<EmailProviderSelection> {
   }
 
   return {
-    provider: new ResendEmailProvider(resendApiKey, fromEmail),
+    provider: new ResendEmailProvider(resendApiKey, buildDisplayFromAddress(effectiveFromEmail, effectiveFromName)),
     mode: "live",
     reason: "Resend provider configured."
   };
@@ -144,13 +155,20 @@ export async function sendContactNotification(contact: ContactSubmissionRecord):
 }
 
 export async function sendDirectEmail(payload: GenericEmailPayload): Promise<EmailSendResult> {
-  const selection = await getProviderSelection();
+  const selection = await getProviderSelection({
+    senderEmail: payload.senderEmail,
+    senderName: payload.senderName,
+    senderAuthUser: payload.senderAuthUser,
+    senderAuthPass: payload.senderAuthPass
+  });
 
   console.info("[email] Provider mode selected", {
     provider: selection.provider.name,
     mode: selection.mode,
     reason: selection.reason,
-    recipient: payload.to
+    recipient: payload.to,
+    senderOverride: payload.senderEmail ? "provided" : "default",
+    authOverride: payload.senderAuthUser || payload.senderAuthPass ? "provided" : "default"
   });
 
   await selection.provider.sendMessage(payload);
