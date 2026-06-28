@@ -8,8 +8,7 @@ import { SITE_CONFIG } from "@/config/site";
 import {
   getNearbyListingsForSchool,
   getSchoolBySlug,
-  getSchools,
-  getTopRankedYorkRegionSchools
+  getSchools
 } from "@/lib/schools/service";
 import type { School, SchoolLevel, SchoolRanking } from "@/types/school";
 
@@ -79,7 +78,6 @@ export default async function SchoolsPage({
   const selectedSchoolBySlug = selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined;
   const listMunicipality = municipality || (!query && !level ? selectedSchoolBySlug?.municipality : undefined);
   const schoolResults = await getSchools({ query, municipality: listMunicipality, level });
-  const topYorkRegionSchools = await getTopRankedYorkRegionSchools(50);
   const selectedSchool = selectedSchoolBySlug;
   const visibleSchoolResults = getVisibleSchoolResults(schoolResults, selectedSchool);
   const hiddenSchoolResultsCount = Math.max(0, schoolResults.length - visibleSchoolResults.length);
@@ -165,36 +163,6 @@ export default async function SchoolsPage({
           </PendingSubmitButton>
         </div>
       </form>
-
-      {!hasSchoolFilters && !selectedSchool ? (
-        <section className="mt-8 rounded-xl border border-brand-100 bg-white p-5 shadow-soft">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">York Region Schools</p>
-              <h2 className="mt-2 font-heading text-3xl text-brand-900">Top ranked school pages</h2>
-            </div>
-            <p className="max-w-2xl text-sm leading-6 text-brand-700">
-              Start with these indexable school pages, then verify boundaries and eligibility directly with the school board.
-            </p>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {topYorkRegionSchools.map((school) => (
-              <Link
-                key={school.slug}
-                href={`/schools/${school.slug}`}
-                className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300 hover:bg-white"
-              >
-                <span className="block font-semibold text-brand-900">
-                  Homes near {school.name}
-                </span>
-                <span className="mt-1 block text-sm text-brand-700">
-                  {school.municipality} | {school.board} | {school.ranking?.score != null ? formatRankingScore(school.ranking.score) : titleCase(school.level)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="space-y-3">
