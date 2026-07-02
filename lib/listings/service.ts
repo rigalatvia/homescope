@@ -1,7 +1,6 @@
 import { applyListingFilters, paginateListings } from "@/lib/listings/filters";
 import {
   getFeaturedListings as getFeaturedListingsFromFirestore,
-  getListingsByAgentKey as getListingsByAgentKeyFromFirestore,
   getPublicListingsPage as getPublicListingsPageFromFirestore,
   getPublicListingsByIds as getPublicListingsByIdsFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
@@ -12,7 +11,7 @@ import {
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings } from "@/lib/settings/site-settings";
+import { getSiteSettings } from "@/lib/settings/site-settings";
 import { getSchoolDirectory } from "@/lib/schools/firestore-data";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
@@ -126,16 +125,16 @@ export async function getAllPublicListings(): Promise<Listing[]> {
 }
 
 export async function getFeaturedListings(): Promise<Listing[]> {
-  const yanAgentKey = DEFAULT_FEATURED_AGENT_KEYS[0];
-  const [yanListings, fallbackListings] = await Promise.all([
-    getListingsByAgentKeyFromFirestore(yanAgentKey, 6),
+  const settings = await getSiteSettings();
+  const [selectedListings, fallbackListings] = await Promise.all([
+    getPublicListingsByIdsFromFirestore(settings.featuredListingIds),
     getFeaturedListingsFromFirestore()
   ]);
 
   const seen = new Set<string>();
   const ordered: Listing[] = [];
 
-  for (const listing of [...yanListings, ...fallbackListings]) {
+  for (const listing of [...selectedListings, ...fallbackListings]) {
     if (seen.has(listing.id)) continue;
     seen.add(listing.id);
     ordered.push(listing);

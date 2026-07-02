@@ -111,13 +111,18 @@ export async function getListingsByAgentKey(agentKey: string, limit = 24): Promi
   if (!normalizedAgentKey) return [];
 
   const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore
-    .collection(LISTINGS_COLLECTION)
-    .where("listAgentKey", "==", normalizedAgentKey)
-    .get();
+  const [agentKeySnapshot, nationalAssociationSnapshot] = await Promise.all([
+    firestore.collection(LISTINGS_COLLECTION).where("listAgentKey", "==", normalizedAgentKey).get(),
+    firestore.collection(LISTINGS_COLLECTION).where("listAgentNationalAssociationId", "==", normalizedAgentKey).get()
+  ]);
+  const listingsById = new Map<string, MLSListingFirestoreDocument>();
 
-  return snapshot.docs
-    .map((doc) => sanitizePublicListing(doc.data() as MLSListingFirestoreDocument))
+  for (const doc of [...agentKeySnapshot.docs, ...nationalAssociationSnapshot.docs]) {
+    const listing = sanitizePublicListing(doc.data() as MLSListingFirestoreDocument);
+    listingsById.set(listing.listingId || doc.id, listing);
+  }
+
+  return Array.from(listingsById.values())
     .filter((listing) => listing.isVisible === true)
     .filter((listing) => !!listing.municipality && allowedMunicipalities.includes(listing.municipality))
     .sort((a, b) => (b.price ?? 0) - (a.price ?? 0))

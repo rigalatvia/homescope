@@ -15,6 +15,7 @@ interface FeaturedResponse {
   success: boolean;
   featuredListingIds?: string[];
   listings?: ListingOption[];
+  yanListings?: ListingOption[];
   error?: string;
 }
 
@@ -26,6 +27,16 @@ function formatPrice(value: number): string {
   }).format(value || 0);
 }
 
+function mergeListingOptions(existing: ListingOption[], incoming: ListingOption[]): ListingOption[] {
+  const optionMap = new Map(existing.map((item) => [item.id, item]));
+
+  for (const item of incoming) {
+    optionMap.set(item.id, item);
+  }
+
+  return Array.from(optionMap.values());
+}
+
 export function FeaturedListingsPanel() {
   const [adminToken, setAdminToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +44,7 @@ export function FeaturedListingsPanel() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [listings, setListings] = useState<ListingOption[]>([]);
+  const [yanListings, setYanListings] = useState<ListingOption[]>([]);
   const [featuredListingIds, setFeaturedListingIds] = useState<string[]>([]);
   const [candidateMlsNumber, setCandidateMlsNumber] = useState("");
 
@@ -73,6 +85,7 @@ export function FeaturedListingsPanel() {
       }
 
       setListings(json.listings || []);
+      setYanListings(json.yanListings || []);
       setFeaturedListingIds(json.featuredListingIds || []);
       setSuccessMessage("Featured listing data loaded.");
     } catch (error) {
@@ -108,6 +121,10 @@ export function FeaturedListingsPanel() {
         throw new Error(json.error || "Failed to save featured order.");
       }
 
+      const returnedListings = json.listings || [];
+      if (returnedListings.length > 0) {
+        setListings((prev) => mergeListingOptions(prev, returnedListings));
+      }
       setFeaturedListingIds(json.featuredListingIds || []);
       setSuccessMessage("Featured listing order saved.");
     } catch (error) {
@@ -131,6 +148,18 @@ export function FeaturedListingsPanel() {
 
     setFeaturedListingIds((prev) => [...prev, valueToAdd]);
     setCandidateMlsNumber("");
+    setErrorMessage("");
+  }
+
+  function addFeaturedListing(listing: ListingOption) {
+    if (featuredListingIds.includes(listing.id) || featuredMlsNumbers.includes(listing.mlsNumber)) {
+      setErrorMessage(`MLS number ${listing.mlsNumber} is already in the featured order.`);
+      setSuccessMessage("");
+      return;
+    }
+
+    setListings((prev) => mergeListingOptions(prev, [listing]));
+    setFeaturedListingIds((prev) => [...prev, listing.id]);
     setErrorMessage("");
   }
 
@@ -206,6 +235,37 @@ export function FeaturedListingsPanel() {
         </div>
       </div>
 
+      {yanListings.length > 0 && (
+        <div className="mt-6 rounded-xl border border-brand-100 bg-white p-4">
+          <p className="text-sm font-semibold text-brand-900">Yan&apos;s Listings</p>
+          <div className="mt-3 space-y-2">
+            {yanListings.map((listing) => {
+              const isSelected = featuredListingIds.includes(listing.id) || featuredMlsNumbers.includes(listing.mlsNumber);
+              return (
+                <div key={listing.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 p-3">
+                  <div className="text-sm text-brand-800">
+                    <p className="font-semibold text-brand-900">
+                      {listing.mlsNumber} - {listing.address}
+                    </p>
+                    <p className="text-brand-700">
+                      {listing.city} - {formatPrice(listing.price)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addFeaturedListing(listing)}
+                    disabled={isSelected}
+                    className="rounded-full border border-brand-300 px-4 py-1.5 text-xs font-semibold text-brand-900 disabled:opacity-50"
+                  >
+                    {isSelected ? "Added" : "Add"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 space-y-3">
         <p className="text-sm font-semibold text-brand-900">Featured Order (shown first)</p>
         {featuredListingIds.length === 0 ? (
@@ -221,10 +281,10 @@ export function FeaturedListingsPanel() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="text-sm text-brand-800">
                       <p className="font-semibold text-brand-900">
-                        #{index + 1} {listing?.mlsNumber || "N/A"} - {listing?.address || id}
+                        #{index + 1} {listing?.mlsNumber || id} - {listing?.address || "Listing details will appear after saving."}
                       </p>
                       <p className="text-brand-700">
-                        {listing?.city || "Unknown"} {listing ? `• ${formatPrice(listing.price)}` : ""}
+                        {listing?.city || "Unknown"} {listing ? `- ${formatPrice(listing.price)}` : ""}
                       </p>
                     </div>
                     <div className="flex gap-2">

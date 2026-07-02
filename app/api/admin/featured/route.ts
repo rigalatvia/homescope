@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import type { DocumentData } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
-import { getSiteSettings, updateFeaturedListingIds } from "@/lib/settings/site-settings";
+import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings, updateFeaturedListingIds } from "@/lib/settings/site-settings";
 
 const LISTINGS_COLLECTION = "listings";
 
@@ -17,6 +18,82 @@ interface AdminListingOption {
   city: string;
   price: number;
   slug: string;
+}
+
+function mapAdminListingOption(doc: { id: string; data: () => DocumentData }): AdminListingOption {
+  const data = doc.data() as {
+    listingId?: string;
+    mlsNumber?: string | null;
+    municipality?: string | null;
+    slug?: string | null;
+    price?: number | null;
+    address?: { fullAddress?: string | null; streetNumber?: string | null; streetName?: string | null; unit?: string | null };
+  };
+  const fallbackAddress =
+    [data.address?.streetNumber, data.address?.streetName, data.address?.unit].filter(Boolean).join(" ").trim() || "Address unavailable";
+  return {
+    id: data.listingId || doc.id,
+    mlsNumber: data.mlsNumber || "N/A",
+    address: data.address?.fullAddress || fallbackAddress,
+    city: data.municipality || "Unknown",
+    price: Number(data.price || 0),
+    slug: data.slug || ""
+  };
+}
+
+function chunkList<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function mergeListingOptions(options: AdminListingOption[]): AdminListingOption[] {
+  const seen = new Set<string>();
+  const merged: AdminListingOption[] = [];
+
+  for (const option of options) {
+    if (seen.has(option.id)) continue;
+    seen.add(option.id);
+    merged.push(option);
+  }
+
+  return merged;
+}
+
+async function getListingOptionsByIds(listingIds: string[]): Promise<AdminListingOption[]> {
+  const normalizedIds = Array.from(new Set(listingIds.filter((item): item is string => typeof item === "string").filter(Boolean)));
+  if (normalizedIds.length === 0) return [];
+
+  const firestore = getFirebaseAdminFirestore();
+  const snapshots = await Promise.all(
+    chunkList(normalizedIds, 10).map((chunk) =>
+      firestore.collection(LISTINGS_COLLECTION).where("listingId", "in", chunk).get()
+    )
+  );
+
+  return snapshots.flatMap((snapshot) => snapshot.docs.map(mapAdminListingOption));
+}
+
+async function getListingOptionsByAgentKeys(agentKeys: readonly string[]): Promise<AdminListingOption[]> {
+  const normalizedAgentKeys = Array.from(new Set(agentKeys.map((item) => item.trim()).filter(Boolean)));
+  if (normalizedAgentKeys.length === 0) return [];
+
+  const firestore = getFirebaseAdminFirestore();
+  const snapshots = await Promise.all(
+    normalizedAgentKeys.flatMap((agentKey) => [
+      firestore.collection(LISTINGS_COLLECTION).where("listAgentKey", "==", agentKey).get(),
+      firestore.collection(LISTINGS_COLLECTION).where("listAgentNationalAssociationId", "==", agentKey).get()
+    ])
+  );
+
+  return mergeListingOptions(
+    snapshots
+      .flatMap((snapshot) => snapshot.docs)
+      .filter((doc) => (doc.data() as { isVisible?: boolean }).isVisible === true)
+      .map(mapAdminListingOption)
+  ).sort((left, right) => right.price - left.price);
 }
 
 async function authorize(request: Request): Promise<NextResponse | null> {
@@ -91,33 +168,18 @@ export async function GET(request: Request) {
       .limit(250)
       .get();
 
-    const listings: AdminListingOption[] = snapshot.docs.map((doc) => {
-      const data = doc.data() as {
-        listingId?: string;
-        mlsNumber?: string | null;
-        municipality?: string | null;
-        slug?: string | null;
-        price?: number | null;
-        address?: { fullAddress?: string | null; streetNumber?: string | null; streetName?: string | null; unit?: string | null };
-      };
-      const fallbackAddress =
-        [data.address?.streetNumber, data.address?.streetName, data.address?.unit].filter(Boolean).join(" ").trim() || "Address unavailable";
-      return {
-        id: data.listingId || doc.id,
-        mlsNumber: data.mlsNumber || "N/A",
-        address: data.address?.fullAddress || fallbackAddress,
-        city: data.municipality || "Unknown",
-        price: Number(data.price || 0),
-        slug: data.slug || ""
-      };
-    });
-
+    const listings = snapshot.docs.map(mapAdminListingOption);
     const settings = await getSiteSettings();
+    const [selectedListings, yanListings] = await Promise.all([
+      getListingOptionsByIds(settings.featuredListingIds),
+      getListingOptionsByAgentKeys(DEFAULT_FEATURED_AGENT_KEYS)
+    ]);
 
     return NextResponse.json({
       success: true,
       featuredListingIds: settings.featuredListingIds,
-      listings
+      listings: mergeListingOptions([...selectedListings, ...yanListings, ...listings]),
+      yanListings
     });
   } catch (error) {
     console.error("[admin][featured] Failed loading featured manager data", error);
@@ -137,10 +199,12 @@ export async function PUT(request: Request) {
         ? body.featuredListingIds
         : [];
     const saved = await updateFeaturedListingIds(featuredListingIds);
+    const selectedListings = await getListingOptionsByIds(saved);
 
     return NextResponse.json({
       success: true,
-      featuredListingIds: saved
+      featuredListingIds: saved,
+      listings: selectedListings
     });
   } catch (error) {
     console.error("[admin][featured] Failed saving featured listing IDs", error);
