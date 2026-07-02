@@ -66,34 +66,82 @@ async function getListingOptionsByIds(listingIds: string[]): Promise<AdminListin
   const normalizedIds = Array.from(new Set(listingIds.filter((item): item is string => typeof item === "string").filter(Boolean)));
   if (normalizedIds.length === 0) return [];
 
-  const firestore = getFirebaseAdminFirestore();
-  const snapshots = await Promise.all(
-    chunkList(normalizedIds, 10).map((chunk) =>
-      firestore.collection(LISTINGS_COLLECTION).where("listingId", "in", chunk).get()
-    )
-  );
+  try {
+    const firestore = getFirebaseAdminFirestore();
+    const snapshots = await Promise.all(
+      chunkList(normalizedIds, 10).map((chunk) =>
+        firestore.collection(LISTINGS_COLLECTION).where("listingId", "in", chunk).get()
+      )
+    );
 
-  return snapshots.flatMap((snapshot) => snapshot.docs.map(mapAdminListingOption));
+    return snapshots.flatMap((snapshot) => snapshot.docs.map(mapAdminListingOption));
+  } catch (error) {
+    console.error("[admin][featured] Failed resolving selected listing IDs", error);
+    return [];
+  }
 }
 
 async function getListingOptionsByAgentKeys(agentKeys: readonly string[]): Promise<AdminListingOption[]> {
   const normalizedAgentKeys = Array.from(new Set(agentKeys.map((item) => item.trim()).filter(Boolean)));
   if (normalizedAgentKeys.length === 0) return [];
 
-  const firestore = getFirebaseAdminFirestore();
-  const snapshots = await Promise.all(
-    normalizedAgentKeys.flatMap((agentKey) => [
-      firestore.collection(LISTINGS_COLLECTION).where("listAgentKey", "==", agentKey).get(),
-      firestore.collection(LISTINGS_COLLECTION).where("listAgentNationalAssociationId", "==", agentKey).get()
-    ])
-  );
+  try {
+    const firestore = getFirebaseAdminFirestore();
+    const snapshots = await Promise.all(
+      normalizedAgentKeys.flatMap((agentKey) => [
+        firestore.collection(LISTINGS_COLLECTION).where("listAgentKey", "==", agentKey).get(),
+        firestore.collection(LISTINGS_COLLECTION).where("listAgentNationalAssociationId", "==", agentKey).get()
+      ])
+    );
 
-  return mergeListingOptions(
-    snapshots
-      .flatMap((snapshot) => snapshot.docs)
-      .filter((doc) => (doc.data() as { isVisible?: boolean }).isVisible === true)
-      .map(mapAdminListingOption)
-  ).sort((left, right) => right.price - left.price);
+    return mergeListingOptions(
+      snapshots
+        .flatMap((snapshot) => snapshot.docs)
+        .filter((doc) => (doc.data() as { isVisible?: boolean }).isVisible === true)
+        .map(mapAdminListingOption)
+    ).sort((left, right) => right.price - left.price);
+  } catch (error) {
+    console.error("[admin][featured] Failed loading Yan listing options", error);
+    return [];
+  }
+}
+
+async function getTopListingOptions(): Promise<AdminListingOption[]> {
+  try {
+    const firestore = getFirebaseAdminFirestore();
+    const snapshot = await firestore
+      .collection(LISTINGS_COLLECTION)
+      .where("isVisible", "==", true)
+      .orderBy("price", "desc")
+      .limit(250)
+      .get();
+
+    return snapshot.docs.map(mapAdminListingOption);
+  } catch (error) {
+    console.error("[admin][featured] Failed loading top listing options", error);
+    return [];
+  }
+}
+
+function getFeaturedIdsWithYanDefault(featuredListingIds: string[], yanListings: AdminListingOption[]): string[] {
+  const yanListingIds = yanListings.map((listing) => listing.id);
+  if (yanListingIds.length === 0) return featuredListingIds;
+
+  const hasYanListing = featuredListingIds.some((id) => yanListingIds.includes(id));
+  return hasYanListing ? featuredListingIds : mergeIds([...yanListingIds, ...featuredListingIds]);
+}
+
+function mergeIds(ids: string[]): string[] {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    merged.push(id);
+  }
+
+  return merged;
 }
 
 async function authorize(request: Request): Promise<NextResponse | null> {
@@ -160,24 +208,17 @@ export async function GET(request: Request) {
   if (authError) return authError;
 
   try {
-    const firestore = getFirebaseAdminFirestore();
-    const snapshot = await firestore
-      .collection(LISTINGS_COLLECTION)
-      .where("isVisible", "==", true)
-      .orderBy("price", "desc")
-      .limit(250)
-      .get();
-
-    const listings = snapshot.docs.map(mapAdminListingOption);
     const settings = await getSiteSettings();
-    const [selectedListings, yanListings] = await Promise.all([
+    const [listings, selectedListings, yanListings] = await Promise.all([
+      getTopListingOptions(),
       getListingOptionsByIds(settings.featuredListingIds),
       getListingOptionsByAgentKeys(DEFAULT_FEATURED_AGENT_KEYS)
     ]);
+    const featuredListingIds = getFeaturedIdsWithYanDefault(settings.featuredListingIds, yanListings);
 
     return NextResponse.json({
       success: true,
-      featuredListingIds: settings.featuredListingIds,
+      featuredListingIds,
       listings: mergeListingOptions([...selectedListings, ...yanListings, ...listings]),
       yanListings
     });

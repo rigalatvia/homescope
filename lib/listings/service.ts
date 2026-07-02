@@ -1,6 +1,7 @@
 import { applyListingFilters, paginateListings } from "@/lib/listings/filters";
 import {
   getFeaturedListings as getFeaturedListingsFromFirestore,
+  getListingsByAgentKey as getListingsByAgentKeyFromFirestore,
   getPublicListingsPage as getPublicListingsPageFromFirestore,
   getPublicListingsByIds as getPublicListingsByIdsFromFirestore,
   getListingsByMunicipality as getListingsByMunicipalityFromFirestore,
@@ -11,7 +12,7 @@ import {
   getPublicListingBySlug as getPublicListingBySlugFromFirestore,
   getPublicListings as getPublicListingsFromFirestore
 } from "@/lib/listings/firestore-data";
-import { getSiteSettings } from "@/lib/settings/site-settings";
+import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings } from "@/lib/settings/site-settings";
 import { getSchoolDirectory } from "@/lib/schools/firestore-data";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 import type { Listing, ListingFilters, PaginatedListings } from "@/types/listing";
@@ -126,15 +127,22 @@ export async function getAllPublicListings(): Promise<Listing[]> {
 
 export async function getFeaturedListings(): Promise<Listing[]> {
   const settings = await getSiteSettings();
-  const [selectedListings, fallbackListings] = await Promise.all([
+  const yanAgentKey = DEFAULT_FEATURED_AGENT_KEYS[0];
+  const [yanListings, selectedListings, fallbackListings] = await Promise.all([
+    getListingsByAgentKeyFromFirestore(yanAgentKey, 6),
     getPublicListingsByIdsFromFirestore(settings.featuredListingIds),
     getFeaturedListingsFromFirestore()
   ]);
 
   const seen = new Set<string>();
   const ordered: Listing[] = [];
+  const yanListingIds = new Set(yanListings.map((listing) => listing.id));
+  const selectedIncludesYan = settings.featuredListingIds.some((id) => yanListingIds.has(id));
+  const orderedCandidates = selectedIncludesYan
+    ? [...selectedListings, ...yanListings, ...fallbackListings]
+    : [...yanListings, ...selectedListings, ...fallbackListings];
 
-  for (const listing of [...selectedListings, ...fallbackListings]) {
+  for (const listing of orderedCandidates) {
     if (seen.has(listing.id)) continue;
     seen.add(listing.id);
     ordered.push(listing);
