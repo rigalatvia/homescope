@@ -23,6 +23,8 @@ interface EmailProviderOptions {
   senderAuthPass?: string | null;
 }
 
+const providerCache = new Map<string, EmailProviderSelection>();
+
 function buildDisplayFromAddress(fromEmail: string, fromName = DEFAULT_FROM_NAME): string {
   const trimmedEmail = fromEmail.trim();
   const trimmedName = fromName.trim();
@@ -65,12 +67,23 @@ async function getProviderSelection(options: EmailProviderOptions = {}): Promise
     }
 
     const senderAddress = buildDisplayFromAddress(effectiveFromEmail || effectiveEmailUser, effectiveFromName);
+    const cacheKey = [
+      "gmail",
+      effectiveEmailUser,
+      effectiveEmailPass,
+      senderAddress
+    ].join("|");
 
-    return {
+    const cachedSelection = providerCache.get(cacheKey);
+    if (cachedSelection) return cachedSelection;
+
+    const selection = {
       provider: new GmailEmailProvider(effectiveEmailUser, effectiveEmailPass, senderAddress),
       mode: "live",
       reason: "Gmail provider configured."
-    };
+    } satisfies EmailProviderSelection;
+    providerCache.set(cacheKey, selection);
+    return selection;
   }
 
   if (requestedProvider !== "resend") {

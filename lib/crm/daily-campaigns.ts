@@ -8,6 +8,7 @@ const CRM_SEND_LOG_COLLECTION = "crmSendLog";
 const SETTINGS_COLLECTION = "settings";
 const CRM_CAMPAIGN_STATUS_DOC_ID = "crmCampaignSchedulerStatus";
 const CRM_TIME_ZONE = "America/Toronto";
+const DEFAULT_SEND_DELAY_MS = 1500;
 
 export interface CrmDailyCampaignRunSummary {
   runDate: string;
@@ -57,6 +58,21 @@ function getContactRecipientName(contact: CrmContactRecord): string {
 
 function buildSendLogId(templateId: string, sendDateKey: string, contactId: string): string {
   return `${sendDateKey}__${templateId}__${contactId}`;
+}
+
+function getSendDelayMs(): number {
+  const parsed = Number(process.env.CRM_CAMPAIGN_SEND_DELAY_MS);
+  if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  return DEFAULT_SEND_DELAY_MS;
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTemporaryGmailAuthThrottle(error?: string): boolean {
+  if (!error) return false;
+  return error.includes("454-4.7.0") || error.toLowerCase().includes("too many login attempts");
 }
 
 async function getSendLogStatus(logId: string): Promise<CrmCampaignSendLogRecord | null> {
@@ -200,6 +216,8 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
   };
 
   try {
+    const sendDelayMs = getSendDelayMs();
+
     for (const template of birthdayTemplates) {
       for (const contact of birthdayContacts) {
         const result = await sendTemplateToContact({
@@ -216,7 +234,12 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
         } else {
           summary.failed += 1;
           if (result.error) summary.errors.push(`[${template.id}][${contact.email}] ${result.error}`);
+          if (isTemporaryGmailAuthThrottle(result.error)) {
+            throw new Error("Gmail temporarily blocked CRM campaign sending because there were too many login attempts. Wait before retrying.");
+          }
         }
+
+        if (sendDelayMs > 0) await wait(sendDelayMs);
       }
     }
 
@@ -236,7 +259,12 @@ export async function runCrmDailyCampaigns(date = new Date()): Promise<CrmDailyC
         } else {
           summary.failed += 1;
           if (result.error) summary.errors.push(`[${template.id}][${contact.email}] ${result.error}`);
+          if (isTemporaryGmailAuthThrottle(result.error)) {
+            throw new Error("Gmail temporarily blocked CRM campaign sending because there were too many login attempts. Wait before retrying.");
+          }
         }
+
+        if (sendDelayMs > 0) await wait(sendDelayMs);
       }
     }
 
