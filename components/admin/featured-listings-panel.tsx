@@ -34,11 +34,20 @@ export function FeaturedListingsPanel() {
   const [successMessage, setSuccessMessage] = useState("");
   const [listings, setListings] = useState<ListingOption[]>([]);
   const [featuredListingIds, setFeaturedListingIds] = useState<string[]>([]);
-  const [candidateId, setCandidateId] = useState("");
+  const [candidateMlsNumber, setCandidateMlsNumber] = useState("");
 
   const listingMap = useMemo(() => new Map(listings.map((item) => [item.id, item])), [listings]);
-  const availableCandidates = listings.filter(
-    (listing) => !featuredListingIds.includes(listing.id) && listing.id !== candidateId
+  const listingByMlsNumber = useMemo(
+    () => new Map(listings.map((item) => [item.mlsNumber.trim().toUpperCase(), item])),
+    [listings]
+  );
+  const featuredMlsNumbers = useMemo(
+    () =>
+      featuredListingIds.map((id) => {
+        const listing = listingMap.get(id);
+        return listing?.mlsNumber || id;
+      }),
+    [featuredListingIds, listingMap]
   );
 
   async function loadData() {
@@ -90,7 +99,9 @@ export function FeaturedListingsPanel() {
           "Content-Type": "application/json",
           "x-admin-sync-token": adminToken.trim()
         },
-        body: JSON.stringify({ featuredListingIds })
+        body: JSON.stringify({
+          featuredMlsNumbers
+        })
       });
       const json = (await response.json()) as FeaturedResponse;
       if (!response.ok || !json.success) {
@@ -106,10 +117,21 @@ export function FeaturedListingsPanel() {
     }
   }
 
-  function addFeatured(id: string) {
-    if (!id) return;
-    setFeaturedListingIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setCandidateId("");
+  function addFeaturedByMlsNumber() {
+    const normalizedMlsNumber = candidateMlsNumber.trim().toUpperCase();
+    if (!normalizedMlsNumber) return;
+
+    const listing = listingByMlsNumber.get(normalizedMlsNumber);
+    const valueToAdd = listing?.id || normalizedMlsNumber;
+    if (featuredListingIds.includes(valueToAdd) || featuredMlsNumbers.includes(normalizedMlsNumber)) {
+      setErrorMessage(`MLS number ${normalizedMlsNumber} is already in the featured order.`);
+      setSuccessMessage("");
+      return;
+    }
+
+    setFeaturedListingIds((prev) => [...prev, valueToAdd]);
+    setCandidateMlsNumber("");
+    setErrorMessage("");
   }
 
   function removeFeatured(id: string) {
@@ -160,22 +182,23 @@ export function FeaturedListingsPanel() {
       <div className="mt-6 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
         <p className="text-sm font-semibold text-brand-900">Add Featured Listing</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <select
-            value={candidateId}
-            onChange={(event) => setCandidateId(event.target.value)}
+          <input
+            type="text"
+            value={candidateMlsNumber}
+            onChange={(event) => setCandidateMlsNumber(event.target.value.toUpperCase())}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addFeaturedByMlsNumber();
+              }
+            }}
             className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
-          >
-            <option value="">Select listing</option>
-            {availableCandidates.map((listing) => (
-              <option key={listing.id} value={listing.id}>
-                {listing.mlsNumber} - {listing.address} ({listing.city}) {formatPrice(listing.price)}
-              </option>
-            ))}
-          </select>
+            placeholder="Enter MLS number, e.g. N12345678"
+          />
           <button
             type="button"
-            onClick={() => addFeatured(candidateId)}
-            disabled={!candidateId}
+            onClick={addFeaturedByMlsNumber}
+            disabled={!candidateMlsNumber.trim()}
             className="rounded-full bg-brand-800 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             Add
