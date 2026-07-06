@@ -58,7 +58,9 @@ async function getProviderSelection(options: EmailProviderOptions = {}): Promise
   }
 
   if (requestedProvider === "gmail") {
-    if (!effectiveEmailUser || !effectiveEmailPass) {
+    const normalizedEmailPass = effectiveEmailPass?.replace(/\s+/g, "");
+
+    if (!effectiveEmailUser || !normalizedEmailPass) {
       return {
         provider: new MockEmailProvider(),
         mode: "mock",
@@ -70,7 +72,7 @@ async function getProviderSelection(options: EmailProviderOptions = {}): Promise
     const cacheKey = [
       "gmail",
       effectiveEmailUser,
-      effectiveEmailPass,
+      normalizedEmailPass,
       senderAddress
     ].join("|");
 
@@ -78,7 +80,7 @@ async function getProviderSelection(options: EmailProviderOptions = {}): Promise
     if (cachedSelection) return cachedSelection;
 
     const selection = {
-      provider: new GmailEmailProvider(effectiveEmailUser, effectiveEmailPass, senderAddress),
+      provider: new GmailEmailProvider(effectiveEmailUser, normalizedEmailPass, senderAddress),
       mode: "live",
       reason: "Gmail provider configured."
     } satisfies EmailProviderSelection;
