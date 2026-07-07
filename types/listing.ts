@@ -52,6 +52,9 @@ export interface ListingFilters {
   maxLongitude?: number;
   schoolSlug?: string;
   schoolRadiusKm?: number;
+  schoolSearchQuery?: string;
+  schoolLevel?: string;
+  schoolSearchMode?: "directory" | "nearby";
   page?: number;
   pageSize?: number;
 }

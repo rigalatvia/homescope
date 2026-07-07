@@ -4,8 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, GraduationCap, MapPin, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
+import { SearchTracker } from "@/components/listings/search-tracker";
 import { SITE_CONFIG } from "@/config/site";
 import { getNearbyListingsForSchool, getSchoolBySlug } from "@/lib/schools/service";
+import type { ListingFilters } from "@/types/listing";
 import type { School, SchoolRanking } from "@/types/school";
 
 export const revalidate = 3600;
@@ -63,9 +65,17 @@ export default async function SchoolDetailPage({
   const hasMoreNearbyListings = nearbyListings.length >= NEARBY_LISTINGS_DISPLAY_LIMIT;
   const schoolUrl = `${SITE_CONFIG.baseUrl}/schools/${school.slug}`;
   const schoolJsonLd = buildSchoolJsonLd(school, schoolUrl);
+  const trackingFilters: ListingFilters = {
+    city: school.municipality,
+    schoolSlug: school.slug,
+    schoolRadiusKm: radiusKm,
+    sort: "distance",
+    schoolSearchMode: "nearby"
+  };
 
   return (
     <section className="site-container py-10">
+      <SearchTracker filters={trackingFilters} resultsTotal={nearbyListings.length} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schoolJsonLd) }} />
       <div className="mb-6">
         <Link

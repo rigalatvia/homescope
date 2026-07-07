@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExternalLink, GraduationCap, MapPin, Search, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
+import { SearchTracker } from "@/components/listings/search-tracker";
 import { PendingSchoolLink, PendingSubmitButton } from "@/components/schools/school-pending-controls";
 import { SITE_CONFIG } from "@/config/site";
 import {
@@ -10,6 +11,7 @@ import {
   getSchoolBySlug,
   getSchools
 } from "@/lib/schools/service";
+import type { ListingFilters } from "@/types/listing";
 import type { School, SchoolLevel, SchoolRanking } from "@/types/school";
 
 export const revalidate = 3600;
@@ -86,9 +88,28 @@ export default async function SchoolsPage({
     ? await getNearbyListingsForSchool(selectedSchool, radiusKm, { limit: NEARBY_LISTINGS_DISPLAY_LIMIT })
     : [];
   const hasMoreNearbyListings = nearbyListings.length >= NEARBY_LISTINGS_DISPLAY_LIMIT;
+  const trackingFilters: ListingFilters = selectedSchool
+    ? {
+        city: selectedSchool.municipality,
+        schoolSlug: selectedSchool.slug,
+        schoolRadiusKm: radiusKm,
+        sort: "distance",
+        schoolSearchMode: "nearby",
+        ...(query ? { schoolSearchQuery: query } : {}),
+        ...(level ? { schoolLevel: level } : {})
+      }
+    : {
+        ...(listMunicipality ? { city: listMunicipality } : {}),
+        ...(query ? { schoolSearchQuery: query } : {}),
+        ...(level ? { schoolLevel: level } : {}),
+        schoolSearchMode: "directory"
+      };
+  const shouldTrackSchoolSearch = Boolean(selectedSchool || hasSchoolFilters);
+  const trackingResultsTotal = selectedSchool ? nearbyListings.length : schoolResults.length;
 
   return (
     <section className="site-container py-10">
+      {shouldTrackSchoolSearch ? <SearchTracker filters={trackingFilters} resultsTotal={trackingResultsTotal} /> : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700">
