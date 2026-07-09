@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 
 const PENDING_FALLBACK_MS = 12000;
@@ -88,6 +88,22 @@ export function PendingSubmitButton({
       ) : (
         children
       )}
+    </button>
+  );
+}
+
+export function BrowserBackButton({
+  children,
+  className
+}: {
+  children: ReactNode;
+  className: string;
+}) {
+  const router = useRouter();
+
+  return (
+    <button type="button" onClick={() => router.back()} className={className}>
+      {children}
     </button>
   );
 }

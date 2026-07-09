@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ExternalLink, GraduationCap, MapPin, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
 import { SearchTracker } from "@/components/listings/search-tracker";
+import { BrowserBackButton } from "@/components/schools/school-pending-controls";
 import { SITE_CONFIG } from "@/config/site";
 import { getNearbyListingsForSchool, getSchoolBySlug } from "@/lib/schools/service";
 import type { ListingFilters } from "@/types/listing";
@@ -78,12 +79,11 @@ export default async function SchoolDetailPage({
       <SearchTracker filters={trackingFilters} resultsTotal={nearbyListings.length} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schoolJsonLd) }} />
       <div className="mb-6">
-        <Link
-          href="/schools"
+        <BrowserBackButton
           className="inline-flex rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-900 transition hover:bg-brand-50"
         >
           Back to school search
-        </Link>
+        </BrowserBackButton>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

@@ -17,6 +17,7 @@ import type { School, SchoolLevel, SchoolRanking } from "@/types/school";
 export const revalidate = 3600;
 const NEARBY_LISTINGS_DISPLAY_LIMIT = 24;
 const SCHOOL_RESULTS_DISPLAY_LIMIT = 75;
+type SchoolSort = "name_asc" | "name_desc" | "rating_desc" | "rating_asc";
 
 export async function generateMetadata({
   searchParams
@@ -75,14 +76,21 @@ export default async function SchoolsPage({
   const level = parseLevel(toString(searchParams.level));
   const selectedSlug = toString(searchParams.school);
   const radiusKm = parseRadiusKm(toString(searchParams.radiusKm));
+  const schoolSort = parseSchoolSort(toString(searchParams.schoolSort));
+  const schoolPage = parseSchoolPage(toString(searchParams.schoolPage));
 
   const municipalities = SITE_CONFIG.primaryMarkets;
   const selectedSchoolBySlug = selectedSlug ? await getSchoolBySlug(selectedSlug) : undefined;
   const listMunicipality = municipality || (!query && !level ? selectedSchoolBySlug?.municipality : undefined);
   const schoolResults = await getSchools({ query, municipality: listMunicipality, level });
+  const sortedSchoolResults = sortSchools(schoolResults, schoolSort);
   const selectedSchool = selectedSchoolBySlug;
-  const visibleSchoolResults = getVisibleSchoolResults(schoolResults, selectedSchool);
-  const hiddenSchoolResultsCount = Math.max(0, schoolResults.length - visibleSchoolResults.length);
+  const schoolTotalPages = Math.max(1, Math.ceil(sortedSchoolResults.length / SCHOOL_RESULTS_DISPLAY_LIMIT));
+  const currentSchoolPage = Math.min(schoolPage, schoolTotalPages);
+  const visibleSchoolResults = getVisibleSchoolResults(sortedSchoolResults, selectedSchool, currentSchoolPage);
+  const firstVisibleSchoolNumber =
+    sortedSchoolResults.length === 0 ? 0 : (currentSchoolPage - 1) * SCHOOL_RESULTS_DISPLAY_LIMIT + 1;
+  const lastVisibleSchoolNumber = Math.min(currentSchoolPage * SCHOOL_RESULTS_DISPLAY_LIMIT, sortedSchoolResults.length);
   const hasSchoolFilters = Boolean(query || listMunicipality || level);
   const nearbyListings = selectedSchool
     ? await getNearbyListingsForSchool(selectedSchool, radiusKm, { limit: NEARBY_LISTINGS_DISPLAY_LIMIT })
@@ -134,7 +142,7 @@ export default async function SchoolsPage({
         action="/schools"
         method="get"
         autoComplete="off"
-        className="mt-8 grid gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-soft md:grid-cols-[minmax(0,1fr)_180px_160px_120px]"
+        className="mt-8 grid gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-soft md:grid-cols-[minmax(0,1fr)_180px_160px_180px_120px]"
       >
         <label className="min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">School, board, program</span>
@@ -178,6 +186,20 @@ export default async function SchoolsPage({
           </select>
         </label>
 
+        <label>
+          <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">Sort</span>
+          <select
+            name="schoolSort"
+            defaultValue={schoolSort}
+            className="mt-1 h-10 w-full rounded-lg border border-brand-100 bg-brand-50 px-3 text-sm text-brand-900 outline-none"
+          >
+            <option value="name_asc">Name A-Z</option>
+            <option value="name_desc">Name Z-A</option>
+            <option value="rating_desc">Rating high-low</option>
+            <option value="rating_asc">Rating low-high</option>
+          </select>
+        </label>
+
         <div className="flex items-end">
           <PendingSubmitButton className="inline-flex h-10 w-full items-center justify-center rounded-full bg-brand-800 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-wait disabled:opacity-80">
             Search
@@ -190,13 +212,15 @@ export default async function SchoolsPage({
           <div className="flex items-center justify-between">
             <h2 className="font-heading text-2xl text-brand-900">Schools</h2>
             <span className="text-sm text-brand-600">
-              {schoolResults.length} found{hiddenSchoolResultsCount > 0 ? `; showing ${visibleSchoolResults.length}` : ""}
+              {schoolResults.length === 0
+                ? "0 found"
+                : `${schoolResults.length} found; showing ${firstVisibleSchoolNumber}-${lastVisibleSchoolNumber}`}
             </span>
           </div>
 
-          {hiddenSchoolResultsCount > 0 ? (
+          {schoolTotalPages > 1 ? (
             <p className="rounded-lg border border-brand-100 bg-white px-3 py-2 text-sm text-brand-700">
-              Search by name or choose a city to narrow the full directory.
+              Page {currentSchoolPage} of {schoolTotalPages}. Use the controls below to view the rest of the directory.
             </p>
           ) : null}
 
@@ -206,7 +230,8 @@ export default async function SchoolsPage({
               query,
               municipality: listMunicipality,
               level,
-              radiusKm
+              radiusKm,
+              schoolSort
             });
 
             return (
@@ -234,6 +259,38 @@ export default async function SchoolsPage({
               </PendingSchoolLink>
             );
           })}
+
+          {schoolTotalPages > 1 ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-100 bg-white p-3 shadow-soft">
+              <PaginationLink
+                href={buildSchoolPageHref({
+                  query,
+                  municipality: listMunicipality,
+                  level,
+                  schoolSort,
+                  schoolPage: Math.max(1, currentSchoolPage - 1)
+                })}
+                disabled={currentSchoolPage <= 1}
+              >
+                Previous
+              </PaginationLink>
+              <span className="px-2 text-sm font-semibold text-brand-700">
+                {currentSchoolPage} / {schoolTotalPages}
+              </span>
+              <PaginationLink
+                href={buildSchoolPageHref({
+                  query,
+                  municipality: listMunicipality,
+                  level,
+                  schoolSort,
+                  schoolPage: Math.min(schoolTotalPages, currentSchoolPage + 1)
+                })}
+                disabled={currentSchoolPage >= schoolTotalPages}
+              >
+                Next
+              </PaginationLink>
+            </div>
+          ) : null}
         </aside>
 
         <div>
@@ -523,8 +580,40 @@ function parseRadiusKm(value?: string): number {
   return 3;
 }
 
-function getVisibleSchoolResults(schools: School[], selectedSchool?: School) {
-  const visible = schools.slice(0, SCHOOL_RESULTS_DISPLAY_LIMIT);
+function parseSchoolSort(value?: string): SchoolSort {
+  if (value === "name_desc" || value === "rating_desc" || value === "rating_asc") return value;
+  return "name_asc";
+}
+
+function parseSchoolPage(value?: string): number {
+  const parsed = Number(value);
+  if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  return 1;
+}
+
+function sortSchools(schools: School[], sort: SchoolSort): School[] {
+  return [...schools].sort((left, right) => {
+    if (sort === "rating_desc" || sort === "rating_asc") {
+      const leftScore = left.ranking?.score;
+      const rightScore = right.ranking?.score;
+
+      if (leftScore == null && rightScore != null) return 1;
+      if (leftScore != null && rightScore == null) return -1;
+      if (leftScore != null && rightScore != null && leftScore !== rightScore) {
+        return sort === "rating_desc" ? rightScore - leftScore : leftScore - rightScore;
+      }
+    }
+
+    const nameComparison = left.name.localeCompare(right.name, "en", { sensitivity: "base" });
+    if (nameComparison !== 0) return sort === "name_desc" ? -nameComparison : nameComparison;
+
+    return left.municipality.localeCompare(right.municipality, "en", { sensitivity: "base" });
+  });
+}
+
+function getVisibleSchoolResults(schools: School[], selectedSchool: School | undefined, page: number) {
+  const startIndex = (page - 1) * SCHOOL_RESULTS_DISPLAY_LIMIT;
+  const visible = schools.slice(startIndex, startIndex + SCHOOL_RESULTS_DISPLAY_LIMIT);
   if (!selectedSchool || visible.some((school) => school.slug === selectedSchool.slug)) {
     return visible;
   }
@@ -533,7 +622,7 @@ function getVisibleSchoolResults(schools: School[], selectedSchool?: School) {
     selectedSchool,
     ...schools
       .filter((school) => school.slug !== selectedSchool.slug)
-      .slice(0, Math.max(0, SCHOOL_RESULTS_DISPLAY_LIMIT - 1))
+      .slice(startIndex, startIndex + Math.max(0, SCHOOL_RESULTS_DISPLAY_LIMIT - 1))
   ];
 }
 
@@ -544,12 +633,54 @@ function buildSchoolSearchHref(
     municipality?: string;
     level?: SchoolLevel;
     radiusKm: number;
+    schoolSort: SchoolSort;
   }
 ): string {
   const params = new URLSearchParams();
   params.set("radiusKm", String(options.radiusKm));
 
   return `/schools/${school.slug}?${params.toString()}`;
+}
+
+function buildSchoolPageHref(options: {
+  query?: string;
+  municipality?: string;
+  level?: SchoolLevel;
+  schoolSort: SchoolSort;
+  schoolPage: number;
+}): string {
+  const params = new URLSearchParams();
+  if (options.query) params.set("q", options.query);
+  if (options.municipality) params.set("municipality", options.municipality);
+  if (options.level) params.set("level", options.level);
+  if (options.schoolSort !== "name_asc") params.set("schoolSort", options.schoolSort);
+  if (options.schoolPage > 1) params.set("schoolPage", String(options.schoolPage));
+
+  const queryString = params.toString();
+  return `/schools${queryString ? `?${queryString}` : ""}`;
+}
+
+function PaginationLink({
+  href,
+  disabled,
+  children
+}: {
+  href: string;
+  disabled: boolean;
+  children: ReactNode;
+}) {
+  const className =
+    "inline-flex h-9 items-center justify-center rounded-full border border-brand-200 px-4 text-sm font-semibold transition";
+
+  if (disabled) {
+    return <span className={`${className} cursor-not-allowed bg-brand-50 text-brand-300`}>{children}</span>;
+  }
+
+  return (
+    <Link href={href} className={`${className} bg-white text-brand-900 hover:bg-brand-50`}>
+      {children}
+    </Link>
+  );
 }
 
 function titleCase(value: string): string {
