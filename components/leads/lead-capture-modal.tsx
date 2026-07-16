@@ -570,11 +570,13 @@ export function ListingQuestionModal({
                 Close
               </button>
             </div>
-            <p className="mt-1 text-sm text-brand-700">
-              Ask about MLS {listingMlsNumber}, the property, pricing, neighbourhood, schools, documents, or next steps.
-            </p>
             {submitState !== "success" ? (
-              <p className="mt-1 text-sm text-brand-700">Leave your email and your question, and we will reply with the listing details.</p>
+              <>
+                <p className="mt-1 text-sm text-brand-700">
+                  Ask about MLS {listingMlsNumber}, the property, pricing, neighbourhood, schools, documents, or next steps.
+                </p>
+                <p className="mt-1 text-sm text-brand-700">Leave your email and your question, and we will reply with the listing details.</p>
+              </>
             ) : null}
 
             {submitState === "success" ? (
