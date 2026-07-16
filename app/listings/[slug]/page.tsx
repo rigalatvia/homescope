@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LeadCaptureModal } from "@/components/leads/lead-capture-modal";
+import { LeadCaptureModal, ListingQuestionModal } from "@/components/leads/lead-capture-modal";
 import { BackToListingsButton } from "@/components/listings/back-to-listings-button";
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
@@ -153,16 +153,28 @@ export default async function ListingDetailPage({
 
           <p className="leading-relaxed text-brand-800">{listing.description}</p>
 
-          <LeadCaptureModal
-            listingId={listing.id}
-            listingMlsNumber={listing.mlsNumber}
-            listingTitle={listing.title}
-            listingAddress={fullAddress}
-            listingCity={listing.city}
-            listingUrl={listingUrl}
-            listingImageUrl={listing.images[0]}
-            listingTransactionType={listing.transactionType}
-          />
+          <div className="flex flex-wrap gap-3">
+            <LeadCaptureModal
+              listingId={listing.id}
+              listingMlsNumber={listing.mlsNumber}
+              listingTitle={listing.title}
+              listingAddress={fullAddress}
+              listingCity={listing.city}
+              listingUrl={listingUrl}
+              listingImageUrl={listing.images[0]}
+              listingTransactionType={listing.transactionType}
+            />
+            <ListingQuestionModal
+              listingId={listing.id}
+              listingMlsNumber={listing.mlsNumber}
+              listingTitle={listing.title}
+              listingAddress={fullAddress}
+              listingCity={listing.city}
+              listingUrl={listingUrl}
+              listingImageUrl={listing.images[0]}
+              listingTransactionType={listing.transactionType}
+            />
+          </div>
 
           {listing.transactionType === "sale" ? (
             <MortgagePaymentCalculator initialPrice={listing.price} compact />

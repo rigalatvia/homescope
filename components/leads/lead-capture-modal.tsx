@@ -19,6 +19,16 @@ interface LeadCaptureModalProps {
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
+const QUESTION_TOPICS = [
+  "Listing availability",
+  "Property details",
+  "Price or offer guidance",
+  "Neighbourhood or schools",
+  "Showing options",
+  "Documents or next steps",
+  "Other"
+];
+
 const initialForm = {
   fullName: "",
   email: "",
@@ -417,6 +427,243 @@ export function LeadCaptureModal({
                 <span>No obligation</span>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function ListingQuestionModal({
+  listingId,
+  listingMlsNumber,
+  listingTitle,
+  listingAddress,
+  listingCity,
+  listingUrl,
+  listingImageUrl,
+  listingTransactionType
+}: LeadCaptureModalProps) {
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    topic: QUESTION_TOPICS[0],
+    message: "",
+    website: ""
+  });
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+
+    setForm((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.displayName || "",
+      email: prev.email || user.email || ""
+    }));
+  }, [user]);
+
+  const open = () => {
+    setSubmitState("idle");
+    setErrorMessage("");
+    setForm((prev) => ({
+      ...prev,
+      fullName: user?.displayName || prev.fullName,
+      email: user?.email || prev.email
+    }));
+    setIsOpen(true);
+  };
+
+  const close = () => setIsOpen(false);
+
+  const onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitState("submitting");
+    setErrorMessage("");
+
+    const messageParts = [
+      `Question topic: ${form.topic}`,
+      `Question: ${form.message.trim()}`,
+      `MLS Number: ${listingMlsNumber}`,
+      `Listing: ${listingAddress}, ${listingCity}`,
+      `Listing URL: ${listingUrl}`
+    ];
+
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: form.fullName.trim() || "Website visitor",
+          email: form.email,
+          phone: form.phone,
+          agreesToTextMessages: false,
+          preferredDateTime: "",
+          message: messageParts.join("\n"),
+          intent: "question",
+          formType: "contact",
+          status: "pending",
+          listingId,
+          listingMlsNumber,
+          listingTitle,
+          listingAddress,
+          listingCity,
+          listingUrl,
+          listingImageUrl,
+          userId: user?.uid,
+          userEmail: user?.email || form.email,
+          userName: user?.displayName || form.fullName || "Website visitor",
+          leadTransactionType: listingTransactionType,
+          website: form.website
+        })
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error || "Could not submit your question.");
+      }
+
+      setSubmitState("success");
+      setForm({
+        fullName: user?.displayName || "",
+        email: user?.email || "",
+        phone: "",
+        topic: QUESTION_TOPICS[0],
+        message: "",
+        website: ""
+      });
+    } catch (error) {
+      setSubmitState("error");
+      setErrorMessage(error instanceof Error ? error.message : "Submission failed.");
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={open}
+        className="rounded-full border border-brand-300 bg-white px-6 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-500 hover:bg-brand-50"
+      >
+        Ask for Details
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/60 p-3">
+          <div className="max-h-[95vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:max-h-none md:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">Ask for Details</h3>
+              <button type="button" onClick={close} className="rounded-full border border-brand-200 px-3 py-1 text-sm text-brand-700">
+                Close
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-brand-700">
+              Ask about MLS {listingMlsNumber}, the property, pricing, neighbourhood, schools, documents, or next steps.
+            </p>
+            {submitState !== "success" ? (
+              <p className="mt-1 text-sm text-brand-700">Leave your email and your question, and we will reply with the listing details.</p>
+            ) : null}
+
+            {submitState === "success" ? (
+              <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                Thank you. Your question was received. We will reply by email shortly.
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="mt-4 space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <FormField label="Name" htmlFor="questionFullName">
+                    <input
+                      id="questionFullName"
+                      name="fullName"
+                      value={form.fullName}
+                      onChange={onChange}
+                      className="w-full rounded-lg border border-brand-200 px-3 py-2"
+                    />
+                  </FormField>
+                  <FormField label="Email" htmlFor="questionEmail" required>
+                    <input
+                      id="questionEmail"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={onChange}
+                      required
+                      className="w-full rounded-lg border border-brand-200 px-3 py-2"
+                    />
+                  </FormField>
+                </div>
+                <FormField label="Phone" htmlFor="questionPhone">
+                  <input
+                    id="questionPhone"
+                    name="phone"
+                    value={form.phone}
+                    onChange={onChange}
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2"
+                  />
+                </FormField>
+                <FormField label="What do you want to know?" htmlFor="questionTopic" required>
+                  <select
+                    id="questionTopic"
+                    name="topic"
+                    value={form.topic}
+                    onChange={onChange}
+                    required
+                    className="w-full rounded-lg border border-brand-200 bg-white px-3 py-2"
+                  >
+                    {QUESTION_TOPICS.map((topic) => (
+                      <option key={topic} value={topic}>
+                        {topic}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Question" htmlFor="questionMessage" required>
+                  <textarea
+                    id="questionMessage"
+                    name="message"
+                    value={form.message}
+                    onChange={onChange}
+                    rows={4}
+                    required
+                    placeholder="Example: Is this listing still available? Are there any offer dates, maintenance fees, rental restrictions, or school boundaries I should know about?"
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2"
+                  />
+                </FormField>
+
+                <input
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  name="website"
+                  value={form.website}
+                  onChange={onChange}
+                  className="hidden"
+                  autoComplete="off"
+                />
+
+                {submitState === "error" && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p>}
+
+                <button
+                  type="submit"
+                  disabled={submitState === "submitting"}
+                  className="w-full rounded-full bg-brand-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {submitState === "submitting" ? "Sending..." : "Send Question"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

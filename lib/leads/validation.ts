@@ -5,11 +5,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateLeadInput(input: LeadSubmissionInput): string[] {
   const errors: string[] = [];
+  const isQuestionLead = input.intent === "question" || input.formType === "contact";
 
-  if (!input.fullName.trim()) errors.push("Full name is required.");
   if (!input.email.trim() || !EMAIL_PATTERN.test(input.email)) errors.push("A valid email is required.");
-  if (!input.phone.trim()) errors.push("Phone is required.");
-  if (!input.preferredDateTime.trim()) errors.push("Preferred date/time is required.");
   if (!input.message.trim()) errors.push("Message is required.");
   if (!input.listingId.trim()) errors.push("Listing reference is missing.");
   if (!input.listingMlsNumber.trim()) errors.push("MLS number is missing.");
@@ -27,12 +25,18 @@ export function validateLeadInput(input: LeadSubmissionInput): string[] {
     errors.push("Lead status is invalid.");
   }
 
-  if (input.leadTransactionType === "lease" && input.isReadyToProvideDocs !== true) {
-    errors.push("Please confirm you are ready to provide required lease documents.");
-  }
+  if (!isQuestionLead) {
+    if (!input.fullName.trim()) errors.push("Full name is required.");
+    if (!input.phone.trim()) errors.push("Phone is required.");
+    if (!input.preferredDateTime.trim()) errors.push("Preferred date/time is required.");
 
-  if (input.leadTransactionType === "sale" && input.hasMortgagePreapproval !== true) {
-    errors.push("Please confirm mortgage pre-approval acknowledgement.");
+    if (input.leadTransactionType === "lease" && input.isReadyToProvideDocs !== true) {
+      errors.push("Please confirm you are ready to provide required lease documents.");
+    }
+
+    if (input.leadTransactionType === "sale" && input.hasMortgagePreapproval !== true) {
+      errors.push("Please confirm mortgage pre-approval acknowledgement.");
+    }
   }
 
   if (input.website && input.website.trim().length > 0) errors.push("Spam protection triggered.");
