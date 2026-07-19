@@ -30,6 +30,7 @@ export class GmailEmailProvider implements EmailProvider {
       subject: payload.subject,
       text: payload.text,
       html: payload.html,
+      headers: payload.headers,
       replyTo: payload.replyTo || this.fromEmail
     });
   }

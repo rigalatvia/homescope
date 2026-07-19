@@ -130,7 +130,8 @@ async function sendTemplateToContact(input: {
     const result = await sendCrmTemplateEmail({
       template: input.template,
       to: input.contact.email,
-      recipientName: getContactRecipientName(input.contact)
+      recipientName: getContactRecipientName(input.contact),
+      contactId: input.contact.id
     });
 
     await saveSendLog({

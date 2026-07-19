@@ -168,6 +168,8 @@ Admin featured route:
 What this page does:
 
 - allows you to manage manually featured listings
+- lets you add a featured listing by MLS number
+- lets you move featured listings up or down
 - stores featured listing IDs in Firestore settings
 
 Current featured behavior also includes logic around a preferred agent key in code, but the admin panel is the safest manual override point.
@@ -176,6 +178,14 @@ Use this page when:
 
 - you want to pin certain listings
 - you want to control homepage emphasis
+- you want Yan's listings or any manually selected listings to appear first
+
+Important notes:
+
+- enter the public MLS number, such as `N13194128`
+- the admin panel resolves that MLS number to the internal listing document
+- the homepage uses the saved order, with the first item shown first
+- if a listing does not appear after saving, check that the listing exists in Firestore and is visible/public
 
 ## 7. Leads
 
@@ -183,7 +193,7 @@ Admin leads route:
 
 - `/admin/leads`
 
-A lead is usually created when someone submits a showing request from a listing page.
+A lead is usually created when someone submits a showing request or asks for listing details from a listing page.
 
 What gets saved:
 
@@ -193,6 +203,8 @@ What gets saved:
 - message
 - listing information
 - transaction type
+- lead intent, such as showing request or question
+- form type, such as showing or contact
 - SMS consent preference
 - delivery status fields for email handling
 
@@ -200,8 +212,11 @@ Important operational behavior:
 
 - after a showing request is submitted, the user is redirected to a thank-you page
 - the thank-you page is important for Google Ads conversion tracking
+- after an Ask for Details request is submitted, the user stays on the listing page and sees an inline confirmation message
 - the confirmation copy tells users to expect an email from:
   - `homescopegta@gmail.com`
+- lead notification emails are sent to `settings/site.leadRecipientEmail`
+- if `settings/site.leadRecipientEmail` is empty, the code falls back to the default HomeScope GTA lead recipient
 
 ## 8. Contacts
 
@@ -232,11 +247,31 @@ Use this page when:
 - you want to see repeat interest
 - you want a cleaner CRM-style overview
 
-## 9. Public Listings Search
+## 9. CRM Birthday and Holiday Campaign Emails
+
+CRM campaign emails are the automated birthday and holiday emails sent from Yan's campaign sender.
+
+Important unsubscribe behavior:
+
+- CRM birthday and holiday emails include an unsubscribe link
+- the unsubscribe link updates the matching `crmContacts` record
+- the contact's `emailConsentStatus` is set to `unsubscribed`
+- future CRM campaign runs skip contacts marked `unsubscribed`
+- this applies only to CRM campaign emails, not saved-search alerts, lead notifications, showing notifications, or Ask for Details notifications
+
+Firestore collections involved:
+
+- `crmContacts`
+- `crmSendLog`
+
+Use `/admin/contacts` if you need to manually review or change a contact's email consent status.
+
+## 10. Public Listings Search
 
 Public route:
 
 - `/listings`
+- `/schools`
 
 What visitors can do:
 
@@ -248,10 +283,16 @@ What visitors can do:
 - search by MLS number
 - search by address text
 - browse on a map
+- search schools and open school profile pages
+- sort school results by name
+- sort school results by rating, high to low or low to high
+- page through school results beyond the first 75 schools
 
-### 9.1 Search tracking
+### 10.1 Search tracking
 
-Every search is saved in Firestore.
+Every listings search is saved in Firestore.
+
+School searches are also tracked so search traffic from the school search page can be reviewed later.
 
 Saved information includes:
 
@@ -267,7 +308,32 @@ This is useful for:
 - marketing decisions
 - future reporting
 
-## 10. Listing Detail Pages
+### 10.2 School search behavior
+
+School search route:
+
+- `/schools`
+
+School detail route pattern:
+
+- `/schools/[slug]`
+
+What visitors can do:
+
+- search by school name, board, or program
+- filter by municipality
+- filter by level
+- sort by name
+- sort by rating in both directions
+- use pagination to see more than the first 75 results
+- open a school profile and see nearby homes
+
+Important behavior:
+
+- the Back to school search button on a school detail page uses browser back behavior
+- rating and school boundary information should still be verified directly with the school board
+
+## 11. Listing Detail Pages
 
 Public route pattern:
 
@@ -278,6 +344,7 @@ What users can do:
 - browse images
 - review property details
 - open the showing request form
+- open the Ask for Details form
 - navigate to related buying or leasing guides
 
 Guide links on listing pages are contextual:
@@ -290,7 +357,7 @@ For lease listings show leasing-focused guides, including:
 - Lease Documents
 - Rental Application Form 410
 
-## 11. Showing Request Form
+## 12. Showing Request Form
 
 The showing request form is one of the most important conversion points on the site.
 
@@ -302,13 +369,13 @@ What it now does:
 - updates or creates a contact profile
 - redirects to a thank-you page
 
-### 11.1 SMS consent
+### 12.1 SMS consent
 
 There is a checkbox asking whether the user agrees to receive text messages on their phone.
 
 This preference is saved and should be respected in follow-up outreach.
 
-### 11.2 Thank-you page
+### 12.2 Thank-you page
 
 Route:
 
@@ -324,7 +391,41 @@ The page also includes:
 - return-back button
 - browse listings option
 
-## 12. Contact Form
+## 13. Ask for Details Form
+
+Listing pages also include an Ask for Details button beside the showing request button.
+
+Use this when a visitor wants to ask a question before booking a showing.
+
+What it asks for:
+
+- email
+- question or message
+- optional name
+
+What gets attached automatically:
+
+- listing title
+- listing address
+- city
+- MLS number
+- listing URL
+- transaction type
+
+What happens after submit:
+
+- the question is saved in `leads`
+- the contact profile is updated or created
+- email notification is attempted
+- the visitor sees a confirmation message on the listing page
+
+Confirmation message:
+
+- `Thank you. Your question was received. We will reply by email shortly.`
+
+This form does not redirect to the thank-you page because it is a lightweight listing question, not the main showing-request conversion.
+
+## 14. Contact Form
 
 Public route:
 
@@ -340,7 +441,7 @@ What happens when a user submits:
 
 If email is unavailable, the message is still stored.
 
-## 13. Guides Section
+## 15. Guides Section
 
 Public route:
 
@@ -369,7 +470,7 @@ Purpose:
 - `/guides/leasing`
 - `/guides/lease-documents`
 
-## 14. Rental Application Resource
+## 16. Rental Application Resource
 
 Public PDF URL:
 
@@ -387,7 +488,7 @@ What users can do:
 
 Download tracking is built into the site analytics.
 
-## 15. Chatbot
+## 17. Chatbot
 
 The site includes a floating chatbot button:
 
@@ -412,7 +513,7 @@ Why it is useful:
 - lets visitors get answers immediately
 - helps you see common questions through saved conversations
 
-## 16. Search Console and SEO Expectations
+## 18. Search Console and SEO Expectations
 
 The site includes:
 
@@ -432,7 +533,50 @@ That means:
 - new guides can be discovered but not crawled immediately
 - indexing status may take time to catch up
 
-## 17. Common Daily Tasks
+## 19. Listing Snapshots
+
+Firestore collection:
+
+- `listingSnapshots`
+
+This collection stores listing change history from MLS sync.
+
+It is not the public listings table. The public current listing records are in:
+
+- `listings`
+
+What a listing snapshot records:
+
+- listing ID
+- source listing key
+- when the snapshot was captured
+- which tracked fields changed
+- previous values
+- new values
+- reason for the snapshot, such as created, updated, hidden, price changed, status changed, or remarks changed
+
+Tracked fields include:
+
+- price
+- status
+- property type
+- common interest
+- structure type
+- property attached
+- public remarks
+- visibility
+- hidden reason
+
+Use `listingSnapshots` when:
+
+- a price changed and you want to see the previous value
+- a listing became hidden
+- a status changed
+- you need to understand what changed during a sync
+
+Do not use `listingSnapshots` as the main source for showing listings on the public site.
+
+## 20. Common Daily Tasks
 
 ### Daily
 
@@ -448,6 +592,7 @@ That means:
 - review listing inventory counts
 - review any municipality or sync anomalies
 - review featured listings
+- test one Ask for Details lead
 - review search patterns in Firestore if needed
 - review chatbot conversations for frequent questions
 
@@ -458,7 +603,7 @@ That means:
 - check email delivery behavior
 - confirm scheduler is still running correctly
 
-## 18. Common Troubleshooting
+## 21. Common Troubleshooting
 
 ### Problem: new listings are missing
 
@@ -489,6 +634,28 @@ Check:
 - delivery status fields on the lead record
 - `settings/site` email recipient
 
+### Problem: an Ask for Details email was not received
+
+Check:
+
+- lead exists in `leads`
+- lead `intent` is `question`
+- delivery status fields on the lead record
+- `settings/site.leadRecipientEmail`
+- email provider mode
+- Gmail app password secrets
+- whether the local development server is using mock email mode
+
+### Problem: someone wants to stop CRM campaign emails
+
+Check:
+
+- the unsubscribe link in the CRM birthday or holiday email
+- `/admin/contacts`
+- the contact's `emailConsentStatus`
+
+Contacts marked `unsubscribed` are skipped by future CRM daily campaign runs.
+
 ### Problem: Search Console says pages are discovered but not indexed
 
 This usually means:
@@ -506,12 +673,13 @@ Check:
 - `settings/site.featuredListingIds`
 - current listing visibility
 - whether those listing documents are present and public
+- whether the MLS number resolves to the expected internal listing document
 
 ### Problem: chatbot is not answering broadly enough
 
 Current chatbot is content-backed, not model-backed. It should answer site-specific questions well, but it is not intended for open-domain real estate Q&A.
 
-## 19. Operational Best Practices
+## 22. Operational Best Practices
 
 - do not edit Firestore listing records by hand unless necessary
 - prefer fixing sync logic and rerunning sync
@@ -519,9 +687,10 @@ Current chatbot is content-backed, not model-backed. It should answer site-speci
 - keep email secrets valid
 - preserve admin token securely
 - review SMS consent before sending texts
+- respect CRM unsubscribe status before sending birthday or holiday campaign emails
 - use the thank-you page URL for ad conversion tracking
 
-## 20. Quick Reference
+## 23. Quick Reference
 
 ### Important admin URLs
 
@@ -535,6 +704,7 @@ Current chatbot is content-backed, not model-backed. It should answer site-speci
 
 - `/`
 - `/listings`
+- `/schools`
 - `/contact`
 - `/guides`
 - `/guides/rental-application-ontario`
@@ -548,6 +718,9 @@ Current chatbot is content-backed, not model-backed. It should answer site-speci
 - `contacts`
 - `searches`
 - `chatConversations`
+- `crmContacts`
+- `crmSendLog`
+- `listingSnapshots`
 - `settings`
 
 ### Important settings documents
@@ -557,7 +730,7 @@ Current chatbot is content-backed, not model-backed. It should answer site-speci
 - `settings/mlsIncrementalCursor`
 - `settings/mlsSchedulerStatus`
 
-## 21. Final Summary
+## 24. Final Summary
 
 If you only remember the essentials:
 
@@ -566,6 +739,6 @@ If you only remember the essentials:
 - use `/admin/featured` to control promoted listings
 - use the guides to support SEO and educate visitors
 - use the thank-you page for ad tracking
-- use Firestore logs for searches and chat conversations to understand audience intent
+- use Firestore logs for searches, listing snapshots, leads, and chat conversations to understand audience intent and listing behavior
 
 This manual should be enough to operate the site without touching the code for normal daily and weekly workflows.

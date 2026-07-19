@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import { verifyCrmUnsubscribeToken } from "@/lib/crm/unsubscribe";
 import type { CrmContactCreateInput, CrmContactRecord, CrmContactUpdateInput } from "@/types/crm";
 
 const CRM_CONTACTS_COLLECTION = "crmContacts";
@@ -381,4 +382,64 @@ export async function deleteCrmContact(contactId: string): Promise<void> {
   }
 
   await firestore.collection(CRM_CONTACTS_COLLECTION).doc(normalizedId).delete();
+}
+
+export async function unsubscribeCrmContactFromEmailLink(input: {
+  contactId: string;
+  token: string;
+}): Promise<{
+  email: string;
+  alreadyUnsubscribed: boolean;
+}> {
+  const firestore = getFirebaseAdminFirestore();
+  const normalizedId = sanitizeText(input.contactId);
+  const normalizedToken = sanitizeText(input.token);
+
+  if (!normalizedId || !normalizedToken) {
+    throw new Error("This unsubscribe link is incomplete.");
+  }
+
+  const docRef = firestore.collection(CRM_CONTACTS_COLLECTION).doc(normalizedId);
+  const snapshot = await docRef.get();
+
+  if (!snapshot.exists) {
+    throw new Error("We could not find this CRM contact.");
+  }
+
+  const contact = buildStoredContactRecord(snapshot.id, snapshot.data() as Partial<CrmContactRecord>);
+
+  if (!contact.email) {
+    throw new Error("This CRM contact does not have an email address.");
+  }
+
+  const isValidToken = await verifyCrmUnsubscribeToken(contact.id, contact.email, normalizedToken);
+  if (!isValidToken) {
+    throw new Error("This unsubscribe link is not valid.");
+  }
+
+  if (contact.emailConsentStatus === "unsubscribed") {
+    return {
+      email: contact.email,
+      alreadyUnsubscribed: true
+    };
+  }
+
+  const now = new Date().toISOString();
+
+  await docRef.set(
+    {
+      emailConsentStatus: "unsubscribed",
+      unsubscribeSource: "crm-email-link",
+      unsubscribedAt: now,
+      unsubscribedAtServer: FieldValue.serverTimestamp(),
+      updatedAt: now,
+      updatedAtServer: FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  return {
+    email: contact.email,
+    alreadyUnsubscribed: false
+  };
 }

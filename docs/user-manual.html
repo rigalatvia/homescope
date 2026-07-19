@@ -283,8 +283,9 @@
             <li>MLS sync operations</li>
             <li>Featured listings</li>
             <li>Leads and contacts</li>
-            <li>Listings search</li>
-            <li>Showing request flow</li>
+            <li>Listings and school search</li>
+            <li>Showing request and Ask for Details flows</li>
+            <li>Listing snapshots</li>
             <li>Guides and rental form</li>
             <li>Chatbot</li>
             <li>Daily / weekly routines</li>
@@ -301,6 +302,7 @@
             <ul>
               <li>Homepage</li>
               <li>Listings search</li>
+              <li>School search</li>
               <li>Listing detail pages</li>
               <li>Guides</li>
               <li>Contact page</li>
@@ -442,11 +444,17 @@
         <div class="card">
           <h3>Best Practices</h3>
           <ul>
-            <li>Use this page to pin or rotate highlighted listings</li>
+            <li>Use this page to pin or rotate highlighted listings by MLS number</li>
+            <li>Move featured listings up or down to control homepage order</li>
             <li>Re-check that each featured listing is still visible and active</li>
             <li>Use this instead of editing Firestore listing documents directly</li>
           </ul>
         </div>
+        <p>
+          The admin panel resolves the public MLS number to the internal listing document and saves the ordered IDs in
+          <code>settings/site.featuredListingIds</code>. If a saved listing does not appear publicly, check that the listing
+          exists, is visible, and is public.
+        </p>
       </section>
 
       <section class="section">
@@ -455,10 +463,11 @@
           <div class="card">
             <h3>Leads</h3>
             <ul>
-              <li>Usually created from showing requests</li>
+              <li>Created from showing requests and Ask for Details questions</li>
               <li>Include listing context and message</li>
               <li>Store SMS consent preference</li>
               <li>Track email delivery fields</li>
+              <li>Use <code>settings/site.leadRecipientEmail</code> for lead notifications</li>
             </ul>
           </div>
           <div class="card">
@@ -471,16 +480,26 @@
             </ul>
           </div>
         </div>
+        <div class="card">
+          <h3>CRM Birthday and Holiday Emails</h3>
+          <ul>
+            <li>CRM birthday and holiday emails include an unsubscribe link</li>
+            <li>The unsubscribe link updates the matching <code>crmContacts</code> record</li>
+            <li>The contact's <code>emailConsentStatus</code> is set to <code>unsubscribed</code></li>
+            <li>Future CRM campaign runs skip unsubscribed contacts</li>
+            <li>This applies only to CRM campaign emails, not saved-search alerts or lead notifications</li>
+          </ul>
+        </div>
       </section>
 
       <div class="page-break"></div>
 
       <section class="section">
-        <h2>8. Public Listings Search</h2>
+        <h2>8. Public Listings and School Search</h2>
         <p>Visitors can search by city, price, transaction type, bedrooms, bathrooms, MLS number, property type, and address text.</p>
         <div class="grid grid-2">
           <div class="card">
-            <h3>What Gets Saved</h3>
+            <h3>Listings Search Tracking</h3>
             <ul>
               <li>Search path</li>
               <li>Query string</li>
@@ -489,24 +508,22 @@
               <li>User agent</li>
             </ul>
           </div>
-          <div class="mini-shot">
-            <div class="bar"></div>
-            <strong style="display:block;margin-bottom:8px;color:#30454b">Listings Search Screen</strong>
-            <div class="row">
-              <div class="box" style="height:44px"></div>
-              <div class="box" style="height:44px"></div>
-            </div>
-            <div class="row">
-              <div class="box" style="height:44px"></div>
-              <div class="box" style="height:44px"></div>
-            </div>
-            <div class="wide"></div>
+          <div class="card">
+            <h3>School Search</h3>
+            <ul>
+              <li>Route: <code>/schools</code></li>
+              <li>Search by school, board, or program</li>
+              <li>Filter by municipality and level</li>
+              <li>Sort by name or rating in both directions</li>
+              <li>Use pagination to see results beyond the first 75 schools</li>
+              <li>School detail back button uses browser back behavior</li>
+            </ul>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>9. Showing Request Flow</h2>
+        <h2>9. Showing Request and Ask for Details Flow</h2>
         <ol>
           <li>User opens the showing request form from a listing page.</li>
           <li>User enters name, email, phone, message, and SMS consent preference.</li>
@@ -514,6 +531,14 @@
           <li>The contact profile is updated.</li>
           <li>User is redirected to the thank-you page.</li>
         </ol>
+        <div class="card">
+          <h3>Ask for Details</h3>
+          <p>
+            Listing pages also include an Ask for Details button. This lightweight question form asks for an email and
+            message, saves a lead with listing context, updates the contact profile, attempts an email notification, and
+            shows an inline confirmation instead of redirecting to the thank-you page.
+          </p>
+        </div>
         <div class="card">
           <h3>What the User Sees</h3>
           <p>
@@ -524,7 +549,36 @@
       </section>
 
       <section class="section">
-        <h2>10. Guides and Rental Application Resource</h2>
+        <h2>10. Listing Snapshots</h2>
+        <p>
+          <code>listingSnapshots</code> is the MLS sync history collection. It is not the current public listing table;
+          current listings are stored in <code>listings</code>.
+        </p>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>What It Stores</h3>
+            <ul>
+              <li>Listing ID and source listing key</li>
+              <li>Captured time</li>
+              <li>Changed fields</li>
+              <li>Before and after values</li>
+              <li>Reason such as created, hidden, price changed, status changed, or remarks changed</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>When To Use It</h3>
+            <ul>
+              <li>Review price changes</li>
+              <li>Understand why a listing became hidden</li>
+              <li>Check status or remarks changes</li>
+              <li>Troubleshoot sync behavior without editing public listing records</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>11. Guides and Rental Application Resource</h2>
         <table class="table">
           <thead>
             <tr>
@@ -544,7 +598,7 @@
       </section>
 
       <section class="section">
-        <h2>11. Chatbot</h2>
+        <h2>12. Chatbot</h2>
         <p>The floating <strong>Ask HomeScope</strong> button opens a site assistant that helps users find the right guide or form.</p>
         <div class="grid grid-2">
           <div class="card">
@@ -573,7 +627,7 @@
       <div class="page-break"></div>
 
       <section class="section">
-        <h2>12. Daily, Weekly, and Monthly Routines</h2>
+        <h2>13. Daily, Weekly, and Monthly Routines</h2>
         <div class="grid grid-2">
           <div class="card">
             <h3>Daily</h3>
@@ -589,6 +643,7 @@
               <li>Review listing inventory counts</li>
               <li>Review sync anomalies</li>
               <li>Review featured listings</li>
+              <li>Test one Ask for Details lead</li>
               <li>Review common chatbot questions</li>
             </ul>
           </div>
@@ -605,7 +660,7 @@
       </section>
 
       <section class="section">
-        <h2>13. Common Troubleshooting</h2>
+        <h2>14. Common Troubleshooting</h2>
         <table class="table">
           <thead>
             <tr>
@@ -624,11 +679,11 @@
             </tr>
             <tr>
               <td>User says no showing email</td>
-              <td>Lead record, email delivery fields, site recipient settings, junk folder guidance</td>
+              <td>Lead record, email delivery fields, <code>settings/site.leadRecipientEmail</code>, Gmail app password secrets, local mock mode, junk folder guidance</td>
             </tr>
             <tr>
               <td>Featured listings wrong</td>
-              <td>Admin featured page, settings/site featured IDs, listing visibility</td>
+              <td>Admin featured page, <code>settings/site.featuredListingIds</code>, MLS number resolution, listing visibility</td>
             </tr>
             <tr>
               <td>Chatbot answer too narrow</td>

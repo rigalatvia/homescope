@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeScope GTA Site Visitor Guide</title>
+    <style>
+      :root {
+        --ink: #21353d;
+        --muted: #5f7178;
+        --line: #dce7e8;
+        --panel: #ffffff;
+        --soft: #f4f8f8;
+        --brand: #2d3b40;
+        --brand-2: #4f7d88;
+        --accent: #b98a44;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background: #eef3f3;
+        line-height: 1.6;
+      }
+
+      .page {
+        width: min(100%, 1100px);
+        margin: 0 auto;
+        background: white;
+        min-height: 100vh;
+        padding: 48px;
+      }
+
+      .cover {
+        background: linear-gradient(135deg, #f8fbfb 0%, #edf4f4 58%, #fffaf1 100%);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 48px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(79, 125, 136, 0.12);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: Georgia, "Times New Roman", serif;
+        line-height: 1.15;
+        margin: 0 0 10px;
+        color: var(--brand);
+      }
+
+      h1 {
+        font-size: 42px;
+        margin-top: 18px;
+      }
+
+      h2 {
+        font-size: 28px;
+        margin-top: 32px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      h3 {
+        font-size: 20px;
+        margin-top: 20px;
+      }
+
+      p {
+        margin: 0 0 12px;
+      }
+
+      ul,
+      ol {
+        margin: 8px 0 18px 22px;
+        padding: 0;
+      }
+
+      li {
+        margin: 5px 0;
+      }
+
+      code {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.95em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .note {
+        border-left: 4px solid var(--accent);
+        background: #fffaf1;
+        padding: 14px 16px;
+        margin: 18px 0;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .toc {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--soft);
+        padding: 18px 22px;
+        margin: 24px 0;
+      }
+
+      .toc a {
+        color: var(--brand);
+        text-decoration: none;
+      }
+
+      .toc a:hover {
+        text-decoration: underline;
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .page {
+          width: 210mm;
+          padding: 16mm;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          padding: 24px;
+        }
+
+        .cover {
+          padding: 28px;
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="cover">
+        <span class="eyebrow">Visitor Guide</span>
+        <h1>HomeScope GTA Site Visitor Guide</h1>
+        <p class="muted">
+          A practical guide for using HomeScope GTA to search listings, compare schools, save searches, request details,
+          book showings, and use buyer and renter tools.
+        </p>
+      </section>
+
+      <section class="toc">
+        <strong>Quick Navigation</strong>
+        <div class="grid">
+          <a href="#overview">What You Can Do</a>
+          <a href="#listings">Search Listings</a>
+          <a href="#details">Listing Detail Pages</a>
+          <a href="#questions">Ask for Details</a>
+          <a href="#showings">Book a Private Showing</a>
+          <a href="#saved">Saved Homes and Alerts</a>
+          <a href="#schools">School Search</a>
+          <a href="#tools">Tools and Calculators</a>
+          <a href="#guides">Guides</a>
+          <a href="#dashboard">Dashboard</a>
+        </div>
+      </section>
+
+      <section id="overview">
+        <h2>1. What You Can Do</h2>
+        <p>HomeScope GTA helps visitors move from browsing to a more organized search.</p>
+        <ul>
+          <li>Search GTA homes for sale and lease.</li>
+          <li>Open detailed listing pages with photos, MLS numbers, facts, descriptions, and tools.</li>
+          <li>Save homes and compare them later.</li>
+          <li>Save searches and turn on listing alerts.</li>
+          <li>Search schools and see nearby homes.</li>
+          <li>Use buyer and renter guides.</li>
+          <li>Estimate mortgage payments and land transfer tax.</li>
+          <li>Request a private showing.</li>
+          <li>Ask for more details about a listing.</li>
+          <li>Use the HomeScope assistant for help navigating the site.</li>
+        </ul>
+      </section>
+
+      <section id="listings">
+        <h2>2. Search Listings</h2>
+        <p>Use <code>/listings</code> to browse available homes.</p>
+        <div class="grid">
+          <div class="card">
+            <h3>Common Filters</h3>
+            <ul>
+              <li>City or market</li>
+              <li>Sale or lease</li>
+              <li>Price</li>
+              <li>Bedrooms and bathrooms</li>
+              <li>Property type</li>
+              <li>Address or MLS number</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Useful Workflow</h3>
+            <ol>
+              <li>Apply filters.</li>
+              <li>Open listing cards that look relevant.</li>
+              <li>Save homes you want to compare.</li>
+              <li>Save the search if you want alerts.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section id="details">
+        <h2>3. Listing Detail Pages</h2>
+        <p>Each listing page can include:</p>
+        <ul>
+          <li>property photos</li>
+          <li>price, address, city, and MLS number</li>
+          <li>property type, bedrooms, bathrooms, and square footage range when available</li>
+          <li>property description</li>
+          <li>mortgage payment calculator for sale listings</li>
+          <li>related buyer or renter guides</li>
+          <li>Save, Book a Private Showing, and Ask for Details buttons</li>
+        </ul>
+      </section>
+
+      <section id="questions">
+        <h2>4. Ask for Details</h2>
+        <p>Use Ask for Details when you have a question about a listing but are not ready to book a showing.</p>
+        <p>You can ask about the property, pricing, MLS number, neighbourhood, schools, documents, next steps, or any specific question.</p>
+        <p>You will be asked for your email so HomeScope GTA can reply. After submitting, you will see a confirmation message on the listing page.</p>
+      </section>
+
+      <section id="showings">
+        <h2>5. Book a Private Showing</h2>
+        <p>Use Book a Private Showing when you want to request a visit to a property.</p>
+        <ul>
+          <li>Enter your contact details.</li>
+          <li>Choose a preferred showing date and time.</li>
+          <li>Add notes if there is anything specific HomeScope GTA should know.</li>
+          <li>After submitting, the request appears in your dashboard under My Showings.</li>
+        </ul>
+      </section>
+
+      <section id="saved">
+        <h2>6. Saved Homes, Searches, and Alerts</h2>
+        <p>Sign in to save homes, save searches, and manage listing alerts.</p>
+        <div class="grid">
+          <div class="card">
+            <h3>Saved Homes</h3>
+            <p>Use the Save button on listing cards or listing pages to keep homes for later, compare them, and keep notes.</p>
+          </div>
+          <div class="card">
+            <h3>Saved Searches</h3>
+            <p>After filtering listings, save the search and turn on alerts so new matching listings can be emailed to you.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard">
+        <h2>7. Dashboard</h2>
+        <p>Use <code>/dashboard</code> to manage your personal activity.</p>
+        <ul>
+          <li>Saved homes</li>
+          <li>Saved searches</li>
+          <li>Listing alerts</li>
+          <li>Private notes</li>
+          <li>Showing requests</li>
+        </ul>
+      </section>
+
+      <section id="schools">
+        <h2>8. School Search</h2>
+        <p>Use <code>/schools</code> if school-area research matters to your home search.</p>
+        <ul>
+          <li>Search by school name, board, program, municipality, and level.</li>
+          <li>Sort by rating in both directions.</li>
+          <li>Sort by school name in both directions.</li>
+          <li>Use pagination to continue beyond the first set of results.</li>
+          <li>Open school profile pages to review school details and nearby homes.</li>
+        </ul>
+        <div class="note">
+          School boundaries and eligibility can change. Always verify school assignment, transportation, and eligibility
+          directly with the school board before making a decision.
+        </div>
+      </section>
+
+      <section id="tools">
+        <h2>9. Tools and Calculators</h2>
+        <p>Use <code>/tools</code> for practical search and planning tools.</p>
+        <ul>
+          <li>Mortgage payment calculator: <code>/tools/mortgage-calculator</code></li>
+          <li>Land transfer tax calculator: <code>/tools/land-transfer-tax-calculator</code></li>
+          <li>Map search: <code>/map-search</code></li>
+          <li>Saved search alerts and saved-home comparison</li>
+        </ul>
+        <p class="muted">Calculator results are estimates. Confirm final numbers with qualified professionals.</p>
+      </section>
+
+      <section id="guides">
+        <h2>10. Guides</h2>
+        <p>Use <code>/guides</code> for Ontario buyer and renter resources.</p>
+        <ul>
+          <li>First-time home buyer guide</li>
+          <li>Documents needed to buy a home</li>
+          <li>Organizing real estate documents</li>
+          <li>Ontario rental application Form 410</li>
+          <li>Buying process guide</li>
+          <li>Leasing process guide</li>
+          <li>Lease document checklist</li>
+          <li>Mortgage calculator guide</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>11. Contact and Chat</h2>
+        <p>Use <code>/contact</code> for general questions. Use Ask for Details for questions tied to a specific listing.</p>
+        <p>The Ask HomeScope assistant can help you find pages, understand saved searches, manage alerts, find calculators, and use the site.</p>
+      </section>
+
+      <section>
+        <h2>12. Quick Links</h2>
+        <ul>
+          <li>Homepage: <code>/</code></li>
+          <li>Listings: <code>/listings</code></li>
+          <li>Map Search: <code>/map-search</code></li>
+          <li>Schools: <code>/schools</code></li>
+          <li>Tools: <code>/tools</code></li>
+          <li>Guides: <code>/guides</code></li>
+          <li>Contact: <code>/contact</code></li>
+          <li>Dashboard: <code>/dashboard</code></li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

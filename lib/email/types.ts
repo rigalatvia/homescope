@@ -7,6 +7,7 @@ export interface GenericEmailPayload {
   text: string;
   html: string;
   replyTo?: string;
+  headers?: Record<string, string>;
   senderEmail?: string;
   senderName?: string;
   senderAuthUser?: string;

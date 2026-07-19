@@ -1,4 +1,5 @@
 import { sendDirectEmail } from "@/lib/email";
+import { buildCrmUnsubscribeUrl } from "@/lib/crm/unsubscribe";
 import type { CrmTemplateRecord } from "@/types/crm";
 
 const CRM_CAMPAIGN_FROM_NAME = "Yan Ginzburg";
@@ -34,13 +35,14 @@ function formatParagraphs(value: string): string {
 
 export function buildCrmTemplateEmail(
   template: CrmTemplateRecord,
-  options?: { recipientName?: string }
+  options?: { recipientName?: string; unsubscribeUrl?: string }
 ): {
   subject: string;
   text: string;
   html: string;
 } {
   const recipientName = options?.recipientName?.trim();
+  const unsubscribeUrl = options?.unsubscribeUrl?.trim();
   const greeting = recipientName ? `Dear ${recipientName},` : "Hello,";
   const imageHtml = template.imageUrl
     ? `<img src="${template.imageUrl}" alt="${escapeHtml(template.name)}" style="display:block; width:100%; max-width:600px; height:auto; border:0;" />`
@@ -59,8 +61,28 @@ export function buildCrmTemplateEmail(
     "",
     template.body,
     "",
-    template.signature
+    template.signature,
+    ...(unsubscribeUrl
+      ? [
+          "",
+          "You are receiving this email because you are in Yan Ginzburg's CRM contact list.",
+          `Unsubscribe: ${unsubscribeUrl}`
+        ]
+      : [])
   ].join("\n");
+
+  const unsubscribeHtml = unsubscribeUrl
+    ? `
+        <tr>
+          <td style="padding:0 40px 32px;">
+            <div style="border-top:1px solid #e2e8f0; padding-top:18px; font-family:Arial, sans-serif; font-size:12px; line-height:1.6; color:#64748b;">
+              You are receiving this email because you are in Yan Ginzburg's CRM contact list.
+              <a href="${escapeHtml(unsubscribeUrl)}" style="color:#0f4c5c; text-decoration:underline;">Unsubscribe</a>
+            </div>
+          </td>
+        </tr>
+      `
+    : "";
 
   const html = `
     <div style="margin:0; padding:24px; background:#f5f1e8; font-family:Georgia, 'Times New Roman', serif;">
@@ -77,6 +99,7 @@ export function buildCrmTemplateEmail(
             <p style="margin:28px 0 0; font-size:16px; line-height:1.7; color:#102a43; white-space:pre-line; font-family:Arial, sans-serif; font-weight:600;">${escapeHtml(template.signature)}</p>
           </td>
         </tr>
+        ${unsubscribeHtml}
       </table>
     </div>
   `;
@@ -93,13 +116,20 @@ export async function sendCrmTemplateEmail(input: {
   to: string;
   recipientName?: string;
   replyTo?: string;
+  contactId?: string;
 }): Promise<{
   mode: "mock" | "live";
   provider: string;
   recipientUsed: string;
   subjectUsed: string;
 }> {
-  const email = buildCrmTemplateEmail(input.template, { recipientName: input.recipientName });
+  const unsubscribeUrl = input.contactId
+    ? await buildCrmUnsubscribeUrl(input.contactId, input.to)
+    : undefined;
+  const email = buildCrmTemplateEmail(input.template, {
+    recipientName: input.recipientName,
+    unsubscribeUrl
+  });
 
   return sendDirectEmail({
     to: input.to,
@@ -107,6 +137,7 @@ export async function sendCrmTemplateEmail(input: {
     text: email.text,
     html: email.html,
     replyTo: input.replyTo,
+    headers: unsubscribeUrl ? { "List-Unsubscribe": `<${unsubscribeUrl}>` } : undefined,
     senderEmail: getCrmCampaignFromEmail(),
     senderName: CRM_CAMPAIGN_FROM_NAME,
     senderAuthUser: process.env.CRM_CAMPAIGN_FROM_EMAIL?.trim() || undefined,
