@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { applySchoolRankingOverride, applySchoolRankingOverrides } from "@/data/school-ranking-overrides";
 import { schools as seedSchools } from "@/data/schools";
 import { COLLECTIONS } from "@/lib/firebase-sync/firestore/collections";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
@@ -21,12 +22,12 @@ const getCachedSchoolsFromFirestore = unstable_cache(
 export async function getSchoolDirectory(): Promise<School[]> {
   try {
     const schools = await getCachedSchoolsFromFirestore();
-    if (schools.length > 0) return schools;
+    if (schools.length > 0) return applySchoolRankingOverrides(schools);
   } catch (error) {
     console.error("[schools] Failed reading Firestore schools. Using seed fallback.", error);
   }
 
-  return seedSchools;
+  return applySchoolRankingOverrides(seedSchools);
 }
 
 export async function importSeedSchoolsToFirestore(): Promise<{
@@ -44,7 +45,7 @@ export async function importSeedSchoolsToFirestore(): Promise<{
 
     for (const school of chunk) {
       const reference = firestore.collection(COLLECTIONS.schools).doc(school.id);
-      const document = buildSeedSchoolDocument(school, importedAt);
+      const document = buildSeedSchoolDocument(applySchoolRankingOverride(school), importedAt);
 
       batch.set(
         reference,
