@@ -63,6 +63,7 @@ export function SiteChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isHiddenRoute = useMemo(() => pathname?.startsWith("/admin") ?? false, [pathname]);
+  const isListingDetailPage = useMemo(() => pathname?.startsWith("/listings/") ?? false, [pathname]);
 
   useEffect(() => {
     if (initializedRef.current || typeof window === "undefined") return;
@@ -295,7 +296,7 @@ export function SiteChatbot() {
       ) : null}
 
       {!isOpen ? (
-        <div className="fixed bottom-5 right-5 z-50">
+        <div className={`fixed right-4 z-50 md:bottom-5 md:right-5 ${isListingDetailPage ? "bottom-24" : "bottom-5"}`}>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
