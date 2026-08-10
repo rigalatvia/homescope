@@ -28,3 +28,27 @@ main {
 .site-container {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
+
+@keyframes dashboardPreview {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  10%,
+  88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0.96;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="dashboardPreview"] {
+    animation: none;
+  }
+}

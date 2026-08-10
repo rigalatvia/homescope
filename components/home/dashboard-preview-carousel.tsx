@@ -8,8 +8,6 @@ import {
   Bell,
   CalendarClock,
   CheckSquare,
-  ChevronLeft,
-  ChevronRight,
   Heart,
   LayoutDashboard,
   NotebookPen
@@ -50,60 +48,38 @@ const AUTO_ROTATE_MS = 5200;
 
 export function DashboardPreviewCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const activeSlide = SLIDES[activeIndex];
   const ActiveIcon = activeSlide.icon;
 
   useEffect(() => {
-    if (isPaused) return;
-
     const interval = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % SLIDES.length);
     }, AUTO_ROTATE_MS);
 
     return () => window.clearInterval(interval);
-  }, [isPaused]);
-
-  const goToPrevious = () => {
-    setActiveIndex((current) => (current - 1 + SLIDES.length) % SLIDES.length);
-  };
-
-  const goToNext = () => {
-    setActiveIndex((current) => (current + 1) % SLIDES.length);
-  };
+  }, []);
 
   return (
-    <div
-      className="rounded-[2rem] border border-brand-100 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-5"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <div className="rounded-[2rem] border border-brand-100 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-brand-700">
           <LayoutDashboard className="h-3.5 w-3.5" />
           Dashboard Preview
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={goToPrevious}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-100 bg-white text-brand-800 transition hover:border-brand-300 hover:bg-brand-50"
-            aria-label="Show previous dashboard preview"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={goToNext}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-100 bg-white text-brand-800 transition hover:border-brand-300 hover:bg-brand-50"
-            aria-label="Show next dashboard preview"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">
+          <span className="relative h-2 w-2 rounded-full bg-emerald-500">
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
+          </span>
+          Live preview
         </div>
       </div>
 
       <div className="mt-5 min-h-[360px] overflow-hidden rounded-[1.5rem] border border-brand-100 bg-brand-50/50 p-4">
+        <div
+          key={activeSlide.eyebrow}
+          className="animate-[dashboardPreview_5200ms_ease-in-out]"
+          aria-live="polite"
+        >
         <div className="flex items-start gap-3">
           <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-900 shadow-sm">
             <ActiveIcon className="h-5 w-5" />
@@ -127,22 +103,6 @@ export function DashboardPreviewCarousel() {
         <div className="mt-5">
           <DashboardMockup preview={activeSlide.preview} />
         </div>
-      </div>
-
-      <div className="mt-5 flex items-center justify-center">
-        <div className="flex items-center gap-2" aria-label="Dashboard preview slides">
-          {SLIDES.map((slide, index) => (
-            <button
-              key={slide.eyebrow}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              className={`h-2.5 rounded-full transition ${
-                index === activeIndex ? "w-7 bg-brand-900" : "w-2.5 bg-brand-200 hover:bg-brand-400"
-              }`}
-              aria-label={`Show ${slide.eyebrow} preview`}
-              aria-pressed={index === activeIndex}
-            />
-          ))}
         </div>
       </div>
     </div>
