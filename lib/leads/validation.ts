@@ -28,7 +28,6 @@ export function validateLeadInput(input: LeadSubmissionInput): string[] {
   if (!isQuestionLead) {
     if (!input.fullName.trim()) errors.push("Full name is required.");
     if (!input.phone.trim()) errors.push("Phone is required.");
-    if (!input.preferredDateTime.trim()) errors.push("Preferred date/time is required.");
 
     if (input.leadTransactionType === "lease" && input.isReadyToProvideDocs !== true) {
       errors.push("Please confirm you are ready to provide required lease documents.");

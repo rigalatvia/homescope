@@ -137,6 +137,7 @@ export function MyShowingsSection({ user }: MyShowingsSectionProps) {
 
 function ShowingDateCell({ showing }: { showing: UserShowing }) {
   const confirmedDateTime = showing.actualShowingDateTime?.trim();
+  const preferredDateTime = showing.preferredDateTime?.trim();
 
   if (showing.status === "confirmed" && confirmedDateTime) {
     return (
@@ -149,8 +150,10 @@ function ShowingDateCell({ showing }: { showing: UserShowing }) {
 
   return (
     <div className="space-y-1">
-      <p className="text-sm font-semibold text-brand-900">Requested time</p>
-      <p className="text-sm text-brand-700">{formatPreferredDateTime(showing.preferredDateTime)}</p>
+      <p className="text-sm font-semibold text-brand-900">{preferredDateTime ? "Requested time" : "Pending confirmation"}</p>
+      <p className="text-sm text-brand-700">
+        {preferredDateTime ? formatPreferredDateTime(preferredDateTime) : "We will follow up to schedule."}
+      </p>
     </div>
   );
 }

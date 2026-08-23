@@ -20,6 +20,7 @@ export function SiteFooter() {
           <p className="mt-2 max-w-md text-sm text-brand-700">
             Browse homes across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto.
           </p>
+          <p className="mt-4 text-xs font-semibold text-brand-500">(c) 2026 HomeScopeGTA. All rights reserved.</p>
         </div>
         <div className="grid gap-8 text-center sm:grid-cols-2 md:text-left">
           <div>

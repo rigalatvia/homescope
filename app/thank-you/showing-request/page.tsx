@@ -40,7 +40,7 @@ export default function ShowingRequestThankYouPage({
         <div className="mt-8 rounded-3xl border border-brand-100 bg-brand-50/60 p-6">
           <h2 className="font-heading text-2xl text-brand-900">What happens next</h2>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-brand-700 sm:text-base">
-            <li>We review your request details and preferred showing time.</li>
+            <li>We review your request details and listing information.</li>
             <li>We follow up by email to confirm next steps.</li>
             <li>For rental listings, you may be asked to share lease documents before scheduling is finalized.</li>
           </ul>
