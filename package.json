@@ -11,6 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:seo": "node -r ./tests/register-ts.cjs ./tests/listing-metadata.test.ts",
+    "test:form410": "node -r ./tests/register-ts.cjs ./tests/rental-application-page.test.ts",
+    "verify:sitemap-schools": "node scripts/verify-school-sitemap.mjs",
+    "test:sitemap-schools": "node -r ./tests/register-ts.cjs ./tests/school-sitemap.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

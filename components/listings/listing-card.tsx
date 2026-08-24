@@ -1,7 +1,7 @@
-import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { FavoriteButton } from "@/components/listings/favorite-button";
+import { TrackedListingLink } from "@/components/listings/tracked-listing-link";
 import { AreaStatIcon, BathStatIcon, BedStatIcon } from "@/components/listings/property-stat-icons";
 import { formatPrice, truncate } from "@/lib/utils/format";
 import type { Listing } from "@/types/listing";
@@ -19,7 +19,7 @@ export function ListingCard({ listing, returnTo, showStatLabels = true }: Listin
   return (
     <article className="overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-soft transition hover:-translate-y-1">
       <div className="relative">
-        <Link href={detailHref} className="block">
+        <TrackedListingLink href={detailHref} listingId={listing.id} isRental={listing.transactionType === "lease"} className="block">
           <Image
             src={`${listing.images[0]}?auto=format&fit=crop&w=1200&q=80`}
             alt={`Photo of ${listing.address}`}
@@ -27,7 +27,7 @@ export function ListingCard({ listing, returnTo, showStatLabels = true }: Listin
             height={800}
             className="h-52 w-full object-cover"
           />
-        </Link>
+        </TrackedListingLink>
         {listing.badge && (
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-900 shadow">
             {listing.badge}
@@ -49,7 +49,7 @@ export function ListingCard({ listing, returnTo, showStatLabels = true }: Listin
               </p>
             )}
           </div>
-          <FavoriteButton listingId={listing.id} />
+          <FavoriteButton listingId={listing.id} isRental={listing.transactionType === "lease"} />
         </div>
         <div className="grid grid-cols-3 gap-3 rounded-2xl border border-brand-100 bg-brand-50/50 px-3 py-3">
           <ListingStat icon={<BedStatIcon />} value={String(listing.bedrooms)} label="Bedrooms" showLabel={showStatLabels} />
@@ -58,12 +58,14 @@ export function ListingCard({ listing, returnTo, showStatLabels = true }: Listin
         </div>
         <p className="text-sm text-brand-700">{listing.propertyType}</p>
         <p className="text-sm text-brand-700">{truncate(listing.description, 120)}</p>
-        <Link
+        <TrackedListingLink
           href={detailHref}
+          listingId={listing.id}
+          isRental={listing.transactionType === "lease"}
           className="inline-flex rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
         >
           View Details
-        </Link>
+        </TrackedListingLink>
       </div>
     </article>
   );

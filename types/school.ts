@@ -38,6 +38,7 @@ export interface School {
   notes?: string;
   dataSource: string;
   updatedLabel?: string;
+  updatedAt?: string;
 }
 
 export interface SchoolSearchFilters {

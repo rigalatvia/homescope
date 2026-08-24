@@ -5,13 +5,15 @@ import { useMemo, useState } from "react";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedHomes } from "@/hooks/useSavedHomes";
+import { trackEvent } from "@/lib/analytics";
 
 interface FavoriteButtonProps {
   listingId: string;
   className?: string;
+  isRental?: boolean;
 }
 
-export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
+export function FavoriteButton({ listingId, className, isRental = false }: FavoriteButtonProps) {
   const { user, loading: authLoading } = useAuth();
   const { isSaved, isPending, toggleSave } = useSavedHomes();
   const [showPrompt, setShowPrompt] = useState(false);
@@ -33,6 +35,7 @@ export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
 
     try {
       await toggleSave(listingId);
+      if (!saved && isRental) trackEvent("rental_saved", { listing_id: listingId });
       setErrorMessage("");
     } catch (error) {
       console.error("[savedHomes] Failed to toggle saved home", error);
@@ -43,6 +46,7 @@ export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
   const handleSignedIn = async () => {
     try {
       await toggleSave(listingId);
+      if (isRental) trackEvent("rental_saved", { listing_id: listingId });
       setErrorMessage("");
       setShowPrompt(false);
     } catch (error) {

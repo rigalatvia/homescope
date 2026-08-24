@@ -134,8 +134,18 @@ function sanitizeSchoolDocument(data: FirebaseFirestore.DocumentData, docId: str
     profileUrl: typeof data.profileUrl === "string" ? data.profileUrl : undefined,
     notes: typeof data.notes === "string" ? data.notes : undefined,
     dataSource: typeof data.dataSource === "string" ? data.dataSource : "Firestore schools collection",
-    updatedLabel: typeof data.updatedLabel === "string" ? data.updatedLabel : undefined
+    updatedLabel: typeof data.updatedLabel === "string" ? data.updatedLabel : undefined,
+    updatedAt: toIsoString(data.updatedAt) || toIsoString(data.importedAt)
   };
+}
+
+function toIsoString(value: unknown): string | undefined {
+  if (typeof value === "string" && Number.isFinite(new Date(value).getTime())) return new Date(value).toISOString();
+  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    const date = value.toDate();
+    if (date instanceof Date && Number.isFinite(date.getTime())) return date.toISOString();
+  }
+  return undefined;
 }
 
 function sanitizeSchoolRanking(value: unknown): SchoolRanking | undefined {
