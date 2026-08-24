@@ -188,8 +188,8 @@ export function LeadCaptureModal({
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/60 p-3">
-          <div className="max-h-[95vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:max-h-none md:overflow-visible md:p-6">
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-brand-900/60 p-3">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:p-6">
             <div className="flex items-start justify-between gap-4">
               <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">{heading}</h3>
               <button type="button" onClick={close} className="rounded-full border border-brand-200 px-3 py-1 text-sm text-brand-700">
@@ -492,8 +492,8 @@ export function ListingQuestionModal({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/60 p-3">
-          <div className="max-h-[95vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:max-h-none md:p-6">
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-brand-900/60 p-3">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:p-6">
             <div className="flex items-start justify-between gap-4">
               <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">Ask for Details</h3>
               <button type="button" onClick={close} className="rounded-full border border-brand-200 px-3 py-1 text-sm text-brand-700">
