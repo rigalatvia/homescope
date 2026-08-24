@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import type { ListingTransactionType } from "@/types/listing";
@@ -188,7 +189,8 @@ export function LeadCaptureModal({
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-brand-900/60 p-3">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto bg-brand-900/60 p-3 py-4 sm:py-6">
           <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:p-6">
             <div className="flex items-start justify-between gap-4">
               <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">{heading}</h3>
@@ -359,6 +361,7 @@ export function LeadCaptureModal({
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </>
   );
@@ -492,7 +495,8 @@ export function ListingQuestionModal({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-brand-900/60 p-3">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto bg-brand-900/60 p-3 py-4 sm:py-6">
           <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-soft md:p-6">
             <div className="flex items-start justify-between gap-4">
               <h3 className="font-heading text-2xl text-brand-900 md:text-3xl">Ask for Details</h3>
@@ -598,9 +602,18 @@ export function ListingQuestionModal({
             )}
           </div>
         </div>
+        </ModalPortal>
       )}
     </>
   );
+}
+
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(children, document.body);
 }
 
 function FormField({
