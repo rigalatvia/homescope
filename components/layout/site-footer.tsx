@@ -41,6 +41,12 @@ export function SiteFooter() {
               <Link href="/contact" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
                 Contact Us
               </Link>
+              <Link href="/privacy" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-sm font-semibold text-brand-900 underline-offset-2 hover:underline">
+                Terms of Service
+              </Link>
               <CookieSettingsButton />
             </div>
           </div>
