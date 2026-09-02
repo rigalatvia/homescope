@@ -1,5 +1,5 @@
 import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
-import { DEFAULT_LISTINGS_PAGE_SIZE } from "@/config/listings";
+import { DEFAULT_LISTINGS_PAGE_SIZE, MAX_LISTINGS_PAGE_SIZE, MAX_PUBLIC_LISTINGS_PAGE } from "@/config/listings";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 
 export const DEFAULT_TRANSACTION_TYPE: NonNullable<ListingFilters["transactionType"]> = "sale";
@@ -48,8 +48,8 @@ export function parseListingFilters(params: {
     maxLongitude: parseNumber(params.maxLongitude),
     schoolSlug: parseQuery(params.schoolSlug),
     schoolRadiusKm: parseSchoolRadiusKm(params.schoolRadiusKm),
-    page: parseNumber(params.page) || 1,
-    pageSize: parseNumber(params.pageSize) || DEFAULT_LISTINGS_PAGE_SIZE
+    page: clampPage(parseNumber(params.page)),
+    pageSize: clampPageSize(parseNumber(params.pageSize))
   };
 }
 
@@ -134,7 +134,7 @@ export function paginateListings(listings: Listing[], filters: ListingFilters): 
   const page = filters.page && filters.page > 0 ? filters.page : 1;
   const pageSize = filters.pageSize && filters.pageSize > 0 ? filters.pageSize : DEFAULT_LISTINGS_PAGE_SIZE;
   const total = listings.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.min(MAX_PUBLIC_LISTINGS_PAGE, Math.max(1, Math.ceil(total / pageSize)));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * pageSize;
   const items = listings.slice(start, start + pageSize);
@@ -153,6 +153,16 @@ function parseNumber(value?: string): number | undefined {
   if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function clampPage(value?: number): number {
+  if (value == null || value < 1) return 1;
+  return Math.min(Math.floor(value), MAX_PUBLIC_LISTINGS_PAGE);
+}
+
+function clampPageSize(value?: number): number {
+  if (value == null || value < 1) return DEFAULT_LISTINGS_PAGE_SIZE;
+  return Math.min(Math.floor(value), MAX_LISTINGS_PAGE_SIZE);
 }
 
 function parseQuery(value?: string): string | undefined {

@@ -1,4 +1,5 @@
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import { MAX_LISTINGS_PAGE_SIZE, MAX_PUBLIC_LISTINGS_PAGE } from "@/config/listings";
 import { allowedMunicipalities } from "@/lib/mls/config";
 import type { MLSListingFirestoreDocument } from "@/lib/mls/types";
 import { AggregateField, type Query } from "firebase-admin/firestore";
@@ -326,7 +327,7 @@ export async function getFilteredListingsPage(
   filters: PublicListingsPageQuery
 ): Promise<PublicListingsPageResult> {
   const firestore = getFirebaseAdminFirestore();
-  const pageSize = Math.max(1, filters.pageSize ?? 24);
+  const pageSize = Math.min(MAX_LISTINGS_PAGE_SIZE, Math.max(1, filters.pageSize ?? 24));
   const page = Math.max(1, filters.page ?? 1);
   const sort = filters.sort ?? "price_asc";
 
@@ -365,7 +366,7 @@ export async function getFilteredListingsPage(
 
   const countSnapshot = await query.count().get();
   const total = countSnapshot.data().count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.min(MAX_PUBLIC_LISTINGS_PAGE, Math.max(1, Math.ceil(total / pageSize)));
   const safePage = Math.min(page, totalPages);
   const offset = (safePage - 1) * pageSize;
 

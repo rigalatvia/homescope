@@ -1,6 +1,6 @@
 import { buildSitemapIndex, xmlResponse } from "@/lib/seo/xml-sitemap";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const SITEMAP_PATHS = [
   "/sitemap-listings.xml",

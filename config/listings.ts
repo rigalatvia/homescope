@@ -1,1 +1,3 @@
 export const DEFAULT_LISTINGS_PAGE_SIZE = 6;
+export const MAX_LISTINGS_PAGE_SIZE = 24;
+export const MAX_PUBLIC_LISTINGS_PAGE = 50;

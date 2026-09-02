@@ -17,7 +17,11 @@ export function ListingsPagination({ page, totalPages, filters, basePath = "/lis
   return (
     <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-3">
       {prev ? (
-        <Link href={prev} className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 hover:border-brand-400">
+        <Link
+          href={prev}
+          rel="nofollow"
+          className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 hover:border-brand-400"
+        >
           Previous
         </Link>
       ) : (
@@ -27,7 +31,11 @@ export function ListingsPagination({ page, totalPages, filters, basePath = "/lis
         Page {page} of {totalPages}
       </span>
       {next ? (
-        <Link href={next} className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 hover:border-brand-400">
+        <Link
+          href={next}
+          rel="nofollow"
+          className="rounded-full border border-brand-200 px-4 py-2 text-sm font-semibold text-brand-900 hover:border-brand-400"
+        >
           Next
         </Link>
       ) : (

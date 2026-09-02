@@ -2,7 +2,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { getSchools } from "@/lib/schools/service";
 import { buildUrlSet, xmlResponse, type XmlSitemapEntry } from "@/lib/seo/xml-sitemap";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function GET() {
   const schools = await getSchools();

@@ -4,7 +4,7 @@ import { NEIGHBORHOOD_PAGES } from "@/lib/locations/neighborhoods";
 import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
 import { buildUrlSet, xmlResponse, type XmlSitemapEntry } from "@/lib/seo/xml-sitemap";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function GET() {
   const lastModified = new Date();

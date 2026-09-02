@@ -18,22 +18,109 @@ import {
 } from "@/lib/mls/sync/publicQueries";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1568605114967-8130f3a36994";
+const PUBLIC_LISTINGS_REVALIDATE_SECONDS = 15 * 60;
 
 const getCachedPublicMLSListings = unstable_cache(
   async () => getPublicMLSListings(500),
   ["public-mls-listings"],
-  { revalidate: 60 }
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
 );
 
 const getCachedFeaturedMLSListings = unstable_cache(
   async () => getFeaturedMLSListings(6),
   ["featured-mls-listings"],
-  { revalidate: 60 }
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedFilteredMLSListings = unstable_cache(
+  async (filters: {
+    municipality?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+  }) => getFilteredMLSListings(filters),
+  ["filtered-mls-listings"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedFilteredMLSListingsPage = unstable_cache(
+  async (filters: {
+    municipality?: string;
+    transactionType?: "sale" | "lease";
+    mlsNumber?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sort?: "price_asc" | "price_desc" | "newest";
+    page?: number;
+    pageSize?: number;
+  }) => getFilteredMLSListingsPage(filters),
+  ["filtered-mls-listings-page"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingBySlug = unstable_cache(
+  async (slug: string) => getMLSListingBySlug(slug),
+  ["public-mls-listing-by-slug"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingByMlsNumber = unstable_cache(
+  async (mlsNumber: string) => getMLSListingByMlsNumber(mlsNumber),
+  ["public-mls-listing-by-mls-number"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingsByMunicipality = unstable_cache(
+  async (city: string, limit: number) => getMLSListingsByMunicipality(city, limit),
+  ["public-mls-listings-by-municipality"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingStatsByMunicipality = unstable_cache(
+  async (city: string) => getMLSListingStatsByMunicipality(city),
+  ["public-mls-listing-stats-by-municipality"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSMonthlyMarketStatsByMunicipality = unstable_cache(
+  async (options: {
+    municipality: string;
+    monthStartIso: string;
+    nextMonthStartIso: string;
+    asOfIso: string;
+  }) => getMLSMonthlyMarketStatsByMunicipality(options),
+  ["public-mls-monthly-market-stats-by-municipality"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingsNearCoordinate = unstable_cache(
+  async (filters: {
+    latitude: number;
+    longitude: number;
+    radiusKm: number;
+    municipality?: string;
+    maxCandidates?: number;
+  }) => getMLSListingsNearCoordinate(filters),
+  ["public-mls-listings-near-coordinate"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedMLSListingsByAgentKey = unstable_cache(
+  async (agentKey: string, limit: number) => getMLSListingsByAgentKey(agentKey, limit),
+  ["public-mls-listings-by-agent-key"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
+);
+
+const getCachedPublicListingsByIds = unstable_cache(
+  async (listingIds: string[]) => getPublicListingsByIdsFromFirestore(listingIds),
+  ["public-mls-listings-by-ids"],
+  { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
 );
 
 export async function getPublicListings(filters?: ListingFilters): Promise<Listing[]> {
   const listings = filters
-    ? await getFilteredMLSListings({
+    ? await getCachedFilteredMLSListings({
         municipality: filters.city,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
@@ -60,7 +147,7 @@ export async function getPublicListingsPage(filters: ListingFilters): Promise<{
   pageSize: number;
   totalPages: number;
 }> {
-  const result = await getFilteredMLSListingsPage({
+  const result = await getCachedFilteredMLSListingsPage({
     municipality: filters.city,
     transactionType: filters.transactionType,
     mlsNumber: filters.mlsNumber?.trim().toUpperCase(),
@@ -99,26 +186,26 @@ function toIndexedListingSort(sort: ListingFilters["sort"]): "price_asc" | "pric
 }
 
 export async function getPublicListingBySlug(slug: string): Promise<Listing | null> {
-  const listing = await getMLSListingBySlug(slug);
+  const listing = await getCachedMLSListingBySlug(slug);
   if (!listing) return null;
   const mapped = mapMLSListingToUIListing(listing);
   return mapped.isPubliclyAdvertisable ? mapped : null;
 }
 
 export async function getPublicListingByMlsNumber(mlsNumber: string): Promise<Listing | null> {
-  const listing = await getMLSListingByMlsNumber(mlsNumber);
+  const listing = await getCachedMLSListingByMlsNumber(mlsNumber);
   if (!listing) return null;
   const mapped = mapMLSListingToUIListing(listing);
   return mapped.isPubliclyAdvertisable ? mapped : null;
 }
 
 export async function getListingsByMunicipality(city: string, limit = 200): Promise<Listing[]> {
-  const listings = await getMLSListingsByMunicipality(city, limit);
+  const listings = await getCachedMLSListingsByMunicipality(city, limit);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
 }
 
 export async function getListingStatsByMunicipality(city: string) {
-  return getMLSListingStatsByMunicipality(city);
+  return getCachedMLSListingStatsByMunicipality(city);
 }
 
 export async function getMonthlyMarketStatsByMunicipality(options: {
@@ -127,7 +214,7 @@ export async function getMonthlyMarketStatsByMunicipality(options: {
   nextMonthStartIso: string;
   asOfIso: string;
 }) {
-  return getMLSMonthlyMarketStatsByMunicipality(options);
+  return getCachedMLSMonthlyMarketStatsByMunicipality(options);
 }
 
 export async function getListingsNearCoordinate(filters: {
@@ -137,7 +224,7 @@ export async function getListingsNearCoordinate(filters: {
   municipality?: string;
   maxCandidates?: number;
 }): Promise<Listing[]> {
-  const listings = await getMLSListingsNearCoordinate(filters);
+  const listings = await getCachedMLSListingsNearCoordinate(filters);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
 }
 
@@ -147,7 +234,7 @@ export async function getFeaturedListings(): Promise<Listing[]> {
 }
 
 export async function getListingsByAgentKey(agentKey: string, limit = 24): Promise<Listing[]> {
-  const listings = await getMLSListingsByAgentKey(agentKey, limit);
+  const listings = await getCachedMLSListingsByAgentKey(agentKey, limit);
   return listings.map(mapMLSListingToUIListing).filter((listing) => listing.isPubliclyAdvertisable);
 }
 
@@ -160,10 +247,14 @@ export async function getPublicListingsByIds(listingIds: string[]): Promise<List
     return [];
   }
 
+  return getCachedPublicListingsByIds(normalizedIds);
+}
+
+async function getPublicListingsByIdsFromFirestore(listingIds: string[]): Promise<Listing[]> {
   const firestore = getFirebaseAdminFirestore();
   const listingMap = new Map<string, Listing>();
   const snapshots = await Promise.all(
-    chunkList(normalizedIds, 10).map((chunk) =>
+    chunkList(listingIds, 10).map((chunk) =>
       firestore.collection("listings").where("listingId", "in", chunk).get()
     )
   );
@@ -180,7 +271,7 @@ export async function getPublicListingsByIds(listingIds: string[]): Promise<List
     }
   }
 
-  return normalizedIds
+  return listingIds
     .map((listingId) => listingMap.get(listingId))
     .filter((listing): listing is Listing => Boolean(listing));
 }

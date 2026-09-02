@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 
 const SETTINGS_COLLECTION = "settings";
@@ -39,6 +40,16 @@ function sanitizeFeaturedListingIds(value: unknown): string[] {
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  return getCachedSiteSettings();
+}
+
+const getCachedSiteSettings = unstable_cache(
+  async (): Promise<SiteSettings> => getSiteSettingsFromFirestore(),
+  ["site-settings"],
+  { revalidate: 15 * 60 }
+);
+
+async function getSiteSettingsFromFirestore(): Promise<SiteSettings> {
   const fallback = getDefaultSiteSettings();
 
   try {

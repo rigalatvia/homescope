@@ -1,7 +1,7 @@
 import { SITE_CONFIG } from "@/config/site";
 import { buildUrlSet, xmlResponse, type XmlSitemapEntry } from "@/lib/seo/xml-sitemap";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const GUIDE_PATHS = [
   "/guides",
@@ -16,7 +16,9 @@ const GUIDE_PATHS = [
   "/guides/lease-documents",
   "/tools",
   "/tools/mortgage-calculator",
-  "/tools/land-transfer-tax-calculator"
+  "/tools/land-transfer-tax-calculator",
+  "/privacy",
+  "/terms"
 ] as const;
 
 export async function GET() {
