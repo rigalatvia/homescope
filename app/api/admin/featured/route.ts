@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { DocumentData } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
-import { DEFAULT_FEATURED_AGENT_KEYS, getSiteSettings, updateFeaturedListingIds } from "@/lib/settings/site-settings";
+import {
+  DEFAULT_FEATURED_AGENT_KEYS,
+  SITE_SETTINGS_CACHE_TAG,
+  getSiteSettings,
+  updateFeaturedListingIds
+} from "@/lib/settings/site-settings";
 
 const LISTINGS_COLLECTION = "listings";
 
@@ -240,6 +246,8 @@ export async function PUT(request: Request) {
         ? body.featuredListingIds
         : [];
     const saved = await updateFeaturedListingIds(featuredListingIds);
+    revalidateTag(SITE_SETTINGS_CACHE_TAG);
+    revalidatePath("/");
     const selectedListings = await getListingOptionsByIds(saved);
 
     return NextResponse.json({

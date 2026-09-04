@@ -4,6 +4,7 @@ import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 const SETTINGS_COLLECTION = "settings";
 const SITE_SETTINGS_DOCUMENT = "site";
 const DEFAULT_LEAD_SUBJECT = "Homescope GTA LEAD";
+export const SITE_SETTINGS_CACHE_TAG = "site-settings";
 export const DEFAULT_FEATURED_AGENT_KEYS = ["2023484"] as const;
 
 export interface SiteSettings {
@@ -46,7 +47,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 const getCachedSiteSettings = unstable_cache(
   async (): Promise<SiteSettings> => getSiteSettingsFromFirestore(),
   ["site-settings"],
-  { revalidate: 15 * 60 }
+  { revalidate: 15 * 60, tags: [SITE_SETTINGS_CACHE_TAG] }
 );
 
 async function getSiteSettingsFromFirestore(): Promise<SiteSettings> {
