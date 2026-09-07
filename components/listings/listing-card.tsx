@@ -58,14 +58,16 @@ export function ListingCard({ listing, returnTo, showStatLabels = true }: Listin
         </div>
         <p className="text-sm text-brand-700">{listing.propertyType}</p>
         <p className="text-sm text-brand-700">{truncate(listing.description, 120)}</p>
-        <TrackedListingLink
-          href={detailHref}
-          listingId={listing.id}
-          isRental={listing.transactionType === "lease"}
-          className="inline-flex rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
-        >
-          View Details
-        </TrackedListingLink>
+        <div className="flex flex-wrap gap-2">
+          <TrackedListingLink
+            href={detailHref}
+            listingId={listing.id}
+            isRental={listing.transactionType === "lease"}
+            className="inline-flex rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
+          >
+            View Details
+          </TrackedListingLink>
+        </div>
       </div>
     </article>
   );

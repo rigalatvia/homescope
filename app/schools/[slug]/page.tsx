@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, GraduationCap, MapPin, ShieldCheck } from "lucide-react";
+import { ExternalLink, GraduationCap, MapPin, MapPinned, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
 import { SaveSearchButton } from "@/components/listings/save-search-button";
 import { SearchTracker } from "@/components/listings/search-tracker";
@@ -164,6 +164,13 @@ export default async function SchoolDetailPage({
                     Apply
                   </button>
                 </form>
+                <Link
+                  href={buildSchoolMapSearchUrl(school.slug, school.municipality, radiusKm)}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-900 transition hover:border-brand-400 hover:bg-brand-50"
+                >
+                  <MapPinned className="h-4 w-4" />
+                  View on Map
+                </Link>
                 <SaveSearchButton filters={trackingFilters} resultsTotal={nearbyListings.length} />
               </div>
             ) : null}
@@ -386,6 +393,18 @@ function parseRadiusKm(value?: string): number {
   const parsed = Number(value);
   if ([1, 3, 5, 10].includes(parsed)) return parsed;
   return 3;
+}
+
+function buildSchoolMapSearchUrl(schoolSlug: string, city: string, radiusKm: number): string {
+  const params = new URLSearchParams({
+    city,
+    schoolSlug,
+    schoolRadiusKm: String(radiusKm),
+    sort: "distance",
+    page: "1"
+  });
+
+  return `/map-search?${params.toString()}`;
 }
 
 function toString(value: string | string[] | undefined): string | undefined {

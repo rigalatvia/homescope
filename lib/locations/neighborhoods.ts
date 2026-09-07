@@ -302,6 +302,126 @@ export const NEIGHBORHOOD_PAGES: NeighborhoodPage[] = [
   },
   {
     city: "Toronto",
+    slug: "waterfront-communities",
+    name: "Waterfront Communities",
+    metaTitle: "Waterfront Communities Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Search Waterfront Communities Toronto condos and homes for sale and lease with current listings and school-area context.",
+    intro:
+      "Waterfront Communities is a central Toronto condo-heavy area close to the lake, downtown employment, transit, entertainment, and newer residential towers.",
+    searchAliases: ["Waterfront Communities", "Waterfront", "Harbourfront", "CityPlace", "South Core", "Toronto Waterfront"],
+    highlights: ["Downtown condo concentration", "Lakefront and transit access", "Strong rental and investor search demand"]
+  },
+  {
+    city: "Toronto",
+    slug: "annex",
+    name: "Annex",
+    metaTitle: "Annex Toronto Homes for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Browse Annex Toronto homes and condos for sale and lease with school-aware listing search and current market context.",
+    intro:
+      "The Annex is a central Toronto neighbourhood with character homes, apartments, condos, transit access, and proximity to University of Toronto.",
+    searchAliases: ["Annex", "The Annex"],
+    highlights: ["Character homes and condos", "Central west location", "Transit and university-area demand"]
+  },
+  {
+    city: "Toronto",
+    slug: "yorkville",
+    name: "Yorkville",
+    metaTitle: "Yorkville Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Find Yorkville Toronto condos and homes for sale and lease with current listings, schools, and local price context.",
+    intro:
+      "Yorkville is a premium central Toronto area known for luxury condos, boutique retail, restaurants, galleries, and strong lifestyle demand.",
+    searchAliases: ["Yorkville", "Annex/Yorkville", "Bay Street Corridor"],
+    highlights: ["Luxury condo market", "Premium downtown amenities", "Transit and lifestyle appeal"]
+  },
+  {
+    city: "Toronto",
+    slug: "king-west",
+    name: "King West",
+    metaTitle: "King West Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Search King West Toronto condos and homes for sale and lease with current listings and neighbourhood context.",
+    intro:
+      "King West is a downtown Toronto condo and loft district with nightlife, restaurants, employment access, and strong rental demand.",
+    searchAliases: ["King West", "Waterfront Communities C1", "Entertainment District", "Fashion District"],
+    highlights: ["Condo and loft demand", "Downtown entertainment access", "Strong rental search interest"]
+  },
+  {
+    city: "Toronto",
+    slug: "liberty-village",
+    name: "Liberty Village",
+    metaTitle: "Liberty Village Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Explore Liberty Village Toronto condos and homes for sale and lease with current listings and local market context.",
+    intro:
+      "Liberty Village is a west downtown Toronto community with condos, lofts, shops, transit access, and nearby employment nodes.",
+    searchAliases: ["Liberty Village"],
+    highlights: ["West downtown condo area", "Lofts and newer towers", "Transit and employment access"]
+  },
+  {
+    city: "Toronto",
+    slug: "niagara",
+    name: "Niagara",
+    metaTitle: "Niagara Toronto Homes for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Browse Niagara Toronto condos and homes for sale and lease with school-aware listing search and current market context.",
+    intro:
+      "Niagara is a west downtown Toronto neighbourhood near King West, Liberty Village, Fort York, parks, transit, and waterfront amenities.",
+    searchAliases: ["Niagara", "Fort York", "Garrison Point"],
+    highlights: ["West downtown location", "Condo-heavy housing mix", "Parks, transit, and waterfront access"]
+  },
+  {
+    city: "Toronto",
+    slug: "queen-west",
+    name: "Queen West",
+    metaTitle: "Queen West Toronto Homes for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Search Queen West Toronto homes and condos for sale and lease with current listings and neighbourhood context.",
+    intro:
+      "Queen West is a central-west Toronto area with condos, lofts, row houses, restaurants, shops, and strong lifestyle appeal.",
+    searchAliases: ["Queen West", "Trinity-Bellwoods", "Trinity Bellwoods", "Little Portugal"],
+    highlights: ["Lifestyle-focused central west area", "Condos, lofts, and row homes", "Shops, restaurants, and parks"]
+  },
+  {
+    city: "Toronto",
+    slug: "st-lawrence",
+    name: "St. Lawrence",
+    metaTitle: "St. Lawrence Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Find St. Lawrence Toronto condos and homes for sale and lease with current listings and neighbourhood context.",
+    intro:
+      "St. Lawrence is a central east downtown Toronto neighbourhood with condos, historic streets, markets, transit, and walkable amenities.",
+    searchAliases: ["St. Lawrence", "St Lawrence", "Moss Park", "Old Town"],
+    highlights: ["Central east downtown location", "Condos and historic streets", "Market, transit, and walkability"]
+  },
+  {
+    city: "Toronto",
+    slug: "distillery-district",
+    name: "Distillery District",
+    metaTitle: "Distillery District Toronto Condos for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Explore Distillery District Toronto condos and homes for sale and lease with current listings and local context.",
+    intro:
+      "The Distillery District area blends historic streets, condos, restaurants, galleries, transit access, and nearby east downtown amenities.",
+    searchAliases: ["Distillery District", "Distillery", "Waterfront Communities C8", "Canary District"],
+    highlights: ["East downtown condo demand", "Historic and cultural amenities", "Transit and waterfront access"]
+  },
+  {
+    city: "Toronto",
+    slug: "cabbagetown",
+    name: "Cabbagetown",
+    metaTitle: "Cabbagetown Toronto Homes for Sale & Lease | HomeScope GTA",
+    metaDescription:
+      "Browse Cabbagetown Toronto homes and condos for sale and lease with current listings and school-aware context.",
+    intro:
+      "Cabbagetown is an established central Toronto neighbourhood known for Victorian homes, residential streets, parks, and downtown access.",
+    searchAliases: ["Cabbagetown", "Cabbagetown-South St. James Town", "South St James Town"],
+    highlights: ["Character-home demand", "Central residential streets", "Parks and downtown access"]
+  },
+  {
+    city: "Toronto",
     slug: "scarborough",
     name: "Scarborough",
     metaTitle: "Scarborough Homes for Sale & Lease | HomeScope GTA",

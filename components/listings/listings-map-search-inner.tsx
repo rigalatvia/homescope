@@ -126,6 +126,9 @@ export function ListingsMapSearchInner({
             {missingCoordinatesCount > 0 ? ` | ${missingCoordinatesCount} without coordinates` : ""}
             {mappableListings.length > MAX_RENDERED_MARKERS ? ` | rendering first ${MAX_RENDERED_MARKERS}` : ""}
           </p>
+          <p className="mt-1 text-xs text-brand-600">
+            Move or zoom the map, then apply the visible area as a location filter.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -134,7 +137,7 @@ export function ListingsMapSearchInner({
             disabled={!hasDraftBounds}
             className="rounded-full bg-brand-800 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Search This Map Area
+            Use This Map Area
           </button>
           {hasAppliedBounds ? (
             <button

@@ -5,6 +5,7 @@ import { LeadCaptureModal, ListingQuestionModal } from "@/components/leads/lead-
 import { BackToListingsButton } from "@/components/listings/back-to-listings-button";
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
+import { PropertyLocationMap } from "@/components/listings/property-location-map";
 import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/guides/breadcrumbs";
 import { formatPrice } from "@/lib/utils/format";
@@ -175,6 +176,24 @@ export default async function ListingDetailPage({
               listingTransactionType={listing.transactionType}
             />
           </div>
+
+          {listing.latitude != null && listing.longitude != null ? (
+            <section id="property-location" className="scroll-mt-24 rounded-2xl border border-brand-100 bg-white p-5 shadow-soft">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Location</p>
+                  <h2 className="mt-2 font-heading text-2xl text-brand-900">View this property on the map</h2>
+                </div>
+                <p className="text-sm text-brand-700">{fullAddress}</p>
+              </div>
+              <PropertyLocationMap
+                latitude={listing.latitude}
+                longitude={listing.longitude}
+                address={listing.address}
+                city={listing.city}
+              />
+            </section>
+          ) : null}
 
           {listing.transactionType === "sale" ? (
             <MortgagePaymentCalculator initialPrice={listing.price} compact />
