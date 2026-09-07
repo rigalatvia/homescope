@@ -1,13 +1,14 @@
 "use client";
 
 import { Bell, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedSearches } from "@/hooks/useSavedSearches";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE } from "@/lib/listings/filters";
 import { getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
+import { trackEvent } from "@/lib/analytics";
 import type { ListingFilters } from "@/types/listing";
 
 interface SaveSearchButtonProps {
@@ -23,18 +24,13 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
   const [showPrompt, setShowPrompt] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [saveAfterSignIn, setSaveAfterSignIn] = useState(false);
   const pending = isPending();
   const label = useMemo(() => buildSavedSearchLabel(filters), [filters]);
+  const isSchoolSearch = Boolean(filters.schoolSlug);
+  const ctaLabel = isSchoolSearch ? "Send Me Homes Near This School" : "Save Search + Alerts";
 
-  const handleSave = async () => {
-    if (authLoading || pending) return;
-
-    if (!user) {
-      setErrorMessage("");
-      setShowPrompt(true);
-      return;
-    }
-
+  const saveCurrentSearch = useCallback(async (source: "button" | "after_sign_in") => {
     try {
       await saveSearch({
         label,
@@ -46,12 +42,37 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
         alertFrequency: "instant"
       });
       setErrorMessage("");
-      setStatusMessage("Saved. Instant alerts are on for this search.");
+      setStatusMessage(
+        isSchoolSearch ? "Saved. New-home alerts are on for this school search." : "Saved. Instant alerts are on for this search."
+      );
+      trackEvent("form_submitted", { source: "save_search", cta: ctaLabel, save_source: source });
     } catch (error) {
       console.error("[savedSearches] Failed to save search", error);
       setStatusMessage("");
       setErrorMessage(error instanceof Error ? error.message : "We could not save this search right now. Please try again.");
     }
+  }, [ctaLabel, filters, isSchoolSearch, label, pathname, resultsTotal, saveSearch, searchParams]);
+
+  useEffect(() => {
+    if (!saveAfterSignIn || authLoading || pending || !user) return;
+    setSaveAfterSignIn(false);
+    void saveCurrentSearch("after_sign_in");
+  }, [authLoading, pending, saveAfterSignIn, saveCurrentSearch, user]);
+
+  const handleSave = async () => {
+    if (authLoading || pending) return;
+
+    trackEvent("cta_clicked", { source: "save_search", cta: ctaLabel });
+
+    if (!user) {
+      setErrorMessage("");
+      setSaveAfterSignIn(true);
+      setShowPrompt(true);
+      trackEvent("modal_opened", { source: "save_search", cta: ctaLabel });
+      return;
+    }
+
+    await saveCurrentSearch("button");
   };
 
   return (
@@ -66,7 +87,7 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
           className="inline-flex items-center gap-2 rounded-full bg-brand-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-          Save Search + Alerts
+          {ctaLabel}
         </button>
         {statusMessage ? <p className="text-xs font-semibold text-emerald-700">{statusMessage}</p> : null}
         {errorMessage ? <p className="text-xs font-semibold text-red-700">{errorMessage}</p> : null}
@@ -75,17 +96,21 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
       {showPrompt ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-brand-900/45 p-4">
           <div className="w-full max-w-sm rounded-[1.75rem] border border-brand-100 bg-white p-6 shadow-soft">
-            <p className="font-heading text-3xl text-brand-900">Sign in to save this search.</p>
+            <p className="font-heading text-3xl text-brand-900">
+              {isSchoolSearch ? "Sign in to get school-area alerts." : "Sign in to save this search."}
+            </p>
             <p className="mt-3 text-sm leading-7 text-brand-700">
-              Saved searches keep your filters ready and prepare instant new-listing alerts for your account.
+              {isSchoolSearch
+                ? "We will save this school search and turn on alerts for new matching homes."
+                : "Saved searches keep your filters ready and prepare instant new-listing alerts for your account."}
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <SignInButton
                 label="Sign in with Google"
+                analyticsSource="save_search"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
                 onSuccess={() => {
                   setShowPrompt(false);
-                  setStatusMessage("Signed in. Click Save Search + Alerts once more to save this search.");
                 }}
                 onError={setErrorMessage}
               />

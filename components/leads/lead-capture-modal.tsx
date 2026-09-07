@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
@@ -19,6 +20,7 @@ interface LeadCaptureModalProps {
 }
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
+type VisitorIntent = "buying" | "renting" | "just_researching";
 
 const QUESTION_TOPICS = [
   "Listing availability",
@@ -59,6 +61,7 @@ export function LeadCaptureModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [qualificationError, setQualificationError] = useState("");
+  const emailTypedTracked = useRef(false);
 
   const heading = "Book a Private Showing";
 
@@ -73,6 +76,8 @@ export function LeadCaptureModal({
   }, [user]);
 
   const open = () => {
+    trackEvent("cta_clicked", { source: "listing_showing", listing_id: listingId });
+    trackEvent("modal_opened", { source: "listing_showing", listing_id: listingId });
     setSubmitState("idle");
     setErrorMessage("");
     setSuccessMessage("");
@@ -88,6 +93,10 @@ export function LeadCaptureModal({
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
+    if (name === "email" && value.trim() && !emailTypedTracked.current) {
+      emailTypedTracked.current = true;
+      trackEvent("email_typed", { source: "listing_showing", listing_id: listingId });
+    }
     setForm((prev) => ({
       ...prev,
       [name]: value
@@ -146,6 +155,7 @@ export function LeadCaptureModal({
         throw new Error(json.error || "Could not submit your request.");
       }
 
+      trackEvent("form_submitted", { source: "listing_showing", listing_id: listingId });
       setSubmitState("success");
       setSuccessMessage(
         typeof json.message === "string"
@@ -379,6 +389,9 @@ export function ListingQuestionModal({
 }: LeadCaptureModalProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [visitorIntent, setVisitorIntent] = useState<VisitorIntent>(
+    listingTransactionType === "lease" ? "renting" : "buying"
+  );
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -389,6 +402,7 @@ export function ListingQuestionModal({
   });
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const emailTypedTracked = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -401,6 +415,8 @@ export function ListingQuestionModal({
   }, [user]);
 
   const open = () => {
+    trackEvent("cta_clicked", { source: "listing_question", listing_id: listingId });
+    trackEvent("modal_opened", { source: "listing_question", listing_id: listingId });
     setSubmitState("idle");
     setErrorMessage("");
     setForm((prev) => ({
@@ -415,6 +431,10 @@ export function ListingQuestionModal({
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
+    if (name === "email" && value.trim() && !emailTypedTracked.current) {
+      emailTypedTracked.current = true;
+      trackEvent("email_typed", { source: "listing_question", listing_id: listingId });
+    }
     setForm((prev) => ({
       ...prev,
       [name]: value
@@ -427,6 +447,7 @@ export function ListingQuestionModal({
     setErrorMessage("");
 
     const messageParts = [
+      `Visitor intent: ${formatVisitorIntent(visitorIntent)}`,
       `Question topic: ${form.topic}`,
       `Question: ${form.message.trim()}`,
       `MLS Number: ${listingMlsNumber}`,
@@ -469,6 +490,11 @@ export function ListingQuestionModal({
         throw new Error(json.error || "Could not submit your question.");
       }
 
+      trackEvent("form_submitted", {
+        source: "listing_question",
+        listing_id: listingId,
+        visitor_intent: visitorIntent
+      });
       setSubmitState("success");
       setForm({
         fullName: user?.displayName || "",
@@ -510,6 +536,33 @@ export function ListingQuestionModal({
                   Ask about MLS {listingMlsNumber}, the property, pricing, neighbourhood, schools, documents, or next steps.
                 </p>
                 <p className="mt-1 text-sm text-brand-700">Leave your email and your question, and we will reply with the listing details.</p>
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">I am</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    {VISITOR_INTENT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setVisitorIntent(option.value);
+                          trackEvent("cta_clicked", {
+                            source: "listing_question_intent",
+                            listing_id: listingId,
+                            visitor_intent: option.value
+                          });
+                        }}
+                        aria-pressed={visitorIntent === option.value}
+                        className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                          visitorIntent === option.value
+                            ? "border-brand-800 bg-brand-800 text-white"
+                            : "border-brand-200 bg-white text-brand-800 hover:border-brand-400 hover:bg-brand-50"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </>
             ) : null}
 
@@ -606,6 +659,17 @@ export function ListingQuestionModal({
       )}
     </>
   );
+}
+
+const VISITOR_INTENT_OPTIONS: { value: VisitorIntent; label: string }[] = [
+  { value: "buying", label: "Buying" },
+  { value: "renting", label: "Renting" },
+  { value: "just_researching", label: "Just researching" }
+];
+
+function formatVisitorIntent(value: VisitorIntent): string {
+  if (value === "just_researching") return "Just researching";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function ModalPortal({ children }: { children: React.ReactNode }) {

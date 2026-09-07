@@ -3,17 +3,21 @@
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
+import type { UserCredential } from "firebase/auth";
 
 interface SignInButtonProps {
   label?: string;
   className?: string;
-  onSuccess?: () => void | Promise<void>;
+  analyticsSource?: string;
+  onSuccess?: (credential: UserCredential) => void | Promise<void>;
   onError?: (message: string) => void;
 }
 
 export function SignInButton({
   label = "Sign in with Google",
   className,
+  analyticsSource = "site",
   onSuccess,
   onError
 }: SignInButtonProps) {
@@ -29,10 +33,13 @@ export function SignInButton({
     setIsSubmitting(true);
 
     try {
-      await signInWithGoogle();
-      await onSuccess?.();
+      trackEvent("google_sign_in_started", { source: analyticsSource });
+      const credential = await signInWithGoogle();
+      trackEvent("google_sign_in_completed", { source: analyticsSource });
+      await onSuccess?.(credential);
     } catch (error) {
       console.error("[auth] Google sign-in failed", error);
+      trackEvent("google_sign_in_failed", { source: analyticsSource });
       onError?.("We could not start Google sign-in right now. Please try again.");
     } finally {
       setIsSubmitting(false);
