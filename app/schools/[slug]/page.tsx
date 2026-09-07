@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, GraduationCap, MapPin, ShieldCheck } from "lucide-react";
 import { ListingCard } from "@/components/listings/listing-card";
+import { SaveSearchButton } from "@/components/listings/save-search-button";
 import { SearchTracker } from "@/components/listings/search-tracker";
 import { BrowserBackButton } from "@/components/schools/school-pending-controls";
 import { SITE_CONFIG } from "@/config/site";
@@ -144,24 +145,27 @@ export default async function SchoolDetailPage({
               )}
             </div>
             {school.latitude != null && school.longitude != null ? (
-              <form action={`/schools/${school.slug}`} method="get" autoComplete="off" className="flex items-end gap-2">
-                <label>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">Radius</span>
-                  <select
-                    name="radiusKm"
-                    defaultValue={String(radiusKm)}
-                    className="mt-1 h-10 rounded-lg border border-brand-100 bg-white px-3 text-sm text-brand-900 outline-none"
-                  >
-                    <option value="1">1 km</option>
-                    <option value="3">3 km</option>
-                    <option value="5">5 km</option>
-                    <option value="10">10 km</option>
-                  </select>
-                </label>
-                <button className="h-10 rounded-full border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-900 transition hover:bg-brand-50">
-                  Apply
-                </button>
-              </form>
+              <div className="flex flex-wrap items-end gap-3">
+                <form action={`/schools/${school.slug}`} method="get" autoComplete="off" className="flex items-end gap-2">
+                  <label>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">Radius</span>
+                    <select
+                      name="radiusKm"
+                      defaultValue={String(radiusKm)}
+                      className="mt-1 h-10 rounded-lg border border-brand-100 bg-white px-3 text-sm text-brand-900 outline-none"
+                    >
+                      <option value="1">1 km</option>
+                      <option value="3">3 km</option>
+                      <option value="5">5 km</option>
+                      <option value="10">10 km</option>
+                    </select>
+                  </label>
+                  <button className="h-10 rounded-full border border-brand-200 bg-white px-4 text-sm font-semibold text-brand-900 transition hover:bg-brand-50">
+                    Apply
+                  </button>
+                </form>
+                <SaveSearchButton filters={trackingFilters} resultsTotal={nearbyListings.length} />
+              </div>
             ) : null}
           </div>
 
