@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { SITE_CONFIG } from "@/config/site";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_TRANSACTION_TYPE } from "@/lib/listings/filters";
+import { getNeighborhoodBySlug, getNeighborhoodsByCity } from "@/lib/locations/neighborhoods";
 import { formatPrice } from "@/lib/utils/format";
 import type { ListingFilters, ListingSort, PropertyType } from "@/types/listing";
 import type { School } from "@/types/school";
@@ -44,6 +45,12 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   const [sortTouched, setSortTouched] = useState(false);
   const [minPrice, setMinPrice] = useState(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
   const [maxPrice, setMaxPrice] = useState(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
+  const [neighborhoodSlug, setNeighborhoodSlug] = useState(filters.neighborhoodSlug || "");
+  const neighborhoodOptions = useMemo(() => (cityValue ? getNeighborhoodsByCity(cityValue) : []), [cityValue]);
+  const selectedNeighborhood = useMemo(
+    () => (filters.city && filters.neighborhoodSlug ? getNeighborhoodBySlug(filters.city, filters.neighborhoodSlug) : undefined),
+    [filters.city, filters.neighborhoodSlug]
+  );
   const citySchools = useMemo(() => filterSchoolsByCity(schools, cityValue), [cityValue, schools]);
   const schoolOptions = useMemo(
     () => citySchools.map((school) => ({ school, label: formatSchoolOptionLabel(school) })),
@@ -55,7 +62,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
   );
   const [schoolSearch, setSchoolSearch] = useState(selectedSchool ? formatSchoolOptionLabel(selectedSchool) : "");
   const [schoolSlug, setSchoolSlug] = useState(filters.schoolSlug || "");
-  const chips = buildFilterChips(filters, selectedSchool);
+  const chips = buildFilterChips(filters, selectedSchool, selectedNeighborhood);
   const formResetKey = [
     filters.city || "",
     filters.transactionType || "",
@@ -67,6 +74,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     filters.bedrooms ? formatCountSelection(filters.bedrooms, filters.bedroomsMatch) : "",
     filters.bathrooms ? formatCountSelection(filters.bathrooms, filters.bathroomsMatch) : "",
     filters.propertyType || "",
+    filters.neighborhoodSlug || "",
     filters.minLatitude ?? "",
     filters.maxLatitude ?? "",
     filters.minLongitude ?? "",
@@ -83,7 +91,8 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     setSortTouched(false);
     setMinPrice(String(filters.minPrice ?? DEFAULT_MIN_PRICE));
     setMaxPrice(String(filters.maxPrice ?? DEFAULT_MAX_PRICE));
-  }, [filters.city, filters.maxPrice, filters.minPrice, filters.sort, filters.transactionType]);
+    setNeighborhoodSlug(filters.neighborhoodSlug || "");
+  }, [filters.city, filters.maxPrice, filters.minPrice, filters.neighborhoodSlug, filters.sort, filters.transactionType]);
 
   useEffect(() => {
     const selectedSchool = schools.find((school) => school.slug === filters.schoolSlug);
@@ -106,6 +115,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     const bedrooms = readFormValue(formData, "bedrooms");
     const bathrooms = readFormValue(formData, "bathrooms");
     const propertyType = readFormValue(formData, "propertyType");
+    const neighborhoodSlug = readFormValue(formData, "neighborhoodSlug");
     const minLatitude = readFormValue(formData, "minLatitude");
     const maxLatitude = readFormValue(formData, "maxLatitude");
     const minLongitude = readFormValue(formData, "minLongitude");
@@ -138,6 +148,7 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     if (bedrooms) params.set("bedrooms", bedrooms);
     if (bathrooms) params.set("bathrooms", bathrooms);
     if (propertyType) params.set("propertyType", propertyType);
+    if (neighborhoodSlug) params.set("neighborhoodSlug", neighborhoodSlug);
     if (minLatitude) params.set("minLatitude", minLatitude);
     if (maxLatitude) params.set("maxLatitude", maxLatitude);
     if (minLongitude) params.set("minLongitude", minLongitude);
@@ -176,6 +187,11 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
     const selectedSchool = schools.find((school) => school.slug === schoolSlug);
     if (selectedSchool && !schoolMatchesCity(selectedSchool, value)) {
       clearSchool();
+    }
+
+    const selectedNeighborhood = getNeighborhoodBySlug(value, neighborhoodSlug);
+    if (!selectedNeighborhood) {
+      setNeighborhoodSlug("");
     }
   };
 
@@ -241,6 +257,23 @@ export function ListingFilters({ filters, schools = [] }: ListingFiltersProps) {
             {SITE_CONFIG.primaryMarkets.map((city) => (
               <option key={city} value={city}>
                 {city}
+              </option>
+            ))}
+          </select>
+        </FilterLabel>
+
+        <FilterLabel label="Neighbourhood">
+          <select
+            name="neighborhoodSlug"
+            value={neighborhoodSlug}
+            onChange={(event) => setNeighborhoodSlug(event.target.value)}
+            disabled={!cityValue || neighborhoodOptions.length === 0}
+            className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm disabled:bg-brand-50 disabled:text-brand-400"
+          >
+            <option value="">{cityValue ? "All neighbourhoods" : "Choose a city first"}</option>
+            {neighborhoodOptions.map((neighborhood) => (
+              <option key={neighborhood.slug} value={neighborhood.slug}>
+                {neighborhood.name}
               </option>
             ))}
           </select>
@@ -444,7 +477,11 @@ function FilterLabel({ label, children }: { label: string; children: React.React
   );
 }
 
-function buildFilterChips(filters: ListingFilters, selectedSchool?: School): { label: string }[] {
+function buildFilterChips(
+  filters: ListingFilters,
+  selectedSchool?: School,
+  selectedNeighborhood?: { name: string }
+): { label: string }[] {
   const chips: { label: string }[] = [];
 
   if (filters.city) chips.push({ label: `City: ${filters.city}` });
@@ -478,6 +515,9 @@ function buildFilterChips(filters: ListingFilters, selectedSchool?: School): { l
     });
   }
   if (filters.propertyType) chips.push({ label: `Type: ${filters.propertyType}` });
+  if (filters.neighborhoodSlug) {
+    chips.push({ label: `Neighbourhood: ${selectedNeighborhood?.name || formatSchoolSlug(filters.neighborhoodSlug)}` });
+  }
   if (filters.schoolSlug) {
     chips.push({ label: `School: ${selectedSchool?.name || formatSchoolSlug(filters.schoolSlug)}` });
     chips.push({ label: `School radius: ${filters.schoolRadiusKm ?? 3} km` });

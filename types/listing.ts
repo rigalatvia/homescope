@@ -46,6 +46,7 @@ export interface ListingFilters {
   bathrooms?: number;
   bathroomsMatch?: "exact" | "atLeast";
   propertyType?: string;
+  neighborhoodSlug?: string;
   minLatitude?: number;
   maxLatitude?: number;
   minLongitude?: number;

@@ -18,10 +18,13 @@ export async function GET(request: Request) {
     bedrooms: searchParams.get("bedrooms") ?? undefined,
     bathrooms: searchParams.get("bathrooms") ?? undefined,
     propertyType: searchParams.get("propertyType") ?? undefined,
+    neighborhoodSlug: searchParams.get("neighborhoodSlug") ?? undefined,
     minLatitude: searchParams.get("minLatitude") ?? undefined,
     maxLatitude: searchParams.get("maxLatitude") ?? undefined,
     minLongitude: searchParams.get("minLongitude") ?? undefined,
-    maxLongitude: searchParams.get("maxLongitude") ?? undefined
+    maxLongitude: searchParams.get("maxLongitude") ?? undefined,
+    schoolSlug: searchParams.get("schoolSlug") ?? undefined,
+    schoolRadiusKm: searchParams.get("schoolRadiusKm") ?? undefined
   });
 
   const results = await getPublicListings(filters, { includeAllItems: true });

@@ -61,6 +61,7 @@ function buildUrl(page: number, filters: ListingFilters, basePath: string): stri
     params.set("bathrooms", filters.bathroomsMatch === "exact" ? String(filters.bathrooms) : `${filters.bathrooms}+`);
   }
   if (filters.propertyType) params.set("propertyType", filters.propertyType);
+  if (filters.neighborhoodSlug) params.set("neighborhoodSlug", filters.neighborhoodSlug);
   if (filters.minLatitude != null) params.set("minLatitude", String(filters.minLatitude));
   if (filters.maxLatitude != null) params.set("maxLatitude", String(filters.maxLatitude));
   if (filters.minLongitude != null) params.set("minLongitude", String(filters.minLongitude));

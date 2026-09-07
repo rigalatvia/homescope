@@ -7,6 +7,7 @@ import { SignInButton } from "@/components/auth/SignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedSearches } from "@/hooks/useSavedSearches";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE } from "@/lib/listings/filters";
+import { getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
 import type { ListingFilters } from "@/types/listing";
 
 interface SaveSearchButtonProps {
@@ -106,6 +107,7 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
 function buildSavedSearchLabel(filters: ListingFilters): string {
   const parts = [
     filters.city || "GTA",
+    filters.city && filters.neighborhoodSlug ? getNeighborhoodBySlug(filters.city, filters.neighborhoodSlug)?.name : undefined,
     filters.transactionType === "lease" ? "For Lease" : "For Sale",
     filters.propertyType,
     filters.bedrooms ? `${filters.bedrooms}${filters.bedroomsMatch === "exact" ? "" : "+"} Bed` : undefined,

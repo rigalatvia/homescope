@@ -50,6 +50,7 @@ export default async function MapSearchPage({
     bedrooms: toString(searchParams.bedrooms),
     bathrooms: toString(searchParams.bathrooms),
     propertyType: toString(searchParams.propertyType),
+    neighborhoodSlug: toString(searchParams.neighborhoodSlug),
     minLatitude: toString(searchParams.minLatitude),
     maxLatitude: toString(searchParams.maxLatitude),
     minLongitude: toString(searchParams.minLongitude),

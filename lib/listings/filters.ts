@@ -1,5 +1,6 @@
 import type { Listing, ListingFilters, ListingSort, PaginatedListings, PropertyType } from "@/types/listing";
 import { DEFAULT_LISTINGS_PAGE_SIZE, MAX_LISTINGS_PAGE_SIZE, MAX_PUBLIC_LISTINGS_PAGE } from "@/config/listings";
+import { getNeighborhoodBySlug, getNeighborhoodForListing } from "@/lib/locations/neighborhoods";
 import { calculateDistanceKm } from "@/lib/schools/geo";
 
 export const DEFAULT_TRANSACTION_TYPE: NonNullable<ListingFilters["transactionType"]> = "sale";
@@ -17,6 +18,7 @@ export function parseListingFilters(params: {
   bedrooms?: string;
   bathrooms?: string;
   propertyType?: string;
+  neighborhoodSlug?: string;
   minLatitude?: string;
   maxLatitude?: string;
   minLongitude?: string;
@@ -42,6 +44,7 @@ export function parseListingFilters(params: {
     bathrooms: bathrooms.value,
     bathroomsMatch: bathrooms.match,
     propertyType: (params.propertyType as PropertyType) || undefined,
+    neighborhoodSlug: parseQuery(params.neighborhoodSlug),
     minLatitude: parseNumber(params.minLatitude),
     maxLatitude: parseNumber(params.maxLatitude),
     minLongitude: parseNumber(params.minLongitude),
@@ -93,6 +96,12 @@ export function applyListingFilters(
       !propertyTypeMatchesFilter(listing.propertyType, filters.propertyType)
     ) {
       return false;
+    }
+    if (filters.neighborhoodSlug) {
+      const neighborhood = getNeighborhoodBySlug(listing.city, filters.neighborhoodSlug);
+      if (!neighborhood) return false;
+      const listingNeighborhood = getNeighborhoodForListing(listing);
+      if (listingNeighborhood?.slug !== neighborhood.slug) return false;
     }
     if (hasMapBounds(filters)) {
       if (listing.latitude == null || listing.longitude == null) return false;

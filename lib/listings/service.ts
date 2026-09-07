@@ -356,6 +356,7 @@ function canUseIndexedSearch(filters: ListingFilters): boolean {
   if (filters.addressContains) return false;
   if (filters.mlsNumber) return false;
   if (filters.propertyType) return false;
+  if (filters.neighborhoodSlug) return false;
   if (filters.bedrooms != null) return false;
   if (filters.bathrooms != null) return false;
   if (filters.minLatitude != null) return false;
