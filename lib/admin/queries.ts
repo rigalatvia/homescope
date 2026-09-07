@@ -13,6 +13,8 @@ export interface AdminContactProfile {
   fullName: string;
   email: string;
   phone?: string;
+  emailConsentStatus?: "unknown" | "subscribed" | "unsubscribed";
+  isActive?: boolean;
   leadCount?: number;
   contactMessageCount?: number;
   lastSeenAt?: string;

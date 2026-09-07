@@ -3,6 +3,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { getPublicListings } from "@/lib/listings/service";
 import { sendDirectEmail } from "@/lib/email";
+import { buildSavedSearchUnsubscribeUrl } from "@/lib/searches/unsubscribe";
 import type { SavedSearchAlertFrequency } from "@/lib/savedSearches";
 import { formatPrice } from "@/lib/utils/format";
 import type { Listing, ListingFilters } from "@/types/listing";
@@ -67,6 +68,11 @@ export async function runSavedSearchAlerts(): Promise<SavedSearchAlertSummary> {
     const search = mapAdminSavedSearch(docSnapshot.id, docSnapshot.data() as AdminSavedSearchDocument);
 
     try {
+      if (!search.alertsEnabled) {
+        summary.skipped += 1;
+        continue;
+      }
+
       if (!search.userEmail) {
         summary.skipped += 1;
         continue;
@@ -115,7 +121,7 @@ export async function runSavedSearchAlerts(): Promise<SavedSearchAlertSummary> {
         continue;
       }
 
-      await sendDirectEmail(buildSavedSearchAlertEmail(search, recentListings.slice(0, ALERT_LOOKBACK_LIMIT)));
+      await sendDirectEmail(await buildSavedSearchAlertEmail(search, recentListings.slice(0, ALERT_LOOKBACK_LIMIT)));
       summary.sent += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown saved search alert error.";
@@ -193,8 +199,9 @@ function buildNextAlertListingIds(
   );
 }
 
-function buildSavedSearchAlertEmail(search: AdminSavedSearchRecord, listings: Listing[]) {
+async function buildSavedSearchAlertEmail(search: AdminSavedSearchRecord, listings: Listing[]) {
   const searchUrl = `${SITE_CONFIG.baseUrl}${buildSavedSearchUrl(search)}`;
+  const unsubscribeUrl = await buildSavedSearchUnsubscribeUrl(search.id, search.userEmail!);
   const subject = `${listings.length} new HomeScope GTA listing${listings.length === 1 ? "" : "s"} for ${search.label}`;
   const text = [
     `New listings matched your saved search: ${search.label}`,
@@ -206,7 +213,8 @@ function buildSavedSearchAlertEmail(search: AdminSavedSearchRecord, listings: Li
     ]),
     `Open your saved search: ${searchUrl}`,
     "",
-    "You can pause or change alert frequency from your HomeScope GTA dashboard."
+    "You can pause or change alert frequency from your HomeScope GTA dashboard.",
+    `Unsubscribe from this alert: ${unsubscribeUrl}`
   ].join("\n");
   const htmlListings = listings
     .map(
@@ -226,13 +234,17 @@ function buildSavedSearchAlertEmail(search: AdminSavedSearchRecord, listings: Li
     <ul>${htmlListings}</ul>
     <p><a href="${escapeHtmlAttribute(searchUrl)}">Open your saved search</a></p>
     <p>You can pause or change alert frequency from your HomeScope GTA dashboard.</p>
+    <p><a href="${escapeHtmlAttribute(unsubscribeUrl)}">Unsubscribe from this alert</a></p>
   `;
 
   return {
     to: search.userEmail!,
     subject,
     text,
-    html
+    html,
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`
+    }
   };
 }
 

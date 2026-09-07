@@ -9,7 +9,7 @@ export class ResendEmailProvider implements EmailProvider {
   ) {}
 
   async sendMessage(payload: GenericEmailPayload): Promise<void> {
-    await this.send(payload.to, payload.subject, payload.html, payload.text, payload.replyTo);
+    await this.send(payload.to, payload.subject, payload.html, payload.text, payload.replyTo, payload.headers);
   }
 
   async sendLeadNotification(payload: LeadEmailPayload): Promise<void> {
@@ -20,7 +20,14 @@ export class ResendEmailProvider implements EmailProvider {
     await this.sendMessage(payload);
   }
 
-  private async send(to: string, subject: string, html: string, text: string, replyTo?: string): Promise<void> {
+  private async send(
+    to: string,
+    subject: string,
+    html: string,
+    text: string,
+    replyTo?: string,
+    headers?: Record<string, string>
+  ): Promise<void> {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -33,7 +40,8 @@ export class ResendEmailProvider implements EmailProvider {
         subject,
         html,
         text,
-        reply_to: replyTo
+        reply_to: replyTo,
+        headers
       })
     });
 

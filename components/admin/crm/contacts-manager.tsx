@@ -86,6 +86,18 @@ function formatContactUpdatedAt(value: string): string {
   }).format(date);
 }
 
+function getConsentStatusLabel(status: CrmContactRecord["emailConsentStatus"]): string {
+  if (status === "subscribed") return "Subscribed";
+  if (status === "unsubscribed") return "Unsubscribed";
+  return "Unknown";
+}
+
+function getConsentStatusClassName(status: CrmContactRecord["emailConsentStatus"]): string {
+  if (status === "subscribed") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (status === "unsubscribed") return "border-red-200 bg-red-50 text-red-800";
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
 export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps) {
   const sortedInitialContacts = useMemo(() => sortContacts(initialContacts), [initialContacts]);
   const [contacts, setContacts] = useState(sortedInitialContacts);
@@ -392,11 +404,12 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
 
           <div className="overflow-hidden rounded-3xl border border-brand-100">
             <div className="overflow-x-auto">
-              <table className="min-w-[680px] w-full text-left text-sm">
+              <table className="min-w-[780px] w-full text-left text-sm">
                 <thead className="bg-brand-50 text-brand-800">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Name</th>
                     <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
                     <th className="px-4 py-3 font-semibold">Birthday</th>
                     <th className="px-4 py-3 font-semibold">City</th>
                     <th className="px-4 py-3 font-semibold text-right">Edit</th>
@@ -405,7 +418,7 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                 <tbody>
                   {filteredContacts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-brand-700">
+                      <td colSpan={6} className="px-4 py-8 text-brand-700">
                         No CRM contacts found.
                       </td>
                     </tr>
@@ -433,6 +446,15 @@ export function CrmContactsManager({ initialContacts }: CrmContactsManagerProps)
                             </div>
                           </td>
                           <td className="cursor-pointer px-4 py-3 text-brand-700">{contact.email || "-"}</td>
+                          <td className="cursor-pointer px-4 py-3">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getConsentStatusClassName(
+                                contact.emailConsentStatus
+                              )}`}
+                            >
+                              {getConsentStatusLabel(contact.emailConsentStatus)}
+                            </span>
+                          </td>
                           <td className="cursor-pointer px-4 py-3 text-brand-700">{formatBirthday(contact)}</td>
                           <td className="cursor-pointer px-4 py-3 text-brand-700">{contact.city || "-"}</td>
                           <td className="px-4 py-3 text-right">

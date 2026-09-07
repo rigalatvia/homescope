@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAdminContacts } from "@/lib/admin/queries";
+import { getAdminContacts, type AdminContactProfile } from "@/lib/admin/queries";
 
 export const metadata: Metadata = {
   title: "Admin Contacts",
@@ -29,6 +29,7 @@ export default async function AdminContactsPage() {
               <tr>
                 <th className="px-3 py-2 font-semibold">Name</th>
                 <th className="px-3 py-2 font-semibold">Email</th>
+                <th className="px-3 py-2 font-semibold">Status</th>
                 <th className="px-3 py-2 font-semibold">Phone</th>
                 <th className="px-3 py-2 font-semibold">Leads</th>
                 <th className="px-3 py-2 font-semibold">Messages</th>
@@ -40,6 +41,9 @@ export default async function AdminContactsPage() {
                 <tr key={contact.id} className="border-t border-brand-100 align-top">
                   <td className="px-3 py-2 text-brand-900">{contact.fullName || "-"}</td>
                   <td className="px-3 py-2 text-brand-700">{contact.email || "-"}</td>
+                  <td className="px-3 py-2">
+                    <StatusBadge contact={contact} />
+                  </td>
                   <td className="px-3 py-2 text-brand-700">{contact.phone || "-"}</td>
                   <td className="px-3 py-2 text-brand-700">{contact.leadCount ?? 0}</td>
                   <td className="px-3 py-2 text-brand-700">{contact.contactMessageCount ?? 0}</td>
@@ -54,3 +58,23 @@ export default async function AdminContactsPage() {
   );
 }
 
+function StatusBadge({ contact }: { contact: AdminContactProfile }) {
+  const status = contact.emailConsentStatus || "unknown";
+  const isInactive = contact.isActive === false;
+  const label = isInactive ? "Inactive" : getConsentStatusLabel(status);
+  const className = isInactive ? "border-slate-200 bg-slate-50 text-slate-700" : getConsentStatusClassName(status);
+
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className}`}>{label}</span>;
+}
+
+function getConsentStatusLabel(status: NonNullable<AdminContactProfile["emailConsentStatus"]>): string {
+  if (status === "subscribed") return "Subscribed";
+  if (status === "unsubscribed") return "Unsubscribed";
+  return "Unknown";
+}
+
+function getConsentStatusClassName(status: NonNullable<AdminContactProfile["emailConsentStatus"]>): string {
+  if (status === "subscribed") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (status === "unsubscribed") return "border-red-200 bg-red-50 text-red-800";
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
