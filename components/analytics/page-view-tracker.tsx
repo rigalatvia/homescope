@@ -28,6 +28,7 @@ export function PageViewTracker() {
 
   useEffect(() => {
     if (!pathname) return;
+    if (pathname.startsWith("/admin")) return;
     if (!hasTrackingConsent()) return;
 
     const url = search ? `${pathname}?${search}` : pathname;

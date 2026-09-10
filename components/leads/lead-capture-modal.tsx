@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackLeadSubmitted } from "@/lib/analytics";
 import type { ListingTransactionType } from "@/types/listing";
 
 interface LeadCaptureModalProps {
@@ -156,6 +156,7 @@ export function LeadCaptureModal({
       }
 
       trackEvent("form_submitted", { source: "listing_showing", listing_id: listingId });
+      trackLeadSubmitted({ source: "listing_showing", propertyId: listingId });
       setSubmitState("success");
       setSuccessMessage(
         typeof json.message === "string"
@@ -495,6 +496,7 @@ export function ListingQuestionModal({
         listing_id: listingId,
         visitor_intent: visitorIntent
       });
+      trackLeadSubmitted({ source: "listing_question", propertyId: listingId, visitorIntent });
       setSubmitState("success");
       setForm({
         fullName: user?.displayName || "",

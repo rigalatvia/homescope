@@ -1,19 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Bell, Download, Loader2 } from "lucide-react";
-import { SignInButton } from "@/components/auth/SignInButton";
-import { useAuth } from "@/hooks/useAuth";
-import { useSavedSearches } from "@/hooks/useSavedSearches";
+import { useMemo, useState } from "react";
+import { Bell, Download, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { SITE_CONFIG } from "@/config/site";
 import { trackEvent } from "@/lib/analytics";
-import type { SavedSearchAlertFrequency } from "@/lib/savedSearches";
+import { getNeighborhoodBySlug, getNeighborhoodsByCity } from "@/lib/locations/neighborhoods";
+import type { PropertyType } from "@/types/listing";
+import type { School } from "@/types/school";
 
 const RENTALS_URL = "/listings?transactionType=lease&sort=newest";
 const PDF_URL = "/forms/410-rental-application-ontario.pdf";
 const fieldClass = "mt-1 min-h-11 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-brand-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200";
+const PROPERTY_TYPES: PropertyType[] = ["Detached", "Semi-Detached", "Townhouse", "Condo Townhouse", "Condo", "Apartment", "Freehold"];
+const COUNT_FILTER_OPTIONS = ["1", "1+", "2", "2+", "3", "3+", "4", "4+", "5", "5+"] as const;
 
-export function RentalHero() {
+interface RentalHeroProps {
+  schools: School[];
+}
+
+interface RentalSearchFormState {
+  city: string;
+  neighborhoodSlug: string;
+  minPrice: string;
+  maxPrice: string;
+  bedrooms: string;
+  bathrooms: string;
+  propertyType: string;
+  schoolSearch: string;
+  schoolSlug: string;
+  schoolRadiusKm: string;
+}
+
+export function RentalHero({ schools }: RentalHeroProps) {
   const [downloaded, setDownloaded] = useState(false);
 
   return (
@@ -40,66 +60,213 @@ export function RentalHero() {
           </div>
         ) : null}
       </div>
-      <RentalAlertForm />
+      <RentalSearchForm schools={schools} />
     </section>
   );
 }
 
-function RentalAlertForm() {
-  const { user, loading: authLoading } = useAuth();
-  const { saveSearch, isPending } = useSavedSearches();
-  const [form, setForm] = useState({ city: "", maxPrice: "", bedrooms: "", propertyType: "", frequency: "instant" as SavedSearchAlertFrequency });
-  const [needsSignIn, setNeedsSignIn] = useState(false);
-  const createAfterSignIn = useRef(false);
-  const [status, setStatus] = useState("");
+function RentalSearchForm({ schools }: { schools: School[] }) {
+  const router = useRouter();
+  const [form, setForm] = useState<RentalSearchFormState>({
+    city: "",
+    neighborhoodSlug: "",
+    minPrice: "",
+    maxPrice: "",
+    bedrooms: "",
+    bathrooms: "",
+    propertyType: "",
+    schoolSearch: "",
+    schoolSlug: "",
+    schoolRadiusKm: "3"
+  });
   const [error, setError] = useState("");
+  const neighborhoodOptions = useMemo(() => (form.city ? getNeighborhoodsByCity(form.city) : []), [form.city]);
+  const citySchools = useMemo(() => filterSchoolsByCity(schools, form.city), [form.city, schools]);
+  const schoolOptions = useMemo(() => citySchools.map((school) => ({ school, label: formatSchoolOptionLabel(school) })), [citySchools]);
 
-  const createAlert = async () => {
-    if (!user) { createAfterSignIn.current = true; setNeedsSignIn(true); return; }
-    setError("");
-    const filters = { transactionType: "lease" as const, sort: "newest" as const, city: form.city || undefined, maxPrice: form.maxPrice ? Number(form.maxPrice) : undefined, bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined, bedroomsMatch: form.bedrooms ? "atLeast" as const : undefined, propertyType: form.propertyType || undefined };
-    const params = new URLSearchParams({ transactionType: "lease", sort: "newest" });
-    if (form.city) params.set("city", form.city);
-    if (form.maxPrice) params.set("maxPrice", form.maxPrice);
-    if (form.bedrooms) params.set("bedrooms", `${form.bedrooms}+`);
-    if (form.propertyType) params.set("propertyType", form.propertyType);
-    try {
-      await saveSearch({ label: `${form.city || "GTA"} Rental Search`, path: "/listings", queryString: params.toString(), filters, resultsTotal: 0, alertsEnabled: true, alertFrequency: form.frequency });
-      setNeedsSignIn(false); setStatus("Your rental search is saved and alerts are on."); trackEvent("rental_alert_created", { frequency: form.frequency });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "We could not create your alert right now."); }
+  const updateForm = <K extends keyof RentalSearchFormState>(key: K, value: RentalSearchFormState[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
   };
 
-  useEffect(() => {
-    if (user && createAfterSignIn.current) {
-      createAfterSignIn.current = false;
-      void createAlert();
+  const handleCityChange = (city: string) => {
+    setForm((current) => {
+      const selectedSchool = schools.find((school) => school.slug === current.schoolSlug);
+      const keepSchool = selectedSchool ? schoolMatchesCity(selectedSchool, city) : false;
+      const keepNeighborhood = Boolean(getNeighborhoodBySlug(city, current.neighborhoodSlug));
+
+      return {
+        ...current,
+        city,
+        neighborhoodSlug: keepNeighborhood ? current.neighborhoodSlug : "",
+        schoolSearch: keepSchool ? current.schoolSearch : "",
+        schoolSlug: keepSchool ? current.schoolSlug : ""
+      };
+    });
+  };
+
+  const handleSchoolSearchChange = (value: string) => {
+    updateForm("schoolSearch", value);
+    updateForm("schoolSlug", resolveSchoolSlug(citySchools, value));
+  };
+
+  const clearSchool = () => {
+    updateForm("schoolSearch", "");
+    updateForm("schoolSlug", "");
+  };
+
+  const submitSearch = () => {
+    setError("");
+
+    const minPrice = form.minPrice ? Number(form.minPrice) : 0;
+    const maxPrice = form.maxPrice ? Number(form.maxPrice) : undefined;
+    if (maxPrice != null && minPrice > maxPrice) {
+      setError("Minimum rent cannot be higher than maximum rent.");
+      return;
     }
-    // createAlert intentionally uses the criteria retained in this mounted form.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+
+    const params = new URLSearchParams({
+      transactionType: "lease",
+      sort: form.schoolSlug ? "distance" : "newest",
+      minPrice: String(minPrice)
+    });
+
+    if (form.city) params.set("city", form.city);
+    if (form.neighborhoodSlug) params.set("neighborhoodSlug", form.neighborhoodSlug);
+    if (form.maxPrice) params.set("maxPrice", form.maxPrice);
+    if (form.bedrooms) params.set("bedrooms", form.bedrooms);
+    if (form.bathrooms) params.set("bathrooms", form.bathrooms);
+    if (form.propertyType) params.set("propertyType", form.propertyType);
+    if (form.schoolSlug) {
+      params.set("schoolSlug", form.schoolSlug);
+      params.set("schoolRadiusKm", form.schoolRadiusKm);
+    }
+
+    trackEvent("rental_alert_started", {
+      city: form.city || "All GTA",
+      has_school: Boolean(form.schoolSlug),
+      has_neighborhood: Boolean(form.neighborhoodSlug)
+    });
+    router.push(`/listings?${params.toString()}`);
+  };
 
   return (
     <div id="rental-alert" className="scroll-mt-28 rounded-[2rem] bg-brand-900 p-6 text-white shadow-soft sm:p-8">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-200">Looking for a rental?</p>
       <h2 className="mt-2 font-heading text-3xl">Let new GTA rentals come to you</h2>
-      <p className="mt-3 leading-7 text-brand-100">Choose what you need once. HomeScope can notify you when a new matching rental appears.</p>
+      <p className="mt-3 leading-7 text-brand-100">Choose your criteria, review matching rentals, then save the search as an alert from the results page.</p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <AlertField label="Preferred city"><select className={fieldClass} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}><option value="">All GTA</option>{["Toronto", "Vaughan", "Richmond Hill", "Aurora", "Newmarket", "King"].map((city) => <option key={city}>{city}</option>)}</select></AlertField>
-        <AlertField label="Maximum monthly rent"><input className={fieldClass} type="number" min="0" step="100" inputMode="numeric" value={form.maxPrice} onChange={(e) => setForm({ ...form, maxPrice: e.target.value })} /></AlertField>
-        <AlertField label="Bedrooms"><select className={fieldClass} value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })}><option value="">Any</option>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}+</option>)}</select></AlertField>
-        <AlertField label="Property type"><select className={fieldClass} value={form.propertyType} onChange={(e) => setForm({ ...form, propertyType: e.target.value })}><option value="">Any</option><option>Condo</option><option>Townhouse</option><option>Detached</option><option>Semi-Detached</option></select></AlertField>
-        <AlertField label="Alert frequency"><select className={fieldClass} value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value as SavedSearchAlertFrequency })}><option value="instant">Instant</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></AlertField>
+        <AlertField label="Preferred city">
+          <select className={fieldClass} value={form.city} onChange={(event) => handleCityChange(event.target.value)}>
+            <option value="">All GTA</option>
+            {SITE_CONFIG.primaryMarkets.map((city) => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+        </AlertField>
+        <AlertField label="Neighbourhood">
+          <select className={fieldClass} value={form.neighborhoodSlug} onChange={(event) => updateForm("neighborhoodSlug", event.target.value)} disabled={!form.city || neighborhoodOptions.length === 0}>
+            <option value="">{form.city ? "All neighbourhoods" : "Choose a city first"}</option>
+            {neighborhoodOptions.map((neighborhood) => (
+              <option key={neighborhood.slug} value={neighborhood.slug}>{neighborhood.name}</option>
+            ))}
+          </select>
+        </AlertField>
+        <AlertField label="Minimum monthly rent">
+          <input className={fieldClass} type="number" min="0" step="100" inputMode="numeric" value={form.minPrice} onChange={(event) => updateForm("minPrice", event.target.value)} placeholder="0" />
+        </AlertField>
+        <AlertField label="Maximum monthly rent">
+          <input className={fieldClass} type="number" min="0" step="100" inputMode="numeric" value={form.maxPrice} onChange={(event) => updateForm("maxPrice", event.target.value)} placeholder="e.g. 3600" />
+        </AlertField>
+        <AlertField label="Bedrooms">
+          <select className={fieldClass} value={form.bedrooms} onChange={(event) => updateForm("bedrooms", event.target.value)}>
+            <option value="">Any</option>
+            {COUNT_FILTER_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        </AlertField>
+        <AlertField label="Bathrooms">
+          <select className={fieldClass} value={form.bathrooms} onChange={(event) => updateForm("bathrooms", event.target.value)}>
+            <option value="">Any</option>
+            {COUNT_FILTER_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        </AlertField>
+        <AlertField label="Property type">
+          <select className={fieldClass} value={form.propertyType} onChange={(event) => updateForm("propertyType", event.target.value)}>
+            <option value="">All Types</option>
+            {PROPERTY_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+        </AlertField>
+        <AlertField label="School radius">
+          <select className={fieldClass} value={form.schoolRadiusKm} onChange={(event) => updateForm("schoolRadiusKm", event.target.value)}>
+            <option value="1">1 km</option>
+            <option value="3">3 km</option>
+            <option value="5">5 km</option>
+            <option value="10">10 km</option>
+          </select>
+        </AlertField>
       </div>
-      <button type="button" disabled={authLoading || isPending()} onClick={() => { trackEvent("rental_alert_started"); void createAlert(); }} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 font-semibold text-brand-900 transition hover:bg-brand-50 disabled:opacity-60">{isPending() ? <Loader2 className="h-5 w-5 animate-spin" /> : <Bell className="h-5 w-5" />} Create My Rental Alert</button>
-      {needsSignIn ? <div className="mt-4 rounded-xl bg-white/10 p-4"><p className="text-sm">Sign in to save these criteria. Your entries will stay in this form.</p><SignInButton label="Sign in with Google" className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-900" onSuccess={() => setNeedsSignIn(false)} onError={setError} /></div> : null}
-      {status ? <p role="status" className="mt-4 rounded-lg bg-emerald-100 p-3 text-sm font-semibold text-emerald-900">{status}</p> : null}
+      <div className="mt-4">
+        <AlertField label="School">
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <input className={fieldClass} type="text" list="rental-school-options" value={form.schoolSearch} onChange={(event) => handleSchoolSearchChange(event.target.value)} placeholder="Type a school name, board, or city" />
+            {(form.schoolSearch || form.schoolSlug) ? (
+              <button type="button" onClick={clearSchool} className="mt-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 px-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                <X className="h-4 w-4" />
+                Clear
+              </button>
+            ) : null}
+          </div>
+          <datalist id="rental-school-options">
+            {schoolOptions.map(({ school, label }) => <option key={school.id} value={label} />)}
+          </datalist>
+        </AlertField>
+      </div>
+      <button type="button" onClick={submitSearch} className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 font-semibold text-brand-900 transition hover:bg-brand-50">
+        <Search className="h-5 w-5" />
+        Show Matching Rentals
+      </button>
       {error ? <p role="alert" className="mt-4 rounded-lg bg-red-100 p-3 text-sm font-semibold text-red-900">{error}</p> : null}
-      <p className="mt-4 text-sm text-brand-200">Save your criteria once and return whenever you are ready.</p>
+      <p className="mt-4 flex items-center gap-2 text-sm text-brand-200"><Bell className="h-4 w-4" /> On the results page, use Save Search + Alerts after you see matching rentals.</p>
     </div>
   );
 }
 
 function AlertField({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-sm font-semibold text-brand-100">{label}{children}</label>; }
+
+function formatSchoolOptionLabel(school: School): string {
+  return `${school.name} - ${school.municipality} - ${school.board} (${school.level})`;
+}
+
+function filterSchoolsByCity(schools: School[], city: string): School[] {
+  const normalizedCity = city.trim().toLowerCase();
+  if (!normalizedCity) return schools;
+
+  return schools.filter((school) => school.municipality.trim().toLowerCase() === normalizedCity);
+}
+
+function schoolMatchesCity(school: School, city: string): boolean {
+  const normalizedCity = city.trim().toLowerCase();
+  if (!normalizedCity) return true;
+  return school.municipality.trim().toLowerCase() === normalizedCity;
+}
+
+function resolveSchoolSlug(schools: School[], value: string): string {
+  const query = value.trim().toLowerCase();
+  if (!query) return "";
+
+  const exactLabelMatch = schools.find((school) => formatSchoolOptionLabel(school).toLowerCase() === query);
+  if (exactLabelMatch) return exactLabelMatch.slug;
+
+  const exactNameMatches = schools.filter((school) => school.name.trim().toLowerCase() === query);
+  if (exactNameMatches.length === 1) return exactNameMatches[0]!.slug;
+
+  const startsWithNameMatches = schools.filter((school) => school.name.trim().toLowerCase().startsWith(query));
+  if (startsWithNameMatches.length === 1) return startsWithNameMatches[0]!.slug;
+
+  const includesNameMatches = schools.filter((school) => school.name.trim().toLowerCase().includes(query));
+  if (includesNameMatches.length === 1) return includesNameMatches[0]!.slug;
+
+  return "";
+}
 
 export function RentalHelpForm() {
   const [form, setForm] = useState({ fullName:"", email:"", phone:"", areas:"", budget:"", bedrooms:"", moveIn:"", pets:"Prefer not to say", message:"", website:"" });

@@ -8,6 +8,7 @@ import { ListingCard } from "@/components/listings/listing-card";
 import { SITE_CONFIG } from "@/config/site";
 import { getPublicListings } from "@/lib/listings/service";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getSchools } from "@/lib/schools/service";
 
 const path = "/guides/rental-application-ontario";
 const rentalsUrl = "/listings?transactionType=lease&sort=newest";
@@ -28,7 +29,10 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = buildPageMetadata({ title: "Ontario Rental Application Form 410 PDF | HomeScope GTA", description, path, type: "article" });
 
 export default async function RentalApplicationOntarioPage() {
-  const listings = await getPublicListings({ transactionType: "lease", sort: "newest", page: 1, pageSize: 6 });
+  const [listings, schools] = await Promise.all([
+    getPublicListings({ transactionType: "lease", sort: "newest", page: 1, pageSize: 6 }),
+    getSchools()
+  ]);
   const url = `${SITE_CONFIG.baseUrl}${path}`;
   const articleSchema = { "@context":"https://schema.org", "@type":"Article", headline:"Ontario Rental Application Form 410 PDF", description, mainEntityOfPage:url, author:{"@type":"Organization",name:"HomeScope GTA"}, publisher:{"@type":"Organization",name:"HomeScope GTA"} };
   const breadcrumbSchema = { "@context":"https://schema.org", "@type":"BreadcrumbList", itemListElement:breadcrumbs.map((item,index)=>({"@type":"ListItem",position:index+1,name:item.label,item:item.href?`${SITE_CONFIG.baseUrl}${item.href}`:url})) };
@@ -37,7 +41,7 @@ export default async function RentalApplicationOntarioPage() {
   return <main className="site-container py-10 sm:py-14">
     {[articleSchema,breadcrumbSchema,faqSchema].map((schema,index)=><script key={index} type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(schema)}} />)}
     <Breadcrumbs items={breadcrumbs}/>
-    <div className="mt-6"><RentalHero /></div>
+    <div className="mt-6"><RentalHero schools={schools} /></div>
 
     <section className="mt-14"><SectionHeading title="From application form to the right rental"/><div className="mt-6 grid gap-5 md:grid-cols-3">{[
       [FileCheck2,"Prepare your application","Review Form 410 and organize the documents you may need before applying."],
@@ -50,7 +54,7 @@ export default async function RentalApplicationOntarioPage() {
       <Link href={rentalsUrl} className="mt-6 inline-flex min-h-12 items-center rounded-lg bg-brand-900 px-5 py-3 font-semibold text-white">See All GTA Rentals</Link>
     </section>
 
-    <section className="mt-14 rounded-[2rem] bg-brand-900 p-7 text-white sm:p-10"><p className="text-sm font-bold uppercase tracking-widest text-brand-200">New Listing Alerts</p><h2 className="mt-3 font-heading text-3xl sm:text-4xl">Don&apos;t rebuild the same rental search every day</h2><p className="mt-4 max-w-3xl leading-7 text-brand-100">Choose your city, monthly rent, bedrooms and property type once. HomeScope can notify you when a new matching rental appears.</p><ul className="mt-6 grid gap-3 sm:grid-cols-2">{["Instant, daily or weekly alerts","Save promising rentals","Keep your shortlist organized","Request private showings"].map(item=><li key={item} className="flex items-center gap-3"><Bell className="h-5 w-5 text-brand-200"/>{item}</li>)}</ul><div className="mt-7 flex flex-wrap items-center gap-5"><a href="#rental-alert" className="inline-flex min-h-12 items-center rounded-lg bg-white px-5 py-3 font-semibold text-brand-900">Set Up My Rental Alert</a><a href="#alerts-explained" className="font-semibold underline underline-offset-4">See How Alerts Work</a></div><p id="alerts-explained" className="mt-5 text-sm leading-6 text-brand-200">Saved-search alerts use the rental criteria you choose and can notify your signed-in account at the frequency you select.</p></section>
+    <section className="mt-14 rounded-[2rem] bg-brand-900 p-7 text-white sm:p-10"><p className="text-sm font-bold uppercase tracking-widest text-brand-200">New Listing Alerts</p><h2 className="mt-3 font-heading text-3xl sm:text-4xl">Don&apos;t rebuild the same rental search every day</h2><p className="mt-4 max-w-3xl leading-7 text-brand-100">Choose your rental criteria, review matching listings, then save the search as an alert from the results page.</p><ul className="mt-6 grid gap-3 sm:grid-cols-2">{["Instant, daily or weekly alerts","Save promising rentals","Keep your shortlist organized","Request private showings"].map(item=><li key={item} className="flex items-center gap-3"><Bell className="h-5 w-5 text-brand-200"/>{item}</li>)}</ul><div className="mt-7 flex flex-wrap items-center gap-5"><a href="#rental-alert" className="inline-flex min-h-12 items-center rounded-lg bg-white px-5 py-3 font-semibold text-brand-900">Build My Rental Search</a><a href="#alerts-explained" className="font-semibold underline underline-offset-4">See How Alerts Work</a></div><p id="alerts-explained" className="mt-5 text-sm leading-6 text-brand-200">Saved-search alerts use the rental criteria you choose after you confirm the matching results.</p></section>
 
     <section className="mt-14"><p className="text-sm font-bold uppercase tracking-widest text-brand-600">Rental Application Checklist</p><SectionHeading title="Prepare before you apply" copy="Requirements can differ, but organizing commonly requested information in advance can make the application process easier."/><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{["Identification","Employment information","Proof of income","Rental history","References","Supporting financial or credit-related documents when requested","Funds for applicable deposits"].map(item=><div key={item} className="flex gap-3 rounded-2xl border border-brand-100 bg-white p-5 shadow-soft"><FileCheck2 className="h-5 w-5 shrink-0 text-brand-600"/><p className="font-semibold text-brand-900">{item}</p></div>)}</div><p className="mt-5 text-brand-700">For a more detailed checklist, read the <Link href="/guides/lease-documents" className="font-semibold text-brand-900 underline">documents needed to rent guide</Link> or review the <Link href="/guides/leasing" className="font-semibold text-brand-900 underline">Ontario leasing guide</Link>.</p></section>
 

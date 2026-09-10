@@ -23,6 +23,19 @@ export interface SaveListingPayload {
   propertyId: string;
 }
 
+export interface SaveSearchPayload {
+  label: string;
+  source: string;
+  resultsTotal: number;
+  isSchoolSearch?: boolean;
+}
+
+export interface LeadSubmittedPayload {
+  source: string;
+  propertyId?: string;
+  visitorIntent?: string;
+}
+
 export interface RentalApplicationDownloadPayload {
   resourcePath: string;
 }
@@ -108,10 +121,39 @@ export function trackContactClick({ source, propertyId }: ContactClickPayload): 
 export function trackSaveListing({ propertyId }: SaveListingPayload): void {
   const payload: EventParams = { property_id: propertyId };
   trackEvent("save_listing", payload);
+  trackEvent("save_home_created", payload);
   trackMetaEvent("AddToWishlist", {
     content_type: "property",
     content_ids: [propertyId]
   });
+}
+
+export function trackSaveSearchCreated({ label, source, resultsTotal, isSchoolSearch }: SaveSearchPayload): void {
+  const payload: EventParams = {
+    search_label: label,
+    source,
+    results_total: resultsTotal,
+    is_school_search: Boolean(isSchoolSearch)
+  };
+
+  trackEvent("save_search_created", payload);
+  trackMetaEvent("Lead", {
+    content_name: label,
+    content_category: isSchoolSearch ? "school_search_alert" : "saved_search_alert",
+    source,
+    results_total: resultsTotal
+  });
+}
+
+export function trackLeadSubmitted({ source, propertyId, visitorIntent }: LeadSubmittedPayload): void {
+  const payload: EventParams = {
+    source,
+    property_id: propertyId || "",
+    visitor_intent: visitorIntent || ""
+  };
+
+  trackEvent("lead_submitted", payload);
+  trackMetaEvent("Lead", payload);
 }
 
 export function trackRentalApplicationDownload({ resourcePath }: RentalApplicationDownloadPayload): void {

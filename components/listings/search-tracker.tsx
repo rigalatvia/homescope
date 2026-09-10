@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { trackSearchPerformed } from "@/lib/analytics";
 import type { ListingFilters } from "@/types/listing";
 
 export function SearchTracker({
@@ -20,6 +21,13 @@ export function SearchTracker({
     const signature = `${pathname}?${queryString}|${resultsTotal}`;
     if (lastSentSignature.current === signature) return;
     lastSentSignature.current = signature;
+    trackSearchPerformed({
+      city: filters.city,
+      filters: {
+        ...filters,
+        resultsTotal
+      }
+    });
 
     void fetch("/api/searches", {
       method: "POST",

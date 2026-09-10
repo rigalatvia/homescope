@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSavedSearches } from "@/hooks/useSavedSearches";
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE } from "@/lib/listings/filters";
 import { getNeighborhoodBySlug } from "@/lib/locations/neighborhoods";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSaveSearchCreated } from "@/lib/analytics";
 import type { ListingFilters } from "@/types/listing";
 
 interface SaveSearchButtonProps {
@@ -46,6 +46,12 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
         isSchoolSearch ? "Saved. New-home alerts are on for this school search." : "Saved. Instant alerts are on for this search."
       );
       trackEvent("form_submitted", { source: "save_search", cta: ctaLabel, save_source: source });
+      trackSaveSearchCreated({
+        label,
+        source,
+        resultsTotal,
+        isSchoolSearch
+      });
     } catch (error) {
       console.error("[savedSearches] Failed to save search", error);
       setStatusMessage("");

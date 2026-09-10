@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedHomes } from "@/hooks/useSavedHomes";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSaveListing } from "@/lib/analytics";
 
 interface FavoriteButtonProps {
   listingId: string;
@@ -36,7 +36,10 @@ export function FavoriteButton({ listingId, className, isRental = false }: Favor
 
     try {
       await toggleSave(listingId);
-      if (!saved && isRental) trackEvent("rental_saved", { listing_id: listingId });
+      if (!saved) {
+        trackSaveListing({ propertyId: listingId });
+        if (isRental) trackEvent("rental_saved", { listing_id: listingId });
+      }
       setErrorMessage("");
     } catch (error) {
       console.error("[savedHomes] Failed to toggle saved home", error);
@@ -47,6 +50,7 @@ export function FavoriteButton({ listingId, className, isRental = false }: Favor
   const handleSignedIn = async () => {
     try {
       await toggleSave(listingId);
+      trackSaveListing({ propertyId: listingId });
       if (isRental) trackEvent("rental_saved", { listing_id: listingId });
       setErrorMessage("");
       setShowPrompt(false);
