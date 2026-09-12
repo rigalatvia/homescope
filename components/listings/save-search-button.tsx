@@ -69,6 +69,11 @@ export function SaveSearchButton({ filters, resultsTotal }: SaveSearchButtonProp
     if (authLoading || pending) return;
 
     trackEvent("cta_clicked", { source: "save_search", cta: ctaLabel });
+    trackEvent("save_search_click", {
+      cta: ctaLabel,
+      results_total: resultsTotal,
+      is_school_search: isSchoolSearch
+    });
 
     if (!user) {
       setErrorMessage("");

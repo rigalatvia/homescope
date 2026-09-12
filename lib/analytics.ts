@@ -162,6 +162,7 @@ export function trackRentalApplicationDownload({ resourcePath }: RentalApplicati
     resource_path: resourcePath
   };
 
+  trackEvent("pdf_downloaded", payload);
   trackEvent("rental_application_download", payload);
   trackMetaEvent("Lead", {
     content_name: "Ontario Rental Application Form 410",

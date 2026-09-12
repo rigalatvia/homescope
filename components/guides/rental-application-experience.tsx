@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Bell, Download, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SITE_CONFIG } from "@/config/site";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackRentalApplicationDownload } from "@/lib/analytics";
 import { getNeighborhoodBySlug, getNeighborhoodsByCity } from "@/lib/locations/neighborhoods";
 import type { PropertyType } from "@/types/listing";
 import type { School } from "@/types/school";
@@ -43,7 +43,7 @@ export function RentalHero({ schools }: RentalHeroProps) {
         <h1 className="mt-3 font-heading text-4xl leading-tight text-brand-900 sm:text-5xl">Ontario Rental Application Form 410 PDF</h1>
         <p className="mt-5 max-w-2xl text-base leading-8 text-brand-700 sm:text-lg">Download the Ontario rental application form, review the information commonly requested by landlords and prepare your supporting documents before you apply.</p>
         <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <a href={PDF_URL} download onClick={() => { setDownloaded(true); trackEvent("form410_download", { resource_path: PDF_URL }); }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-900 px-5 py-3 font-semibold text-white transition hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
+          <a href={PDF_URL} download onClick={() => { setDownloaded(true); trackRentalApplicationDownload({ resourcePath: PDF_URL }); }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-900 px-5 py-3 font-semibold text-white transition hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
             <Download className="h-5 w-5" /> Download Form 410 PDF
           </a>
           <Link href={RENTALS_URL} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-brand-300 bg-white px-5 py-3 font-semibold text-brand-900 transition hover:bg-brand-50">Search GTA Rentals</Link>
@@ -52,9 +52,9 @@ export function RentalHero({ schools }: RentalHeroProps) {
         {downloaded ? (
           <div role="status" aria-live="polite" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
             <p className="font-semibold">Your Form 410 download has started.</p>
-            <p className="mt-1 text-sm leading-6">Looking for somewhere to use it? Create a rental alert and see new GTA rentals that match your budget.</p>
+            <p className="mt-1 text-sm leading-6">Looking for somewhere to use it? Search matching rentals first, then save the search for new-listing alerts.</p>
             <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
-              <a href="#rental-alert" className="underline underline-offset-4">Create a Rental Alert</a>
+              <a href="#rental-alert" className="underline underline-offset-4">Search Matching Rentals</a>
               <Link href={RENTALS_URL} className="underline underline-offset-4">View Current Rentals</Link>
             </div>
           </div>
@@ -141,7 +141,7 @@ function RentalSearchForm({ schools }: { schools: School[] }) {
       params.set("schoolRadiusKm", form.schoolRadiusKm);
     }
 
-    trackEvent("rental_alert_started", {
+    trackEvent("rental_search_started", {
       city: form.city || "All GTA",
       has_school: Boolean(form.schoolSlug),
       has_neighborhood: Boolean(form.neighborhoodSlug)
@@ -225,7 +225,7 @@ function RentalSearchForm({ schools }: { schools: School[] }) {
         Show Matching Rentals
       </button>
       {error ? <p role="alert" className="mt-4 rounded-lg bg-red-100 p-3 text-sm font-semibold text-red-900">{error}</p> : null}
-      <p className="mt-4 flex items-center gap-2 text-sm text-brand-200"><Bell className="h-4 w-4" /> On the results page, use Save Search + Alerts after you see matching rentals.</p>
+      <p className="mt-4 flex items-center gap-2 text-sm text-brand-200"><Bell className="h-4 w-4" /> Free search. No spam. On the results page, use Save Search + Alerts after you see matching rentals.</p>
     </div>
   );
 }

@@ -22,7 +22,7 @@ const faqItems = [
   { question: "Does completing Form 410 guarantee approval?", answer: "No. Completing an application does not guarantee approval. A landlord reviews the application and any supporting information for the specific rental." },
   { question: "What is the difference between Form 410 and the Ontario Standard Lease?", answer: "Form 410 is used to apply for a rental. The Ontario Standard Lease is the tenancy agreement used to record the terms after an application is accepted, where applicable." },
   { question: "Where can I search for rentals in the GTA?", answer: "HomeScope GTA's rental search shows active lease listings and lets you filter by city, monthly price, bedrooms, property type and school." },
-  { question: "How can I receive alerts for new rental listings?", answer: "Choose rental criteria in the alert form on this page, sign in to your HomeScope account, and select instant, daily or weekly notifications." }
+  { question: "How can I receive alerts for new rental listings?", answer: "Choose rental criteria on this page, review the matching rentals, then use Save Search + Alerts on the results page to receive instant, daily or weekly notifications." }
 ];
 
 export const dynamic = "force-dynamic";

@@ -209,7 +209,7 @@ export function LeadCaptureModal({
                 Close
               </button>
             </div>
-            <p className="mt-1 text-xs text-brand-700 md:text-sm">We&apos;ll contact you shortly to confirm your visit.</p>
+            <p className="mt-1 text-xs text-brand-700 md:text-sm">We&apos;ll reply by email first. Phone is optional.</p>
             <p className="mt-1 text-xs text-brand-700 md:text-sm">
               Please expect an email from homescopegta@gmail.com and check your junk folder if you do not see it in the next few hours.
             </p>
@@ -246,27 +246,28 @@ export function LeadCaptureModal({
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
                 </FormField>
-                <FormField label="Phone" htmlFor="phone" required>
+                <FormField label="Phone (optional)" htmlFor="phone">
                   <input
                     id="phone"
                     name="phone"
                     value={form.phone}
                     onChange={onChange}
-                    required
                     className="w-full rounded-lg border border-brand-200 px-3 py-2"
                   />
                 </FormField>
-                <label className="md:col-span-2 flex items-start gap-2 rounded-lg border border-brand-100 bg-brand-50/50 px-3 py-3 text-sm text-brand-800">
-                  <input
-                    id="agreesToTextMessages"
-                    name="agreesToTextMessages"
-                    type="checkbox"
-                    checked={form.agreesToTextMessages}
-                    onChange={onCheckboxChange}
-                    className="mt-0.5 h-4 w-4 rounded border-brand-300"
-                  />
-                  <span>I agree to receive text messages at this phone number about my showing request.</span>
-                </label>
+                {form.phone.trim() ? (
+                  <label className="md:col-span-2 flex items-start gap-2 rounded-lg border border-brand-100 bg-brand-50/50 px-3 py-3 text-sm text-brand-800">
+                    <input
+                      id="agreesToTextMessages"
+                      name="agreesToTextMessages"
+                      type="checkbox"
+                      checked={form.agreesToTextMessages}
+                      onChange={onCheckboxChange}
+                      className="mt-0.5 h-4 w-4 rounded border-brand-300"
+                    />
+                    <span>I agree to receive text messages at this phone number about my showing request.</span>
+                  </label>
+                ) : null}
                 </div>
                 <FormField label="Message" htmlFor="message" required>
                   <textarea
