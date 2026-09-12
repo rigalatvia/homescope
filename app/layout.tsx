@@ -30,8 +30,11 @@ export const metadata: Metadata = {
     canonical: SITE_CONFIG.baseUrl
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png"
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "64x64" }
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }]
   },
   verification: GOOGLE_SITE_VERIFICATION
     ? {

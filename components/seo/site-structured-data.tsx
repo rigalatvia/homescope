@@ -1,13 +1,17 @@
 import { SITE_CONFIG } from "@/config/site";
 
 export function SiteStructuredData() {
+  const siteUrl = new URL("/", SITE_CONFIG.baseUrl).toString();
+  const logoUrl = new URL(SITE_CONFIG.logoPath, siteUrl).toString();
+
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": `${SITE_CONFIG.baseUrl}/#organization`,
+    "@id": `${siteUrl}#organization`,
     name: SITE_CONFIG.name,
-    url: SITE_CONFIG.baseUrl,
-    logo: `${SITE_CONFIG.baseUrl}${SITE_CONFIG.logoPath}`,
+    alternateName: ["HomeScopeGTA", "Home Scope GTA"],
+    url: siteUrl,
+    logo: logoUrl,
     email: SITE_CONFIG.contactEmail,
     areaServed: SITE_CONFIG.primaryMarkets.map((city) => ({
       "@type": "City",
@@ -18,13 +22,14 @@ export function SiteStructuredData() {
   const realEstateAgentSchema = {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
-    "@id": `${SITE_CONFIG.baseUrl}/#real-estate-agent`,
+    "@id": `${siteUrl}#real-estate-agent`,
     name: SITE_CONFIG.name,
-    url: SITE_CONFIG.baseUrl,
-    logo: `${SITE_CONFIG.baseUrl}${SITE_CONFIG.logoPath}`,
+    alternateName: ["HomeScopeGTA", "Home Scope GTA"],
+    url: siteUrl,
+    logo: logoUrl,
     email: SITE_CONFIG.contactEmail,
     parentOrganization: {
-      "@id": `${SITE_CONFIG.baseUrl}/#organization`
+      "@id": `${siteUrl}#organization`
     },
     areaServed: SITE_CONFIG.primaryMarkets.map((city) => ({
       "@type": "City",
@@ -40,8 +45,13 @@ export function SiteStructuredData() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${siteUrl}#website`,
     name: SITE_CONFIG.name,
-    url: SITE_CONFIG.baseUrl,
+    alternateName: ["HomeScopeGTA", "Home Scope GTA", "homescopegta.ca"],
+    url: siteUrl,
+    publisher: {
+      "@id": `${siteUrl}#organization`
+    },
     potentialAction: {
       "@type": "SearchAction",
       target: `${SITE_CONFIG.baseUrl}/listings?addressContains={search_term_string}`,
