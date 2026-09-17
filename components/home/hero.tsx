@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Search, Star } from "lucide-react";
-import { DashboardPreviewCarousel } from "@/components/home/dashboard-preview-carousel";
+import { DesktopDashboardPreview } from "@/components/home/desktop-dashboard-preview";
 
 export function HeroSection() {
   return (
@@ -34,7 +34,7 @@ export function HeroSection() {
             </div>
           </div>
           <div className="hidden lg:block">
-            <DashboardPreviewCarousel />
+            <DesktopDashboardPreview />
           </div>
         </div>
         <div className="mt-5 max-w-4xl rounded-2xl border border-brand-100 bg-white/80 p-4 shadow-soft backdrop-blur sm:mt-6 sm:rounded-3xl sm:p-5">

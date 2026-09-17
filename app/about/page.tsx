@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, GraduationCap, Home, MapPinned, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpenText,
+  ExternalLink,
+  GraduationCap,
+  Home,
+  Languages,
+  MapPinned,
+  ShieldCheck
+} from "lucide-react";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -31,6 +41,21 @@ const HELP_AREAS = [
     description: "Read buyer, leasing, rental application, and document checklists before important decisions.",
     icon: BookOpenText
   }
+] as const;
+
+const YAN_LANGUAGES = ["English", "Russian", "Hebrew"] as const;
+
+const YAN_SPECIALTIES = [
+  "Business Brokerage",
+  "Residential Brokerage",
+  "Consulting",
+  "Development Land",
+  "Appraisal",
+  "Investment",
+  "Retail",
+  "Industrial",
+  "Office",
+  "Multi-Family"
 ] as const;
 
 export default function AboutPage() {
@@ -83,6 +108,90 @@ export default function AboutPage() {
           </div>
         </aside>
       </div>
+
+      <section className="mt-12 overflow-hidden rounded-[2rem] border border-brand-100 bg-white shadow-soft">
+        <div className="grid lg:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.28fr)]">
+          <div className="bg-white">
+            <Image
+              src="/yan-ginzburg.jpg"
+              alt="Yan Ginzburg"
+              width={878}
+              height={900}
+              className="h-full max-h-[620px] w-full object-cover object-top"
+              sizes="(min-width: 1024px) 38vw, 100vw"
+            />
+          </div>
+
+          <div className="p-6 sm:p-8 lg:p-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Meet Yan</p>
+            <h2 className="mt-2 font-heading text-4xl text-brand-900">Yan Ginzburg</h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-brand-700">
+              Explore Yan&apos;s professional qualifications, service specialties, and verified real estate profile.
+            </p>
+
+            <div className="mt-7">
+              <div className="flex items-center gap-2 text-brand-900">
+                <Languages className="h-5 w-5" />
+                <h3 className="font-heading text-2xl">Languages</h3>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {YAN_LANGUAGES.map((language) => (
+                  <span
+                    key={language}
+                    className="rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-800"
+                  >
+                    {language}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-7">
+              <h3 className="font-heading text-2xl text-brand-900">Specialties</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {YAN_SPECIALTIES.map((specialty) => (
+                  <span
+                    key={specialty}
+                    className="rounded-full border border-brand-100 bg-white px-4 py-2 text-sm font-medium text-brand-700 shadow-sm"
+                  >
+                    {specialty}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="https://www.realtor.ca/agent/2023484/yan-ginzburg-52-scarsdale-road-unit-205-toronto-ontario"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                REALTOR.ca Profile
+                <ExternalLink className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.facebook.com/yanginzburgrealestate/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Facebook
+                <ExternalLink className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/yanginzburg/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Instagram
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="mt-12 rounded-[2rem] border border-brand-100 bg-white p-6 shadow-soft sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">How To Use HomeScope GTA</p>
