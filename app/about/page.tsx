@@ -110,19 +110,19 @@ export default function AboutPage() {
       </div>
 
       <section className="mt-12 overflow-hidden rounded-[2rem] border border-brand-100 bg-white shadow-soft">
-        <div className="grid lg:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.28fr)]">
-          <div className="bg-white">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+          <div className="order-1 bg-white px-6 pt-6 sm:px-8 sm:pt-8 lg:order-2 lg:p-6 lg:pl-0">
             <Image
               src="/yan-ginzburg.jpg"
               alt="Yan Ginzburg"
               width={878}
               height={900}
-              className="h-full max-h-[620px] w-full object-cover object-top"
-              sizes="(min-width: 1024px) 38vw, 100vw"
+              className="mx-auto h-auto max-h-[430px] w-full max-w-[360px] object-contain object-top"
+              sizes="(min-width: 1024px) 296px, (min-width: 640px) 360px, calc(100vw - 80px)"
             />
           </div>
 
-          <div className="p-6 sm:p-8 lg:p-10">
+          <div className="order-2 p-6 sm:p-8 lg:order-1 lg:p-10 lg:pr-8">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Meet Yan</p>
             <h2 className="mt-2 font-heading text-4xl text-brand-900">Yan Ginzburg</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-brand-700">
