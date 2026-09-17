@@ -4,36 +4,40 @@ import { DashboardPreviewCarousel } from "@/components/home/dashboard-preview-ca
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-hero-gradient py-12 sm:py-16">
+    <section className="relative overflow-hidden bg-hero-gradient py-6 sm:py-10 lg:py-16">
       <div className="site-container relative">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.8fr)] lg:items-center">
+        <div className="grid lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.8fr)] lg:items-center lg:gap-8">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-brand-700">ONTARIO REAL ESTATE</p>
-            <h1 className="mt-3 max-w-3xl font-heading text-4xl leading-tight text-brand-900 sm:text-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 sm:text-sm sm:tracking-[0.24em]">
+              ONTARIO REAL ESTATE
+            </p>
+            <h1 className="mt-2 max-w-3xl font-heading text-4xl leading-tight text-brand-900 sm:mt-3 sm:text-5xl">
               Find Your Next Home in the GTA
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-brand-800 sm:text-lg">
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-brand-800 sm:mt-5 sm:text-lg">
               Browse curated public listings across Vaughan, Richmond Hill, Aurora, Newmarket, King, and Toronto through a
               clean, modern home search experience.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-8 sm:flex sm:flex-wrap">
               <Link
                 href="/listings"
-                className="rounded-full bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-brand-800 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-700 sm:rounded-full sm:px-6"
               >
                 Browse Listings
               </Link>
               <Link
                 href="/contact"
-                className="rounded-full border border-brand-300 bg-white/70 px-6 py-3 text-sm font-semibold text-brand-900 transition hover:bg-white"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-brand-300 bg-white/70 px-4 py-3 text-center text-sm font-semibold text-brand-900 transition hover:bg-white sm:rounded-full sm:px-6"
               >
                 Contact Us
               </Link>
             </div>
           </div>
-          <DashboardPreviewCarousel />
+          <div className="hidden lg:block">
+            <DashboardPreviewCarousel />
+          </div>
         </div>
-        <div className="mt-6 max-w-4xl rounded-3xl border border-brand-100 bg-white/80 p-4 shadow-soft backdrop-blur sm:p-5">
+        <div className="mt-5 max-w-4xl rounded-2xl border border-brand-100 bg-white/80 p-4 shadow-soft backdrop-blur sm:mt-6 sm:rounded-3xl sm:p-5">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div className="min-w-0">
               <p className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
