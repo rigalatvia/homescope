@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { upsertCrmContactFromWebsiteMessage } from "@/lib/crm/contacts-store";
 import { sendContactNotification } from "@/lib/email";
 import { upsertContactFromMessage } from "@/lib/leads/contacts-store";
 import { storeContactSubmission, updateContactEmailDeliveryStatus } from "@/lib/leads/contact-store";
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
       console.error("[contacts] Failed to upsert profile from contact message", {
         contactId: record.id,
         error: contactsError
+      });
+    }
+
+    try {
+      await upsertCrmContactFromWebsiteMessage(record);
+    } catch (crmError) {
+      console.error("[crm] Failed to save website contact in Yan's CRM", {
+        contactId: record.id,
+        error: crmError
       });
     }
 

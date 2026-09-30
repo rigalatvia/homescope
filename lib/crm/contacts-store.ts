@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { verifyCrmUnsubscribeToken } from "@/lib/crm/unsubscribe";
+import type { ContactSubmissionRecord } from "@/types/contact";
 import type { CrmContactCreateInput, CrmContactRecord, CrmContactUpdateInput } from "@/types/crm";
 
 const CRM_CONTACTS_COLLECTION = "crmContacts";
@@ -165,6 +166,14 @@ function buildContactId(email: string): string {
 
 function buildManualContactId(): string {
   return `manual-${crypto.randomUUID()}`;
+}
+
+function splitFullName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts.shift() ?? "",
+    lastName: parts.join(" ")
+  };
 }
 
 function sanitizeNotes(notes: string): string {
@@ -371,6 +380,50 @@ export async function createCrmContact(input: CrmContactCreateInput): Promise<Cr
   );
 
   return record;
+}
+
+export async function upsertCrmContactFromWebsiteMessage(contact: ContactSubmissionRecord): Promise<CrmContactRecord> {
+  const firestore = getFirebaseAdminFirestore();
+  const normalizedEmail = normalizeEmail(contact.email);
+  const contactId = normalizedEmail || buildManualContactId();
+  const docRef = firestore.collection(CRM_CONTACTS_COLLECTION).doc(contactId);
+  const now = new Date().toISOString();
+  const { firstName, lastName } = splitFullName(contact.fullName);
+  const inquiryNote = sanitizeNotes(
+    [`Website inquiry (${now})`, contact.subject ? `Subject: ${contact.subject}` : "", contact.message].filter(Boolean).join("\n")
+  );
+
+  return firestore.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(docRef);
+    const existing = snapshot.exists ? (snapshot.data() as Partial<CrmContactRecord>) : null;
+    const existingNotes = sanitizeNotes(existing?.notes ?? "");
+    const record = buildStoredContactRecord(contactId, {
+      ...existing,
+      id: contactId,
+      firstName: sanitizeText(existing?.firstName ?? "") || firstName,
+      lastName: sanitizeText(existing?.lastName ?? "") || lastName,
+      email: normalizedEmail,
+      phone: normalizePhone(contact.phone ?? "") || normalizePhone(existing?.phone ?? ""),
+      notes: [existingNotes, inquiryNote].filter(Boolean).join("\n\n"),
+      tags: sanitizeTags([...(existing?.tags ?? []), "website inquiry"]),
+      source: existing?.source ?? "website",
+      emailConsentStatus: existing?.emailConsentStatus ?? "unknown",
+      isActive: existing?.isActive ?? false,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now
+    });
+
+    transaction.set(
+      docRef,
+      {
+        ...record,
+        updatedAtServer: FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    return record;
+  });
 }
 
 export async function deleteCrmContact(contactId: string): Promise<void> {
