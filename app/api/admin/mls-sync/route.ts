@@ -48,7 +48,10 @@ export async function POST(request: Request) {
     }
     const result = await runMLSSync(mode, {
       connectorKind: body.connectorKind,
-      sinceIso: body.sinceIso
+      sinceIso: body.sinceIso,
+      // The admin UI loops cleanup requests until the saved cursor reaches the
+      // end. One page per HTTP response avoids hosting-proxy timeouts.
+      cleanupMaxPagesPerRun: mode === "cleanup" ? 1 : undefined
     });
 
     await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(

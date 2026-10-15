@@ -20,7 +20,10 @@ import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 
-export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+export async function runStaleCleanup(
+  connectorKind?: MLSConnectorKind,
+  options?: { maxPagesPerRun?: number }
+): Promise<MLSSyncResult> {
   await ensureServerSecretsLoaded();
 
   const startedAt = new Date().toISOString();
@@ -50,23 +53,6 @@ export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise
   try {
     const connector = createMLSConnector(connectorKind);
 
-    const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
-    if (cleanupRemoved > 0) {
-      stats.archived += cleanupRemoved;
-      stats.hidden += cleanupRemoved;
-      stats.hiddenByReason.connector_not_returned = cleanupRemoved;
-      notes.push(`cleanup removed ${cleanupRemoved} misclassified King-area listing(s).`);
-    }
-
-    const preCleanup = await deleteStoredHiddenAndNonActiveListings();
-    if (preCleanup.deleted > 0) {
-      stats.archived += preCleanup.deleted;
-      stats.hidden += preCleanup.deleted;
-      stats.hiddenByReason.status_not_displayable =
-        (stats.hiddenByReason.status_not_displayable || 0) + preCleanup.deleted;
-      notes.push(`cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active.`);
-    }
-
     if (!connector.fetchActiveListingsPage) {
       notes.push("cleanup connector does not support active-feed reconciliation.");
       return buildCleanupResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
@@ -75,6 +61,28 @@ export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise
     let startPage = await getCleanupStartPage();
     let nextCursor = await getCleanupNextCursor();
     let sweepStartedAt = await getCleanupSweepStartedAt();
+
+    // These collection-wide maintenance queries only need to run once per
+    // sweep. Repeating them on every cursor batch adds enough work for the
+    // hosting proxy to terminate otherwise healthy cleanup requests.
+    if (startPage === getDefaultCleanupStartPage() && !nextCursor) {
+      const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
+      if (cleanupRemoved > 0) {
+        stats.archived += cleanupRemoved;
+        stats.hidden += cleanupRemoved;
+        stats.hiddenByReason.connector_not_returned = cleanupRemoved;
+        notes.push(`cleanup removed ${cleanupRemoved} misclassified King-area listing(s).`);
+      }
+
+      const preCleanup = await deleteStoredHiddenAndNonActiveListings();
+      if (preCleanup.deleted > 0) {
+        stats.archived += preCleanup.deleted;
+        stats.hidden += preCleanup.deleted;
+        stats.hiddenByReason.status_not_displayable =
+          (stats.hiddenByReason.status_not_displayable || 0) + preCleanup.deleted;
+        notes.push(`cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active.`);
+      }
+    }
 
     if (startPage > getDefaultCleanupStartPage() && !nextCursor) {
       startPage = getDefaultCleanupStartPage();
@@ -101,7 +109,7 @@ export async function runStaleCleanup(connectorKind?: MLSConnectorKind): Promise
 
     let page = startPage;
     let reachedEnd = false;
-    const maxPages = Math.max(1, mlsSyncConfig.cleanupMaxPagesPerRun);
+    const maxPages = Math.max(1, options?.maxPagesPerRun ?? mlsSyncConfig.cleanupMaxPagesPerRun);
     const stopPage = startPage + maxPages - 1;
 
     while (page <= stopPage) {

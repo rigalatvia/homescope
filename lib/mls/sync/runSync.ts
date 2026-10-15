@@ -4,7 +4,10 @@ import { runIncrementalSync } from "@/lib/mls/sync/runIncrementalSync";
 import { runStaleCleanup } from "@/lib/mls/sync/runStaleCleanup";
 import { clearMLSSyncStop } from "@/lib/mls/sync/stopSignal";
 
-export async function runMLSSync(mode: MLSSyncMode, params?: { connectorKind?: MLSConnectorKind; sinceIso?: string }): Promise<MLSSyncResult> {
+export async function runMLSSync(
+  mode: MLSSyncMode,
+  params?: { connectorKind?: MLSConnectorKind; sinceIso?: string; cleanupMaxPagesPerRun?: number }
+): Promise<MLSSyncResult> {
   await clearMLSSyncStop();
   if (mode === "full") return runFullSync(params?.connectorKind);
   if (mode === "incremental") {
@@ -13,5 +16,5 @@ export async function runMLSSync(mode: MLSSyncMode, params?: { connectorKind?: M
       since: params?.sinceIso ? new Date(params.sinceIso) : undefined
     });
   }
-  return runStaleCleanup(params?.connectorKind);
+  return runStaleCleanup(params?.connectorKind, { maxPagesPerRun: params?.cleanupMaxPagesPerRun });
 }
