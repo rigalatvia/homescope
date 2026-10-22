@@ -15,7 +15,7 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "Vaughan",
     slug: "vaughan",
     title: "Vaughan Real Estate Listings",
-    metaTitle: "Vaughan Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "Vaughan Real Estate | Homes for Sale & Rent",
     metaDescription:
       "Browse Vaughan real estate listings, homes for sale, rentals, townhomes, condos, and school-focused search tools on HomeScope GTA.",
     intro:
@@ -26,9 +26,9 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "Richmond Hill",
     slug: "richmond-hill",
     title: "Richmond Hill Real Estate Listings",
-    metaTitle: "Richmond Hill Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "Richmond Hill Real Estate | Homes for Sale & Rent",
     metaDescription:
-      "Find Richmond Hill homes for sale and lease, including school-focused searches near Bayview, Oak Ridges, Jefferson, and nearby communities.",
+      "Explore Richmond Hill homes for sale and rent. Browse current property listings, compare neighbourhoods, research nearby schools and save your favourites.",
     intro:
       "Explore Richmond Hill listings and compare nearby homes around schools, parks, transit, and established neighbourhoods from Oak Ridges to Bayview and Jefferson.",
     highlights: ["Homes near Richmond Hill schools", "For sale and lease listings", "Local school rankings and nearby-home search"]
@@ -37,7 +37,7 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "Aurora",
     slug: "aurora",
     title: "Aurora Real Estate Listings",
-    metaTitle: "Aurora Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "Aurora Real Estate | Homes for Sale & Rent",
     metaDescription:
       "Browse Aurora real estate listings, homes for sale, rentals, and school search tools for buyers and renters in York Region.",
     intro:
@@ -48,9 +48,9 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "Newmarket",
     slug: "newmarket",
     title: "Newmarket Real Estate Listings",
-    metaTitle: "Newmarket Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "Newmarket Real Estate | Homes for Sale & Rent",
     metaDescription:
-      "Search Newmarket real estate listings, homes for sale, rentals, and school-area home matches on HomeScope GTA.",
+      "Browse homes for sale and rent in Newmarket, Ontario. Compare current listings, neighbourhoods, prices and nearby schools with HomeScope GTA.",
     intro:
       "Browse Newmarket homes and compare listings by price, property type, schools, and location using a focused Greater Toronto Area search experience.",
     highlights: ["Newmarket houses, townhomes, condos, and rentals", "Nearby school matching", "Ontario buyer and renter resources"]
@@ -59,7 +59,7 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "King",
     slug: "king",
     title: "King Real Estate Listings",
-    metaTitle: "King Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "King City Real Estate | Homes for Sale & Rent",
     metaDescription:
       "View King real estate listings, homes for sale, rural properties, rentals, and school-focused search tools on HomeScope GTA.",
     intro:
@@ -70,7 +70,7 @@ export const PRIMARY_MARKET_PAGES: PrimaryMarketPage[] = [
     city: "Toronto",
     slug: "toronto",
     title: "Toronto Real Estate Listings",
-    metaTitle: "Toronto Real Estate Listings, Homes for Sale & Rentals",
+    metaTitle: "Toronto Real Estate | Homes for Sale & Rent",
     metaDescription:
       "Search Toronto homes for sale and lease, including condos, freeholds, rentals, school search, and buyer resources on HomeScope GTA.",
     intro:

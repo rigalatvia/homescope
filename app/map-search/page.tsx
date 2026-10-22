@@ -17,21 +17,24 @@ const MAP_SEARCH_PAGE_SIZE = 500;
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "GTA Map Search",
-  description: "Search GTA homes for sale and lease with an interactive map on HomeScope GTA.",
-  alternates: {
-    canonical: `${SITE_CONFIG.baseUrl}/map-search`
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true
-    }
-  }
-};
+export function generateMetadata({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}): Metadata {
+  const hasFilters = Object.values(searchParams).some((value) =>
+    Array.isArray(value) ? value.some(Boolean) : Boolean(value?.trim())
+  );
+
+  return {
+    title: "GTA Map Search",
+    description: "Search GTA homes for sale and lease with an interactive map on HomeScope GTA.",
+    alternates: { canonical: `${SITE_CONFIG.baseUrl}/map-search` },
+    robots: hasFilters
+      ? { index: false, follow: true, googleBot: { index: false, follow: true } }
+      : { index: true, follow: true, googleBot: { index: true, follow: true } }
+  };
+}
 
 export default async function MapSearchPage({
   searchParams

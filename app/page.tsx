@@ -5,6 +5,8 @@ import { FeaturedListingsPreview } from "@/components/home/featured-listings-pre
 import { HeroSection } from "@/components/home/hero";
 import { ServiceAreasSection } from "@/components/home/service-areas";
 import { getFeaturedListings } from "@/lib/listings/service";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getAllPropertySearchLandings } from "@/lib/seo/property-search-landings";
 
 const FEATURED_GUIDES = [
   {
@@ -33,11 +35,12 @@ const FEATURED_GUIDES = [
   }
 ] as const;
 
-export const metadata: Metadata = {
-  title: "HomeScope GTA | GTA Homes for Sale, Rentals & School Search",
+export const metadata: Metadata = buildPageMetadata({
+  title: "HomeScope GTA | Homes for Sale & Rent in the Greater Toronto Area",
   description:
-    "Search GTA homes for sale and lease across Toronto, Vaughan, Richmond Hill, Aurora, Newmarket, and King. Browse listings, school rankings, and buyer resources."
-};
+    "Search homes for sale and rent in Toronto, Vaughan, Richmond Hill, Aurora, Newmarket and King City. Save favourites, compare properties and book showings.",
+  path: "/"
+});
 
 export default async function HomePage() {
   const featuredListings = (await getFeaturedListings()).slice(0, 3);
@@ -46,6 +49,19 @@ export default async function HomePage() {
     <>
       <HeroSection />
       <ServiceAreasSection />
+      <section className="site-container py-8 sm:py-10">
+        <div className="border-y border-brand-100 py-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Popular Property Searches</p>
+          <h2 className="mt-2 font-heading text-3xl text-brand-900">Homes for sale and rent across the GTA</h2>
+          <div className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            {getAllPropertySearchLandings().map((landing) => (
+              <Link key={`${landing.intentSlug}-${landing.citySlug}`} href={`/${landing.intentSlug}/${landing.citySlug}`} className="border-b border-brand-100 py-3 font-semibold text-brand-900 transition hover:border-brand-400 hover:underline">
+                {landing.displayCity} homes for {landing.transactionType === "lease" ? "rent" : "sale"}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
       <FeaturedListingsPreview listings={featuredListings} />
       <section className="site-container py-8 sm:py-10">
         <div className="rounded-[2rem] border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 shadow-soft sm:p-8">

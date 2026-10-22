@@ -80,7 +80,11 @@ async function getListingOptionsByIds(listingIds: string[]): Promise<AdminListin
       )
     );
 
-    return snapshots.flatMap((snapshot) => snapshot.docs.map(mapAdminListingOption));
+    return snapshots.flatMap((snapshot) =>
+      snapshot.docs
+        .filter((doc) => (doc.data() as { isVisible?: boolean }).isVisible === true)
+        .map(mapAdminListingOption)
+    );
   } catch (error) {
     console.error("[admin][featured] Failed resolving selected listing IDs", error);
     return [];
@@ -220,7 +224,17 @@ export async function GET(request: Request) {
       getListingOptionsByIds(settings.featuredListingIds),
       getListingOptionsByAgentKeys(DEFAULT_FEATURED_AGENT_KEYS)
     ]);
-    const featuredListingIds = getFeaturedIdsWithYanDefault(settings.featuredListingIds, yanListings);
+    const validSelectedIds = selectedListings.map((listing) => listing.id);
+    const featuredListingIds = getFeaturedIdsWithYanDefault(validSelectedIds, yanListings);
+
+    if (
+      featuredListingIds.length !== settings.featuredListingIds.length ||
+      featuredListingIds.some((id, index) => id !== settings.featuredListingIds[index])
+    ) {
+      await updateFeaturedListingIds(featuredListingIds);
+      revalidateTag(SITE_SETTINGS_CACHE_TAG);
+      revalidatePath("/");
+    }
 
     return NextResponse.json({
       success: true,

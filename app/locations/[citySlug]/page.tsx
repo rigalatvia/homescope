@@ -74,11 +74,23 @@ export default async function LocationPage({ params }: { params: { citySlug: str
             <p className="mt-4 max-w-3xl text-base leading-8 text-brand-700 sm:text-lg">{market.intro}</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                href={listingSearchUrl}
+                href={`/homes-for-sale/${market.slug}`}
                 className="inline-flex items-center gap-2 rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Browse {market.city} Listings
+                Homes for Sale
                 <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/homes-for-rent/${market.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Homes for Rent
+              </Link>
+              <Link
+                href={listingSearchUrl}
+                className="inline-flex items-center gap-2 rounded-full border border-brand-200 px-5 py-3 text-sm font-semibold text-brand-900 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Browse {market.city} Listings
               </Link>
               <Link
                 href={`/locations/${market.slug}/market`}

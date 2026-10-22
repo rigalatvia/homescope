@@ -6,15 +6,18 @@ import { BackToListingsButton } from "@/components/listings/back-to-listings-but
 import { FavoriteButton } from "@/components/listings/favorite-button";
 import { ListingGallery } from "@/components/listings/gallery";
 import { PropertyLocationMap } from "@/components/listings/property-location-map";
+import { PropertyViewTracker } from "@/components/listings/property-view-tracker";
 import { MortgagePaymentCalculator } from "@/components/guides/mortgage-payment-calculator";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/guides/breadcrumbs";
 import { formatPrice } from "@/lib/utils/format";
 import { getPublicListingBySlug, getSimilarListingsForListing } from "@/lib/listings/service";
 import { getMarketByCity } from "@/lib/locations/markets";
 import { getNeighborhoodForListing } from "@/lib/locations/neighborhoods";
+import { getNearbySchoolsForProperty } from "@/lib/schools/service";
 import { buildListingMetadata, formatListingAddress } from "@/lib/seo/listing-metadata";
 import { SITE_CONFIG } from "@/config/site";
 import type { Listing } from "@/types/listing";
+import type { School } from "@/types/school";
 
 export const revalidate = 60;
 
@@ -72,7 +75,18 @@ export default async function ListingDetailPage({
   const listing = await getPublicListingBySlug(params.slug);
   if (!listing) notFound();
 
-  const similarListings = await getSimilarListingsForListing(listing, 8);
+  const [similarListings, nearbySchools] = await Promise.all([
+    getSimilarListingsForListing(listing, 8),
+    listing.latitude != null && listing.longitude != null
+      ? getNearbySchoolsForProperty({
+          latitude: listing.latitude,
+          longitude: listing.longitude,
+          municipality: listing.city,
+          radiusKm: 5,
+          limit: 8
+        })
+      : Promise.resolve([])
+  ]);
   const listingUrl = `${SITE_CONFIG.baseUrl}/listings/${listing.listingUrlSlug}`;
   const fullAddress = formatListingAddress(listing.address, listing.city, listing.postalCode);
   const market = getMarketByCity(listing.city);
@@ -125,6 +139,7 @@ export default async function ListingDetailPage({
 
   return (
     <section className="site-container py-10">
+      <PropertyViewTracker propertyId={listing.id} city={listing.city} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }} />
       <Breadcrumbs items={breadcrumbItems} />
       <div className="mb-6">
@@ -195,6 +210,14 @@ export default async function ListingDetailPage({
             </section>
           ) : null}
 
+          {nearbySchools.length > 0 ? (
+            <NearbySchoolsSection
+              schools={nearbySchools}
+              city={listing.city}
+              address={listing.address}
+            />
+          ) : null}
+
           {listing.transactionType === "sale" ? (
             <MortgagePaymentCalculator initialPrice={listing.price} compact />
           ) : null}
@@ -233,6 +256,64 @@ export default async function ListingDetailPage({
           ) : null}
         </div>
       </div>
+    </section>
+  );
+}
+
+function NearbySchoolsSection({
+  schools,
+  city,
+  address
+}: {
+  schools: Array<{ school: School; distanceKm: number }>;
+  city: string;
+  address: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-brand-100 bg-white p-5 shadow-soft">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Nearby Schools</p>
+          <h2 className="mt-2 font-heading text-2xl text-brand-900">Schools near {address}</h2>
+        </div>
+        <Link
+          href={`/schools?municipality=${encodeURIComponent(city)}`}
+          className="text-sm font-semibold text-brand-800 underline decoration-brand-300 underline-offset-4 hover:text-brand-600"
+        >
+          View all {city} schools
+        </Link>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-brand-700">
+        Distances are measured in a straight line from this property.
+      </p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {schools.map(({ school, distanceKm }) => (
+          <Link
+            key={school.id}
+            href={`/schools/${school.slug}`}
+            className="group border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300 hover:bg-white"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-brand-900 group-hover:text-brand-700">{school.name}</p>
+                <p className="mt-1 text-xs font-semibold uppercase text-brand-600">
+                  {school.level === "elementary" ? "Elementary school" : "Secondary school"}
+                  {school.grades ? ` · Grades ${school.grades}` : ""}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-brand-900">{distanceKm.toFixed(1)} km</span>
+            </div>
+            <p className="mt-3 text-sm text-brand-700">{school.board}</p>
+            {school.address ? <p className="mt-1 text-sm text-brand-600">{school.address}</p> : null}
+          </Link>
+        ))}
+      </div>
+
+      <p className="mt-4 border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+        Proximity does not guarantee enrollment eligibility. Verify attendance boundaries and admission requirements with the relevant school board before making a decision.
+      </p>
     </section>
   );
 }
@@ -293,7 +374,9 @@ function buildListingBreadcrumbItems(input: {
     { label: "Home", href: "/" },
     {
       label: input.listing.city,
-      href: input.marketSlug ? `/locations/${input.marketSlug}` : undefined
+      href: input.marketSlug
+        ? `/${input.listing.transactionType === "lease" ? "homes-for-rent" : "homes-for-sale"}/${input.marketSlug}`
+        : undefined
     },
     ...(input.neighborhoodName && input.marketSlug && input.neighborhoodSlug
       ? [

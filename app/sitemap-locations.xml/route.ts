@@ -2,6 +2,7 @@ import { SITE_CONFIG } from "@/config/site";
 import { PRIMARY_MARKET_PAGES } from "@/lib/locations/markets";
 import { NEIGHBORHOOD_PAGES } from "@/lib/locations/neighborhoods";
 import { CURRENT_MARKET_REPORT } from "@/lib/market/reports";
+import { getAllPropertySearchLandings } from "@/lib/seo/property-search-landings";
 import { buildUrlSet, xmlResponse, type XmlSitemapEntry } from "@/lib/seo/xml-sitemap";
 
 export const revalidate = 3600;
@@ -36,7 +37,14 @@ export async function GET() {
     priority: 0.75
   }));
 
-  return xmlResponse(buildUrlSet([...cityEntries, ...neighborhoodEntries]));
+  const searchLandingEntries: XmlSitemapEntry[] = getAllPropertySearchLandings().map((landing) => ({
+    url: `${SITE_CONFIG.baseUrl}/${landing.intentSlug}/${landing.citySlug}`,
+    lastModified,
+    changeFrequency: "daily",
+    priority: 0.9
+  }));
+
+  return xmlResponse(buildUrlSet([...cityEntries, ...searchLandingEntries, ...neighborhoodEntries]));
 }
 
 function slugify(value: string): string {

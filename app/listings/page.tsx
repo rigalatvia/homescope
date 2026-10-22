@@ -61,10 +61,10 @@ export async function generateMetadata({
     robots: hasSearchFilters
       ? {
           index: false,
-          follow: false,
+          follow: true,
           googleBot: {
             index: false,
-            follow: false
+            follow: true
           }
         }
       : undefined

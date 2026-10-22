@@ -8,6 +8,8 @@ import type { School, SchoolSearchFilters } from "@/types/school";
 
 const DEFAULT_NEARBY_RADIUS_KM = 3;
 const DEFAULT_NEARBY_LISTING_LIMIT = 24;
+const DEFAULT_NEARBY_SCHOOL_RADIUS_KM = 5;
+const DEFAULT_NEARBY_SCHOOL_LIMIT = 8;
 const YORK_REGION_MUNICIPALITIES = new Set(["Vaughan", "Richmond Hill", "Aurora", "Newmarket", "King"]);
 
 export async function getSchools(filters: SchoolSearchFilters = {}): Promise<School[]> {
@@ -100,6 +102,28 @@ export async function getNearbyListingsForSchool(
     }))
     .filter((result) => result.distanceKm <= radiusKm)
     .sort((a, b) => a.distanceKm - b.distanceKm || a.listing.price - b.listing.price)
+    .slice(0, limit);
+}
+
+export async function getNearbySchoolsForProperty(options: {
+  latitude: number;
+  longitude: number;
+  municipality?: string;
+  radiusKm?: number;
+  limit?: number;
+}): Promise<Array<{ school: School; distanceKm: number }>> {
+  const radiusKm = Math.max(0.5, options.radiusKm ?? DEFAULT_NEARBY_SCHOOL_RADIUS_KM);
+  const limit = Math.max(1, options.limit ?? DEFAULT_NEARBY_SCHOOL_LIMIT);
+  const schools = await getSchools(options.municipality ? { municipality: options.municipality } : {});
+
+  return schools
+    .filter((school) => school.latitude != null && school.longitude != null)
+    .map((school) => ({
+      school,
+      distanceKm: calculateDistanceKm(options.latitude, options.longitude, school.latitude!, school.longitude!)
+    }))
+    .filter((result) => result.distanceKm <= radiusKm)
+    .sort((a, b) => a.distanceKm - b.distanceKm || a.school.name.localeCompare(b.school.name))
     .slice(0, limit);
 }
 

@@ -90,6 +90,7 @@ export function trackMetaEvent(name: string, params?: EventParams): void {
 
 export function trackPropertyView({ propertyId, city }: PropertyViewPayload): void {
   trackEvent("property_view", { property_id: propertyId, city: city || "" });
+  trackEvent("view_property", { property_id: propertyId, city: city || "" });
   trackMetaEvent("ViewContent", {
     content_type: "property",
     content_ids: [propertyId],
@@ -105,6 +106,7 @@ export function trackSearchPerformed({ query, city, filters }: SearchPerformedPa
   };
 
   trackEvent("search_performed", payload);
+  trackEvent("property_search", payload);
   trackMetaEvent("Search", payload);
 }
 
@@ -121,6 +123,7 @@ export function trackContactClick({ source, propertyId }: ContactClickPayload): 
 export function trackSaveListing({ propertyId }: SaveListingPayload): void {
   const payload: EventParams = { property_id: propertyId };
   trackEvent("save_listing", payload);
+  trackEvent("save_property", payload);
   trackEvent("save_home_created", payload);
   trackMetaEvent("AddToWishlist", {
     content_type: "property",
@@ -137,6 +140,11 @@ export function trackSaveSearchCreated({ label, source, resultsTotal, isSchoolSe
   };
 
   trackEvent("save_search_created", payload);
+  trackEvent("save_search", {
+    source,
+    results_total: resultsTotal,
+    is_school_search: Boolean(isSchoolSearch)
+  });
   trackMetaEvent("Lead", {
     content_name: label,
     content_category: isSchoolSearch ? "school_search_alert" : "saved_search_alert",
@@ -153,6 +161,7 @@ export function trackLeadSubmitted({ source, propertyId, visitorIntent }: LeadSu
   };
 
   trackEvent("lead_submitted", payload);
+  trackEvent(source.toLowerCase().includes("showing") ? "request_showing" : "property_inquiry", payload);
   trackMetaEvent("Lead", payload);
 }
 
