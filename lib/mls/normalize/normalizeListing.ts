@@ -54,6 +54,9 @@ export function normalizeListing(raw: RawMLSFeedListing, syncedAt: string): Norm
       longitude: raw.coordinates?.longitude ?? null
     },
     brokerageName: raw.brokerageName?.trim() || null,
+    listingOfficeName: raw.listingOfficeName?.trim() || null,
+    listingOfficeKey: raw.listingOfficeKey?.trim() || null,
+    socialRestricted: raw.socialRestricted === true,
     status: parseListingStatus(raw.status),
     sourceUpdatedAt: raw.sourceUpdatedAt || null,
     syncedAt,

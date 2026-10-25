@@ -89,6 +89,9 @@ export interface RawMLSFeedListing {
     longitude?: number | null;
   } | null;
   brokerageName?: string | null;
+  listingOfficeName?: string | null;
+  listingOfficeKey?: string | null;
+  socialRestricted?: boolean;
   status?: string | null;
   sourceUpdatedAt?: string | null;
 }
@@ -131,6 +134,9 @@ export interface NormalizedMLSListing {
     longitude: number | null;
   };
   brokerageName: string | null;
+  listingOfficeName?: string | null;
+  listingOfficeKey?: string | null;
+  socialRestricted?: boolean;
   status: MLSListingStatus;
   sourceUpdatedAt: string | null;
   syncedAt: string;

@@ -10,7 +10,8 @@ import {
   getListingsByAgentKey as getMLSListingsByAgentKey,
   getListingsByMunicipality as getMLSListingsByMunicipality,
   getListingStatsByMunicipality as getMLSListingStatsByMunicipality,
-  getMonthlyMarketStatsByMunicipality as getMLSMonthlyMarketStatsByMunicipality,
+  calculateMonthlyMarketStats,
+  getMonthlyMarketStatsSource,
   getListingsNearCoordinate as getMLSListingsNearCoordinate,
   getPublicListingByMlsNumber as getMLSListingByMlsNumber,
   getPublicListingBySlug as getMLSListingBySlug,
@@ -83,14 +84,9 @@ const getCachedMLSListingStatsByMunicipality = unstable_cache(
   { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
 );
 
-const getCachedMLSMonthlyMarketStatsByMunicipality = unstable_cache(
-  async (options: {
-    municipality: string;
-    monthStartIso: string;
-    nextMonthStartIso: string;
-    asOfIso: string;
-  }) => getMLSMonthlyMarketStatsByMunicipality(options),
-  ["public-mls-monthly-market-stats-by-municipality"],
+const getCachedMLSMonthlyMarketStatsSource = unstable_cache(
+  async (municipality: string) => getMonthlyMarketStatsSource(municipality),
+  ["public-mls-monthly-market-stats-source-v1"],
   { revalidate: PUBLIC_LISTINGS_REVALIDATE_SECONDS }
 );
 
@@ -214,7 +210,8 @@ export async function getMonthlyMarketStatsByMunicipality(options: {
   nextMonthStartIso: string;
   asOfIso: string;
 }) {
-  return getCachedMLSMonthlyMarketStatsByMunicipality(options);
+  const source = await getCachedMLSMonthlyMarketStatsSource(options.municipality);
+  return calculateMonthlyMarketStats(source, options);
 }
 
 export async function getListingsNearCoordinate(filters: {

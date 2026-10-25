@@ -87,6 +87,9 @@ function toFirestoreDoc(
 ): MLSListingFirestoreDocument {
   return {
     ...listing,
+    // Durable discovery outbox. The social worker consumes this independently;
+    // Meta/storage failures never run inside or fail MLS synchronization.
+    ...(!existing ? { socialDiscoveredAt: nowIso, socialDiscoveryPendingAt: nowIso } : {}),
     createdAt: existing?.createdAt || nowIso,
     updatedAt: nowIso,
     lastSeenInSourceAt: nowIso

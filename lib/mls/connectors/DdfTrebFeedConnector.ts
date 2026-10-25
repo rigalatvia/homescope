@@ -1,4 +1,5 @@
 import { logSyncInfo, logSyncWarn } from "@/lib/mls/utils/logger";
+import { verifiedDdfOffice } from "@/lib/mls/config/listing-offices";
 import { withRetry } from "@/lib/mls/utils/retry";
 import type {
   MLSConnectorHealth,
@@ -441,7 +442,13 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
         latitude: pickNumber(record, ["Latitude", "Lat"]),
         longitude: pickNumber(record, ["Longitude", "Lng", "Lon"])
       },
-      brokerageName: pickString(record, ["ListOfficeName", "BrokerageName"]),
+      brokerageName: verifiedDdfOffice(pickString(record, ["ListOfficeKey"]), this.sourceSystem) || pickString(record, ["ListOfficeName", "BrokerageName"]),
+      listingOfficeName: verifiedDdfOffice(pickString(record, ["ListOfficeKey"]), this.sourceSystem) || pickString(record, ["ListOfficeName"]),
+      listingOfficeKey: pickString(record, ["ListOfficeKey"]),
+      socialRestricted: ["PermToAdvertise", "PermToAdvertiseYN", "PermitToAdvertise", "InternetEntireListingDisplayYN", "InternetAddressDisplayYN"].some((key) => {
+        const value = record[key];
+        return value === false || value === 0 || (typeof value === "string" && ["no", "n", "false", "0"].includes(value.trim().toLowerCase()));
+      }),
       status: pickString(record, ["StandardStatus", "Status"]),
       sourceUpdatedAt: pickString(record, ["ModificationTimestamp", "SourceUpdatedAt", "UpdatedAt", "Timestamp"])
     };

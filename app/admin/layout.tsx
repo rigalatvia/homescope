@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 const adminLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/crm", label: "CRM" },
+  { href: "/admin/social", label: "Social Media" },
   { href: "/admin/sync", label: "Sync" },
   { href: "/admin/market-reports", label: "Market Reports" },
   { href: "/admin/schools", label: "Schools" },

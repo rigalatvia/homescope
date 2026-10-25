@@ -63,22 +63,13 @@ export async function getPublicListings(
     return paginated;
   }
 
-  if (canUseIndexedSearch(filters)) {
+  // Maps consume all matching items, so a separate page/count query is unused.
+  if (!includeAllItems && canUseIndexedSearch(filters)) {
     const paged = await getPublicListingsPageFromFirestore(filters);
     let items = paged.items;
-    let allItems: Listing[] | undefined;
 
     if (filters.propertyType) {
       items = items.filter((listing) => propertyTypeMatchesFilter(listing.propertyType, filters.propertyType!));
-    }
-
-    if (includeAllItems) {
-      const allCandidates = await getPublicListingsFromFirestore(filters);
-      allItems = sortListingsForBrowsing(
-        addSchoolDistances(applyListingFilters(allCandidates, filters, { school }), school),
-        filters.sort,
-        school
-      );
     }
 
     return {
@@ -87,7 +78,7 @@ export async function getPublicListings(
       page: paged.page,
       pageSize: paged.pageSize,
       totalPages: paged.totalPages,
-      allItems
+      allItems: undefined
     };
   }
 
