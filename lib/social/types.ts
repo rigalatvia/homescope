@@ -28,6 +28,9 @@ export interface Publication {
     processingChecks?: number;
 }
 export interface SocialCampaign {
+    listingGroup?: "new" | "existing";
+    listingCreatedAt?: string;
+    publishApprovedAt?: string | null;
     id: string;
     listingId: string;
     mlsNumber: string | null;

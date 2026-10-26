@@ -84,6 +84,26 @@ test('sync listing cache retains only one page and releases evicted documents', 
   });
 });
 const snapshotWrites = () => writes.filter(w => w.path.startsWith('listingSnapshots/'));
+test('new eligible MLS listing creates one unapproved review draft atomically; updates preserve it', async () => {
+  const item = normalized('review-home');
+  item.listingOfficeKey = undefined;
+  item.listingOfficeName = 'RE/MAX METROPOLIS REALTY';
+  item.isVisible = true; item.status = 'active'; item.permToAdvertise = true;
+  item.slug = 'review-home'; item.mlsNumber = 'C12345678';
+  const { campaignId } = require('../lib/social/policy.ts');
+  const key = `propertySocialPosts/${campaignId(item.listingId)}`;
+  await withSyncLease(() => upsertNormalizedListings([item], old));
+  const draft = records.get(key);
+  assert.equal(draft.listingGroup, 'new');
+  assert.equal(draft.publishApprovedAt, null);
+  assert.equal(draft.dryRun, true);
+  assert.equal(draft.listingCreatedAt, old);
+  assert.equal(draft.nextAttemptAt, '9999-12-31T00:00:00.000Z');
+  records.set(key, { ...draft, publishApprovedAt: old });
+  await withSyncLease(() => upsertNormalizedListings([{ ...item, price: item.price + 1 }], old));
+  assert.equal(records.get(key).publishApprovedAt, old);
+  assert.equal(writes.filter(w => w.path === key).length, 1);
+});
 beforeEach(() => {
   records.clear(); writes = []; reads = []; failCommit = null; calls = [];
   mlsSyncConfig.incrementalMaxPagesPerRun = 10; mlsSyncConfig.fullSyncMaxPagesPerRun = 1;

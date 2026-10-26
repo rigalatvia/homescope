@@ -5,6 +5,9 @@ import { eligibilityReason, newCampaign, validateSettings, reference, stopCampai
 import { MetaClient, metaConfig, reconcile, advanceFirstComment, commentRetryAt } from "./meta";
 import { generateCampaign, runSocialWorker } from "./worker";
 import { NEVER, PLATFORMS, type SocialCampaign, type SocialSettings, type Platform } from "./types";
+import { FieldPath } from "firebase-admin/firestore";
+import { withSyncLease } from "@/lib/mls/sync/execution";
+import type { SocialListing } from "./types";
 export async function socialOverview(before?: string) {
     const db = getFirebaseAdminFirestore(), collection = db.collection(COLLECTION);
     let query = collection.orderBy("createdAt", "desc");
@@ -25,6 +28,31 @@ export async function socialAction(input: Record<string, unknown>) {
     if (action === "process")
         return runSocialWorker(typeof input.id === "string" ? campaignRef(input.id).id : undefined);
     const result = await withSocialLock(async (lock) => {
+        if (action === "importExisting") {
+            return withSyncLease(async () => {
+            const state = (await settingsRef().get()).data() || {};
+            if (state.reviewImportComplete) return { imported: 0, complete: true };
+            let query = getFirebaseAdminFirestore().collection("listings").orderBy(FieldPath.documentId()).limit(100);
+            if (state.reviewImportCursor) query = query.startAfter(state.reviewImportCursor);
+            const rows = await query.get();
+            let imported = 0;
+            for (const row of rows.docs) {
+                const listing = { ...row.data(), listingId: row.id } as SocialListing;
+                if (eligibilityReason(listing)) continue;
+                const draft = newCampaign(listing, new Date().toISOString(), true, true);
+                const ref = campaignRef(draft.id);
+                if ((await ref.get()).exists) continue;
+                draft.nextAttemptAt = NEVER;
+                await lock.check();
+                try { await ref.create(draft); imported++; }
+                catch (error) { if ((error as { code?: number }).code !== 6) throw error; }
+            }
+            await lock.check();
+            await settingsRef().set({ reviewImportCursor: rows.docs.at(-1)?.id || state.reviewImportCursor || null,
+                reviewImportComplete: rows.size < 100 }, { merge: true });
+            return { imported, complete: rows.size < 100 };
+            });
+        }
         if (action === "settings") {
             const settings = await getSettings();
             const update = validateSettings(input.settings as Partial<SocialSettings> || {});
@@ -32,23 +60,10 @@ export async function socialAction(input: Record<string, unknown>) {
             const merged = { ...settings, ...update };
             if (merged.windowEnd <= merged.windowStart)
                 throw new Error("Publishing window must end after it starts.");
+            if (requested?.enabled === true) throw new Error("Automatic publishing has been replaced by per-campaign approval. Use Publish now on a reviewed draft.");
             if (requested?.enabled !== undefined) {
                 if (typeof requested.enabled !== "boolean")
                     throw new Error("Invalid activation setting.");
-                if (requested.enabled && !settings.enabled) {
-                    if (!settings.dryRunPassedAt)
-                        throw new Error("Complete an eligible listing dry run before activation.");
-                    if (await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
-                        throw new Error("Set the server-side live publishing switch before activation.");
-                    if (!(await new MetaClient(await metaConfig()).health()).ok)
-                        throw new Error("Meta connection, linked accounts or permissions require attention.");
-                    if (!merged.activatedAt) {
-                        merged.activatedAt = new Date().toISOString();
-                        merged.baselineComplete = false;
-                        merged.baselineCursor = null;
-                        merged.discoveryCursor = null;
-                    }
-                }
                 merged.enabled = requested.enabled;
             }
             await settingsRef().set(merged);
@@ -109,19 +124,21 @@ export async function socialAction(input: Record<string, unknown>) {
             campaign.editedCaptions = [];
             campaign.state = "queued";
             await lock.save(campaign);
+            campaign.publishApprovedAt = null;
+            campaign.dryRun = true;
             await generateCampaign(campaign, lock);
             return { id: campaign.id };
         }
         else if (action === "publishNow") {
-            const settings = await getSettings();
-            if (!settings.enabled || await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
-                throw new Error("Activate publishing first.");
+            if (await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
+                throw new Error("Enable the server live publishing switch and configure Meta connections before publishing.");
             if (!campaign.assets.length || !["ready", "scheduled"].includes(campaign.state))
                 throw new Error("Generate a ready carousel first.");
             const reason = eligibilityReason(await getListing(campaign.listingId));
             if (reason)
                 throw new Error(reason);
             campaign.dryRun = false;
+            campaign.publishApprovedAt = new Date().toISOString();
             campaign.scheduledAt = new Date().toISOString();
             campaign.nextAttemptAt = campaign.scheduledAt;
             campaign.state = "scheduled";

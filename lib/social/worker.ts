@@ -64,15 +64,15 @@ export async function generateCampaign(campaign: SocialCampaign, lock: WorkerLoc
 async function processCampaign(campaign: SocialCampaign, settings: SocialSettings, lock: WorkerLock) {
     if (["cancelled", "skipped"].includes(campaign.state))
         return;
-    if (!campaign.dryRun && !settings.enabled)
-        return;
+    // Every platform publication requires an explicit approval on this campaign.
+    // Legacy automatic jobs cannot publish merely because automation was enabled.
     if (campaign.state === "queued" || campaign.state === "generating") {
         await generateCampaign(campaign, lock);
         return;
     }
-    if (campaign.dryRun)
+    if (campaign.dryRun || !campaign.publishApprovedAt)
         return;
-    if (!settings.enabled || await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
+    if (await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
         return;
     const listing = await getListing(campaign.listingId), reason = eligibilityReason(listing);
     if (reason) {
@@ -111,7 +111,7 @@ async function processCampaign(campaign: SocialCampaign, settings: SocialSetting
                 const current = await getListing(campaign.listingId);
                 if (eligibilityReason(current) || !current || contentHash(current) !== campaign.contentHash)
                     throw new Error("Listing changed before publication; stop and regenerate.");
-                if (!(await getSettings()).enabled || await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
+                if (!campaign.publishApprovedAt || await getServerConfigValue("SOCIAL_AUTO_PUBLISH_ENABLED") !== "true")
                     throw new Error("Live publishing is disabled.");
                 await validatePropertyUrl(campaign.property.url);
 
@@ -135,15 +135,20 @@ async function processCampaign(campaign: SocialCampaign, settings: SocialSetting
 export async function runSocialWorker(targetId?: string) {
     return withSocialLock(async (lock) => {
         const settings = await getSettings();
-        const discovery = settings.enabled ? await discover(settings, lock) : null;
-        // Complete the pre-activation baseline before processing new automatic jobs.
-        if (settings.enabled && !settings.baselineComplete && !targetId)
-            return { discovery, processed: 0 };
+        // Sync creates review drafts directly. Worker ticks only advance work;
+        // they never discover listings for automatic publication.
+        const discovery = null;
         const snapshot = targetId ? await getFirebaseAdminFirestore().collection(COLLECTION).doc(targetId).get() : null;
         const due = targetId ? null : await getFirebaseAdminFirestore().collection(COLLECTION).where("nextAttemptAt", "<=", new Date().toISOString()).orderBy("nextAttemptAt").limit(1).get();
         const campaign = (snapshot?.data() || due?.docs[0]?.data()) as SocialCampaign | undefined;
         if (!campaign)
             return { discovery, processed: 0 };
+        if (!targetId && !campaign.publishApprovedAt) {
+            campaign.dryRun = true;
+            campaign.nextAttemptAt = NEVER;
+            await lock.save(campaign);
+            return { discovery, processed: 0 };
+        }
         try {
             const deadline = Date.now() + 180000;
             for (let step = 0; step < 20; step++) {

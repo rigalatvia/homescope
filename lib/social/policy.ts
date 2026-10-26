@@ -72,7 +72,7 @@ export function newCampaign(listing: SocialListing, now: string, dryRun: boolean
     const id = campaignId(listing.listingId);
     const captions = buildCaptions(listing, id);
     const platform = (caption: string): Publication => ({ status: "queued", caption, mediaIds: [], containerId: null, preparedAt: null, submittedAt: null, postId: null, permalink: null, publishedAt: null, retries: 0, retryAt: null, lastError: null });
-    return { id, listingId: listing.listingId, mlsNumber: listing.mlsNumber, campaignType: "just_listed", discoveredAt: listing.socialDiscoveredAt || listing.createdAt, createdAt: now, updatedAt: now, scheduledAt: null, startedAt: null, nextAttemptAt: now, state: "queued", dryRun, manual, assets: [], assetPaths: [], generation: 0, contentHash: null, lastError: null,
+    return { id, listingGroup: "existing", listingCreatedAt: listing.createdAt, publishApprovedAt: null, listingId: listing.listingId, mlsNumber: listing.mlsNumber, campaignType: "just_listed", discoveredAt: listing.socialDiscoveredAt || listing.createdAt, createdAt: now, updatedAt: now, scheduledAt: null, startedAt: null, nextAttemptAt: now, state: "queued", dryRun, manual, assets: [], assetPaths: [], generation: 0, contentHash: null, lastError: null,
         property: { city: listing.municipality || "GTA", address: listing.address.fullAddress || "", price: listing.price, brokerage: listing.listingOfficeName || BROKERAGE, photo: listing.images[0] || null, url: propertyUrl(listing) }, instagram: platform(captions.instagram), facebook: platform(captions.facebook) };
 }
 export function contentHash(listing: SocialListing): string {
