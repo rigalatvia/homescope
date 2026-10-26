@@ -1,7 +1,8 @@
-﻿import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
+import { saveIncrementalCursor } from "@/lib/mls/sync/incrementalSyncCursor";
+import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime } from "@/lib/mls/sync/execution";
+import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
-import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import {
   getDefaultIncrementalStartPage,
@@ -9,20 +10,14 @@ import {
   getIncrementalStartPage,
   getIncrementalSweepStartedAt,
   getIncrementalSyncSince,
-  setIncrementalNextCursor,
-  setIncrementalStartPage,
-  setIncrementalSweepStartedAt,
-  setIncrementalSyncSince
 } from "@/lib/mls/sync/incrementalSyncCursor";
-import { deleteStoredHiddenAndNonActiveListings } from "@/lib/mls/sync/staleCleanup";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
-import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import { mlsSyncConfig } from "@/lib/mls/config";
 
-export async function runIncrementalSync(params?: {
+async function runIncrementalSyncInternal(params?: {
   connectorKind?: MLSConnectorKind;
   since?: Date;
 }): Promise<MLSSyncResult> {
@@ -62,21 +57,6 @@ export async function runIncrementalSync(params?: {
   });
 
   try {
-    const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
-    if (cleanupRemoved > 0) {
-      stats.archived += cleanupRemoved;
-      notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
-    }
-
-    const preCleanup = await deleteStoredHiddenAndNonActiveListings();
-    if (preCleanup.deleted > 0) {
-      stats.archived += preCleanup.deleted;
-      stats.hidden += preCleanup.deleted;
-      notes.push(
-        `cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active before incremental processing.`
-      );
-    }
-
     if (!connector.fetchUpdatedListingsPage) {
       throw new Error("Incremental sync connector does not support paged updated-listing fetches.");
     }
@@ -89,30 +69,23 @@ export async function runIncrementalSync(params?: {
       startPage = getDefaultIncrementalStartPage();
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setIncrementalStartPage(startPage);
-      await setIncrementalNextCursor(null);
-      await setIncrementalSweepStartedAt(sweepStartedAt);
+      await saveIncrementalCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt, sweepSinceIso: since.toISOString() });
       notes.push(`Incremental cursor overridden manually. Restarted incremental sweep from page ${startPage}.`);
     } else if (startPage > getDefaultIncrementalStartPage() && !nextCursor) {
       startPage = getDefaultIncrementalStartPage();
       sweepStartedAt = startedAt;
-      await setIncrementalStartPage(startPage);
-      await setIncrementalNextCursor(null);
-      await setIncrementalSweepStartedAt(sweepStartedAt);
+      await saveIncrementalCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt });
       notes.push(`Incremental cursor was reset from an incomplete legacy state and restarted at page ${startPage}.`);
     } else if (startPage === getDefaultIncrementalStartPage()) {
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setIncrementalNextCursor(null);
-      await setIncrementalSweepStartedAt(sweepStartedAt);
+      await saveIncrementalCursor({ nextPage: 1, nextCursor: null, sweepStartedAt });
       notes.push(`Incremental sweep started at ${sweepStartedAt}.`);
     } else if (!sweepStartedAt) {
       startPage = getDefaultIncrementalStartPage();
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setIncrementalStartPage(startPage);
-      await setIncrementalNextCursor(null);
-      await setIncrementalSweepStartedAt(sweepStartedAt);
+      await saveIncrementalCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt });
       notes.push(`Incremental resumed without a sweep marker, so it restarted safely at page ${startPage}.`);
     }
 
@@ -122,9 +95,12 @@ export async function runIncrementalSync(params?: {
     const stopPage = startPage + maxPages - 1;
 
     while (page <= stopPage) {
+      if (remainingSyncTime() < 5000) {
+        notes.push("Runtime budget reached; saved cursor will resume on retry.");
+        break;
+      }
       if (await isMLSSyncStopRequested()) {
-        await setIncrementalStartPage(page);
-        await setIncrementalNextCursor(nextCursor);
+        await saveIncrementalCursor({ nextPage: page, nextCursor, sweepStartedAt });
         await clearMLSSyncStop();
         notes.push(`Incremental sync stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
         return buildIncrementalResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
@@ -136,16 +112,18 @@ export async function runIncrementalSync(params?: {
         cursor: nextCursor
       });
 
-      if (rawPage.items.length === 0) {
+      if (rawPage.items.length === 0 && !rawPage.nextCursor) {
         reachedEnd = true;
         break;
       }
 
       stats.fetched += rawPage.items.length;
+      recordRetrieved(rawPage.items.length);
       logSyncInfo("Incremental sync fetched listings page", { page, count: rawPage.items.length });
 
       const filteredRaw = filterRawListingsByTargetPostalAreas(rawPage.items);
       stats.filtered += filteredRaw.included.length;
+      recordFiltered(filteredRaw.included.length);
       if (filteredRaw.excludedCount > 0) {
         logSyncInfo("Incremental sync target-area filter applied", {
           page,
@@ -165,46 +143,34 @@ export async function runIncrementalSync(params?: {
         (listing) => listing.hiddenReason === "perm_to_advertise_false"
       ).length;
 
-      const visibleListings = normalized.filter((listing) => listing.isVisible);
-      const hiddenListings = normalized.filter((listing) => !listing.isVisible);
-
-      const upsert = await upsertNormalizedListings(visibleListings, nowIso);
+      const upsert = await upsertNormalizedListings(normalized, nowIso);
       stats.created += upsert.created;
       stats.updated += upsert.updated;
       stats.upserted += upsert.upserted;
       stats.unchanged += upsert.unchanged;
       stats.snapshotsWritten += upsert.snapshotsWritten;
 
-      if (hiddenListings.length > 0) {
-        const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
-        stats.archived += deleted;
-        stats.hidden += deleted;
-        if (deleted > 0) {
-          notes.push(`incremental deleted ${deleted} non-active or hidden listing(s) from page ${page}.`);
-        }
-      }
+      stats.hidden += upsert.hidden;
+      stats.archived += upsert.hidden;
 
-      if (!rawPage.nextCursor || rawPage.items.length < mlsSyncConfig.pageSize) {
+      if (!rawPage.nextCursor) {
         reachedEnd = true;
         break;
       }
 
       nextCursor = rawPage.nextCursor;
       page += 1;
+      await saveIncrementalCursor({ nextPage: page, nextCursor, sweepStartedAt });
     }
 
     const finishedAt = new Date().toISOString();
 
     if (reachedEnd) {
-      const nextSince = sweepStartedAt || finishedAt;
-      await setIncrementalSyncSince(nextSince);
-      await setIncrementalStartPage(getDefaultIncrementalStartPage());
-      await setIncrementalNextCursor(null);
-      await setIncrementalSweepStartedAt(null);
+      const nextSince = new Date(Date.parse(sweepStartedAt || startedAt) - 5 * 60 * 1000).toISOString();
+      await saveIncrementalCursor({ sinceIso: nextSince, nextPage: 1, nextCursor: null, sweepStartedAt: null, sweepSinceIso: null });
       notes.push(`Incremental reached end of updated feed. Cursor advanced_to=${nextSince} and page reset to 1.`);
     } else {
-      await setIncrementalStartPage(page);
-      await setIncrementalNextCursor(nextCursor);
+      await saveIncrementalCursor({ nextPage: page, nextCursor, sweepStartedAt });
       notes.push(
         `Incremental processed a batch (${maxPages} page${maxPages === 1 ? "" : "s"}) from page ${startPage}. Continue from page ${page} on next run.`
       );
@@ -222,7 +188,7 @@ export async function runIncrementalSync(params?: {
       nextSince: reachedEnd ? sweepStartedAt || finishedAt : since.toISOString()
     });
     logSyncInfo("Incremental sync completed", { stats });
-    return buildIncrementalResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
+    return buildIncrementalResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem, reachedEnd);
   } catch (error) {
     stats.failed += 1;
     logSyncError("Incremental sync failed", error, { stats });
@@ -235,7 +201,8 @@ function buildIncrementalResult(
   stats: MLSSyncStats,
   notes: string[],
   connectorKind: MLSConnectorKind,
-  sourceSystem: string
+  sourceSystem: string,
+  complete = false
 ): MLSSyncResult {
   const finishedAt = new Date().toISOString();
   return {
@@ -245,7 +212,8 @@ function buildIncrementalResult(
     startedAt,
     finishedAt,
     stats,
-    notes
+    notes,
+    complete
   };
 }
 
@@ -268,4 +236,9 @@ function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats
     counts[reason] = (counts[reason] || 0) + 1;
   }
   return counts;
+}
+
+export async function runIncrementalSync(params?: { connectorKind?: MLSConnectorKind; since?: Date }): Promise<MLSSyncResult> {
+  await ensureServerSecretsLoaded();
+  return withSyncLease(() => runIncrementalSyncInternal(params));
 }

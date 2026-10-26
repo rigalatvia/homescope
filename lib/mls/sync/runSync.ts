@@ -1,3 +1,5 @@
+import { withSyncLease } from "@/lib/mls/sync/execution";
+import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import type { MLSConnectorKind, MLSSyncMode, MLSSyncResult } from "@/lib/mls/types";
 import { runFullSync } from "@/lib/mls/sync/runFullSync";
 import { runIncrementalSync } from "@/lib/mls/sync/runIncrementalSync";
@@ -8,13 +10,16 @@ export async function runMLSSync(
   mode: MLSSyncMode,
   params?: { connectorKind?: MLSConnectorKind; sinceIso?: string; cleanupMaxPagesPerRun?: number }
 ): Promise<MLSSyncResult> {
-  await clearMLSSyncStop();
-  if (mode === "full") return runFullSync(params?.connectorKind);
-  if (mode === "incremental") {
-    return runIncrementalSync({
-      connectorKind: params?.connectorKind,
-      since: params?.sinceIso ? new Date(params.sinceIso) : undefined
-    });
+  await ensureServerSecretsLoaded();
+  return withSyncLease(async () => {
+    await clearMLSSyncStop();
+    if (mode === "full") return runFullSync(params?.connectorKind);
+    if (mode === "incremental") {
+      return runIncrementalSync({
+        connectorKind: params?.connectorKind,
+        since: params?.sinceIso ? new Date(params.sinceIso) : undefined
+      });
   }
   return runStaleCleanup(params?.connectorKind, { maxPagesPerRun: params?.cleanupMaxPagesPerRun });
+  });
 }

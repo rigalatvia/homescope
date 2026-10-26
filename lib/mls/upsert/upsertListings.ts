@@ -1,7 +1,9 @@
 import type { MLSListingFirestoreDocument, NormalizedMLSListing } from "@/lib/mls/types";
 import { mlsSyncConfig } from "@/lib/mls/config";
-import { createListingSnapshot, getListingById, touchListingLastSeen, upsertListingDocument } from "@/lib/mls/upsert/repository";
-import { logSyncInfo } from "@/lib/mls/utils/logger";
+import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
+import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
+import { cacheListing, listingReadCache, recordReads, recordListingChanges, writeSyncDocuments } from "@/lib/mls/sync/execution";
 
 const TRACKED_FIELDS: Array<keyof MLSListingFirestoreDocument> = [
   "price",
@@ -21,63 +23,85 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
   upserted: number;
   unchanged: number;
   snapshotsWritten: number;
+  hidden: number;
 }> {
   let created = 0;
   let updated = 0;
   let upserted = 0;
   let unchanged = 0;
   let snapshotsWritten = 0;
+  let hidden = 0;
 
-  for (const listing of listings) {
-    const existing = await getListingById(listing.listingId);
+  const unique = [...new Map(listings.map(listing => [listing.listingId, listing])).values()];
+  const db = getFirebaseAdminFirestore();
+  const writes: Parameters<typeof writeSyncDocuments>[0] = [];
+  const stored = new Map<string, MLSListingFirestoreDocument>();
+  const cache = listingReadCache();
+  for (const listing of unique) {
+    const cached = cache?.get(listing.listingId);
+    if (cached) stored.set(listing.listingId, cached);
+  }
+  const unread = unique.filter(listing => !cache?.has(listing.listingId));
+  for (let i = 0; i < unread.length; i += 100) {
+    const chunk = unread.slice(i, i + 100);
+    const snapshots = await db.getAll(...chunk.map(listing => db.collection("listings").doc(listing.listingId)));
+    recordReads(snapshots.length);
+    for (const snapshot of snapshots) {
+      const data = snapshot.exists ? snapshot.data() as MLSListingFirestoreDocument : null;
+      if (data) stored.set(snapshot.id, data);
+      cacheListing(snapshot.id, data);
+    }
+  }
+  for (const listing of unique) {
+    const existing = stored.get(listing.listingId) ?? null;
+    // Do not fill the database with never-public out-of-area records.
+    if (!existing && !listing.isVisible) continue;
     const doc = toFirestoreDoc(listing, nowIso, existing);
 
-    if (
-      existing &&
-      existing.rawSourceHash === doc.rawSourceHash &&
-      existing.isVisible === doc.isVisible &&
-      existing.propertyType === doc.propertyType &&
-      existing.commonInterest === doc.commonInterest &&
-      areStringArraysEqual(existing.structureType, doc.structureType) &&
-      existing.propertyAttached === doc.propertyAttached
-    ) {
-      await touchListingLastSeen(doc.listingId, nowIso);
+    if (existing && meaningfulListingEqual(existing, listing)) {
       unchanged += 1;
       continue;
     }
 
-    await upsertListingDocument(doc);
+    writes.push({ ref: db.collection("listings").doc(doc.listingId), data: { ...doc } });
     upserted += 1;
+    if (existing?.isVisible && !doc.isVisible) hidden++;
     if (existing) {
       updated += 1;
     } else {
       created += 1;
     }
 
-    logSyncInfo("Listing upserted", {
-      listingId: doc.listingId,
-      isVisible: doc.isVisible,
-      hiddenReason: doc.hiddenReason
-    });
-
     if (mlsSyncConfig.featureFlags.snapshotsEnabled) {
       const changedFields = getChangedFields(existing, doc);
       if (!existing || changedFields.length > 0) {
-        await createListingSnapshot(
-          doc.listingId,
-          doc.sourceListingKey,
-          existing ? changedFields : ["created"],
-          existing ? pickTrackedFields(existing) : null,
-          pickTrackedFields(doc),
-          mapSnapshotReason(existing, changedFields),
-          nowIso
-        );
+        const snapshotId = randomUUID();
+        writes.push({ ref: db.collection("listingSnapshots").doc(snapshotId), data: {
+          snapshotId, listingId: doc.listingId, sourceListingKey: doc.sourceListingKey,
+          changedFields: existing ? changedFields : ["created"],
+          before: existing ? pickTrackedFields(existing) : null,
+          after: pickTrackedFields(doc), reason: mapSnapshotReason(existing, changedFields), capturedAt: nowIso
+        } });
         snapshotsWritten += 1;
       }
     }
   }
 
-  return { created, updated, upserted, unchanged, snapshotsWritten };
+  // A page is at most 100 listings (200 writes with snapshots), so each
+  // listing and its snapshot commit atomically in the same bounded batch.
+  if (writes.length > 400) throw new Error("MLS upsert page exceeds atomic write limit");
+  await writeSyncDocuments(writes);
+  for (const write of writes) if (write.ref.parent.id === "listings") {
+    cacheListing(write.ref.id, write.data as MLSListingFirestoreDocument);
+  }
+  recordListingChanges({ created, updated, unchanged, hidden });
+  return { created, updated, upserted, unchanged, snapshotsWritten, hidden };
+}
+
+export function meaningfulListingEqual(existing: MLSListingFirestoreDocument, incoming: NormalizedMLSListing): boolean {
+  return (Object.keys(incoming) as Array<keyof NormalizedMLSListing>)
+    .filter(key => !["syncedAt", "rawSourceHash", "sourceUpdatedAt"].includes(key))
+    .every(key => isDeepStrictEqual(existing[key], incoming[key]));
 }
 
 function toFirestoreDoc(
@@ -101,7 +125,7 @@ function getChangedFields(
   after: MLSListingFirestoreDocument
 ): string[] {
   if (!before) return ["created"];
-  return TRACKED_FIELDS.filter((field) => before[field] !== after[field]).map(String);
+  return TRACKED_FIELDS.filter((field) => !isDeepStrictEqual(before[field], after[field])).map(String);
 }
 
 function pickTrackedFields(doc: MLSListingFirestoreDocument): Partial<MLSListingFirestoreDocument> {
@@ -116,13 +140,6 @@ function pickTrackedFields(doc: MLSListingFirestoreDocument): Partial<MLSListing
     isVisible: doc.isVisible,
     hiddenReason: doc.hiddenReason
   };
-}
-
-function areStringArraysEqual(left: string[] | null, right: string[] | null): boolean {
-  if (left === right) return true;
-  if (!left || !right) return false;
-  if (left.length !== right.length) return false;
-  return left.every((value, index) => value === right[index]);
 }
 
 function mapSnapshotReason(

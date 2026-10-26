@@ -1,14 +1,10 @@
+import { withSyncLease, SyncBusyError, recordWrites } from "@/lib/mls/sync/execution";
 import { NextResponse } from "next/server";
 import type { MLSConnectorKind, MLSSyncMode } from "@/lib/mls/types";
 import { runMLSSync } from "@/lib/mls/sync/runSync";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-import {
-  getDefaultFullSyncStartPage,
-  setFullSyncNextCursor,
-  setFullSyncStartPage,
-  setFullSyncSweepStartedAt
-} from "@/lib/mls/sync/fullSyncCursor";
+import { saveFullSyncCursor } from "@/lib/mls/sync/fullSyncCursor";
 import { requestMLSSyncStop } from "@/lib/mls/sync/stopSignal";
 
 export const maxDuration = 300;
@@ -38,58 +34,60 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = ((await request.json()) as ManualSyncBody) || {};
-    const mode: MLSSyncMode = body.mode || "full";
-    attemptedMode = mode;
-    if (mode === "full" && body.resetCursorToFirstPage === true) {
-      await setFullSyncStartPage(getDefaultFullSyncStartPage());
-      await setFullSyncNextCursor(null);
-      await setFullSyncSweepStartedAt(null);
-    }
-    const result = await runMLSSync(mode, {
-      connectorKind: body.connectorKind,
-      sinceIso: body.sinceIso,
-      // The admin UI loops cleanup requests until the saved cursor reaches the
-      // end. One page per HTTP response avoids hosting-proxy timeouts.
-      cleanupMaxPagesPerRun: mode === "cleanup" ? 1 : undefined
+    return await withSyncLease(async () => {
+      const body = ((await request.json()) as ManualSyncBody) || {};
+      const mode: MLSSyncMode = body.mode || "full";
+      attemptedMode = mode;
+      if (mode === "full" && body.resetCursorToFirstPage === true) {
+        await saveFullSyncCursor({ nextPage: 1, nextCursor: null, sweepStartedAt: null });
+      }
+      const result = await runMLSSync(mode, {
+        connectorKind: body.connectorKind,
+        sinceIso: body.sinceIso,
+        // The admin UI loops cleanup requests until the saved cursor reaches the
+        // end. One page per HTTP response avoids hosting-proxy timeouts.
+        cleanupMaxPagesPerRun: mode === "cleanup" ? 1 : undefined
+      });
+
+      await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(
+        {
+          lastRunAt: new Date().toISOString(),
+          lastRunMode: mode,
+          lastRunStatus: "success",
+          lastRunCounts: {
+            fetched: result.stats.fetched,
+            filtered: result.stats.filtered,
+            created: result.stats.created,
+            updated: result.stats.updated,
+            deleted: 0,
+            archived: result.stats.archived,
+            failed: result.stats.failed
+          },
+          lastError: null
+        },
+        { merge: true }
+      );
+
+      recordWrites(1);
+      return NextResponse.json(
+        {
+          success: true,
+          counts: {
+            fetched: result.stats.fetched,
+            filtered: result.stats.filtered,
+            created: result.stats.created,
+            updated: result.stats.updated,
+            deleted: 0,
+            archived: result.stats.archived,
+            failed: result.stats.failed
+          },
+          result
+        },
+        { status: 200 }
+      );
     });
-
-    await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(
-      {
-        lastRunAt: new Date().toISOString(),
-        lastRunMode: mode,
-        lastRunStatus: "success",
-        lastRunCounts: {
-          fetched: result.stats.fetched,
-          filtered: result.stats.filtered,
-          created: result.stats.created,
-          updated: result.stats.updated,
-          deleted: result.stats.archived,
-          archived: result.stats.archived,
-          failed: result.stats.failed
-        },
-        lastError: null
-      },
-      { merge: true }
-    );
-
-    return NextResponse.json(
-      {
-        success: true,
-        counts: {
-          fetched: result.stats.fetched,
-          filtered: result.stats.filtered,
-          created: result.stats.created,
-          updated: result.stats.updated,
-          deleted: result.stats.archived,
-          archived: result.stats.archived,
-          failed: result.stats.failed
-        },
-        result
-      },
-      { status: 200 }
-    );
   } catch (error) {
+    if (error instanceof SyncBusyError) return NextResponse.json({ error: error.message }, { status: 409 });
     console.error("[mls-sync] Manual trigger failed", error);
     const detail = error instanceof Error ? error.message : "Unknown sync error";
     await firestore.collection(SETTINGS_COLLECTION).doc(MANUAL_STATUS_DOC_ID).set(

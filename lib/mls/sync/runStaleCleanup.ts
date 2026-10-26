@@ -1,26 +1,23 @@
+import { saveCleanupCursor } from "@/lib/mls/sync/cleanupCursor";
+import { recordReconciliationPage, reconcileMissing, hasReconciliationManifest, IncompleteReconciliationError } from "@/lib/mls/sync/reconciliation";
+import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime } from "@/lib/mls/sync/execution";
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
-import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import {
   getCleanupNextCursor,
   getCleanupStartPage,
   getCleanupSweepStartedAt,
   getDefaultCleanupStartPage,
-  setCleanupNextCursor,
-  setCleanupStartPage,
-  setCleanupSweepStartedAt
 } from "@/lib/mls/sync/cleanupCursor";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
-import { deleteListingsNotSeenSinceForSource, deleteStoredHiddenAndNonActiveListings } from "@/lib/mls/sync/staleCleanup";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
-import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 
-export async function runStaleCleanup(
+async function runStaleCleanupInternal(
   connectorKind?: MLSConnectorKind,
   options?: { maxPagesPerRun?: number }
 ): Promise<MLSSyncResult> {
@@ -61,49 +58,26 @@ export async function runStaleCleanup(
     let startPage = await getCleanupStartPage();
     let nextCursor = await getCleanupNextCursor();
     let sweepStartedAt = await getCleanupSweepStartedAt();
-
-    // These collection-wide maintenance queries only need to run once per
-    // sweep. Repeating them on every cursor batch adds enough work for the
-    // hosting proxy to terminate otherwise healthy cleanup requests.
-    if (startPage === getDefaultCleanupStartPage() && !nextCursor) {
-      const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
-      if (cleanupRemoved > 0) {
-        stats.archived += cleanupRemoved;
-        stats.hidden += cleanupRemoved;
-        stats.hiddenByReason.connector_not_returned = cleanupRemoved;
-        notes.push(`cleanup removed ${cleanupRemoved} misclassified King-area listing(s).`);
-      }
-
-      const preCleanup = await deleteStoredHiddenAndNonActiveListings();
-      if (preCleanup.deleted > 0) {
-        stats.archived += preCleanup.deleted;
-        stats.hidden += preCleanup.deleted;
-        stats.hiddenByReason.status_not_displayable =
-          (stats.hiddenByReason.status_not_displayable || 0) + preCleanup.deleted;
-        notes.push(`cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active.`);
-      }
+    if (startPage > 1 && !await hasReconciliationManifest("cleanup", connector.sourceSystem, sweepStartedAt)) {
+      startPage = 1; nextCursor = null; sweepStartedAt = null;
+      await saveCleanupCursor({ nextPage: 1, nextCursor: null, sweepStartedAt: null });
     }
 
     if (startPage > getDefaultCleanupStartPage() && !nextCursor) {
       startPage = getDefaultCleanupStartPage();
       sweepStartedAt = startedAt;
-      await setCleanupStartPage(startPage);
-      await setCleanupNextCursor(null);
-      await setCleanupSweepStartedAt(sweepStartedAt);
+      await saveCleanupCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt });
       notes.push(`Cleanup cursor was reset from an incomplete legacy state and restarted at page ${startPage}.`);
     } else if (startPage === getDefaultCleanupStartPage()) {
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setCleanupNextCursor(null);
-      await setCleanupSweepStartedAt(sweepStartedAt);
+      await saveCleanupCursor({ nextPage: 1, nextCursor: null, sweepStartedAt });
       notes.push(`Cleanup sweep started at ${sweepStartedAt}.`);
     } else if (!sweepStartedAt) {
       startPage = getDefaultCleanupStartPage();
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setCleanupStartPage(startPage);
-      await setCleanupNextCursor(null);
-      await setCleanupSweepStartedAt(sweepStartedAt);
+      await saveCleanupCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt });
       notes.push(`Cleanup resumed without a sweep marker, so it restarted safely at page ${startPage}.`);
     }
 
@@ -113,9 +87,12 @@ export async function runStaleCleanup(
     const stopPage = startPage + maxPages - 1;
 
     while (page <= stopPage) {
+      if (remainingSyncTime() < 5000) {
+        notes.push("Runtime budget reached; saved cursor will resume on retry.");
+        break;
+      }
       if (await isMLSSyncStopRequested()) {
-        await setCleanupStartPage(page);
-        await setCleanupNextCursor(nextCursor);
+        await saveCleanupCursor({ nextPage: page, nextCursor, sweepStartedAt });
         await clearMLSSyncStop();
         notes.push(`Cleanup stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
         return buildCleanupResult(startedAt, stats, notes, connector.connectorName as MLSConnectorKind, connector.sourceSystem);
@@ -127,16 +104,19 @@ export async function runStaleCleanup(
         cursor: nextCursor
       });
 
-      if (activePage.items.length === 0) {
+      if (activePage.items.length === 0 && !activePage.nextCursor) {
+        if (sweepStartedAt) await recordReconciliationPage("cleanup", connector.sourceSystem, sweepStartedAt, page, [], 0);
         reachedEnd = true;
         break;
       }
 
       stats.fetched += activePage.items.length;
+      recordRetrieved(activePage.items.length);
       logSyncInfo("Cleanup fetched current active page", { page, count: activePage.items.length });
 
       const filteredRaw = filterRawListingsByTargetPostalAreas(activePage.items);
       stats.filtered += filteredRaw.included.length;
+      recordFiltered(filteredRaw.included.length);
 
       const nowIso = new Date().toISOString();
       const normalized = filteredRaw.included.map((raw) => normalizeListing(raw, nowIso));
@@ -149,56 +129,44 @@ export async function runStaleCleanup(
       ).length;
 
       const visibleListings = normalized.filter((listing) => listing.isVisible);
-      const hiddenListings = normalized.filter((listing) => !listing.isVisible);
 
-      const upsert = await upsertNormalizedListings(visibleListings, nowIso);
+      const upsert = await upsertNormalizedListings(normalized, nowIso);
       stats.created += upsert.created;
       stats.updated += upsert.updated;
       stats.upserted += upsert.upserted;
       stats.unchanged += upsert.unchanged;
       stats.snapshotsWritten += upsert.snapshotsWritten;
+      if (sweepStartedAt) await recordReconciliationPage("cleanup", connector.sourceSystem, sweepStartedAt, page, visibleListings.map(listing => listing.listingId), activePage.items.length);
 
-      if (hiddenListings.length > 0) {
-        const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
-        stats.archived += deleted;
-        stats.hidden += deleted;
-        if (deleted > 0) {
-          notes.push(`cleanup deleted ${deleted} non-displayable listing(s) from active-feed page ${page}.`);
-        }
-      }
+      stats.hidden += upsert.hidden;
+      stats.archived += upsert.hidden;
 
-      if (!activePage.nextCursor || activePage.items.length < mlsSyncConfig.pageSize) {
+      if (!activePage.nextCursor) {
         reachedEnd = true;
         break;
       }
 
       nextCursor = activePage.nextCursor;
       page += 1;
+      await saveCleanupCursor({ nextPage: page, nextCursor, sweepStartedAt });
     }
 
     if (reachedEnd) {
-      if (stats.fetched === 0) {
-        notes.push(
-          "Cleanup reached end of the active feed without fetching any rows, so stale deletion was skipped as a safety precaution."
-        );
-      } else if (sweepStartedAt) {
-        const deletedNotSeen = await deleteListingsNotSeenSinceForSource(sweepStartedAt, connector.sourceSystem);
-        if (deletedNotSeen > 0) {
-          stats.archived += deletedNotSeen;
-          stats.hidden += deletedNotSeen;
+      if (sweepStartedAt) {
+        const hiddenNotSeen = await reconcileMissing("cleanup", connector.sourceSystem, sweepStartedAt, page);
+        if (hiddenNotSeen > 0) {
+          stats.archived += hiddenNotSeen;
+          stats.hidden += hiddenNotSeen;
           stats.hiddenByReason.connector_not_returned =
-            (stats.hiddenByReason.connector_not_returned || 0) + deletedNotSeen;
-          notes.push(`cleanup deleted ${deletedNotSeen} listing(s) not present in the current active feed.`);
+            (stats.hiddenByReason.connector_not_returned || 0) + hiddenNotSeen;
+          notes.push(`cleanup hidden ${hiddenNotSeen} listing(s) not present in the current active feed.`);
         }
       }
 
-      await setCleanupStartPage(getDefaultCleanupStartPage());
-      await setCleanupNextCursor(null);
-      await setCleanupSweepStartedAt(null);
+      await saveCleanupCursor({ nextPage: getDefaultCleanupStartPage(), nextCursor: null, sweepStartedAt: null });
       notes.push("Cleanup reached end of current active feed. Cursor reset to page 1.");
     } else {
-      await setCleanupStartPage(page);
-      await setCleanupNextCursor(nextCursor);
+      await saveCleanupCursor({ nextPage: page, nextCursor, sweepStartedAt });
       notes.push(
         `Cleanup processed a batch (${maxPages} page${maxPages === 1 ? "" : "s"}) from page ${startPage}. Continue from page ${page} on next run.`
       );
@@ -209,9 +177,13 @@ export async function runStaleCleanup(
       stats,
       notes,
       connector.connectorName as MLSConnectorKind,
-      connector.sourceSystem
+      connector.sourceSystem,
+      reachedEnd
     );
   } catch (error) {
+    if (error instanceof IncompleteReconciliationError) {
+      await saveCleanupCursor({ nextPage: 1, nextCursor: null, sweepStartedAt: null });
+    }
     stats.failed += 1;
     logSyncError("Stale cleanup failed", error, { stats });
     throw error;
@@ -223,7 +195,8 @@ function buildCleanupResult(
   stats: MLSSyncStats,
   notes: string[],
   connectorKind: MLSConnectorKind,
-  sourceSystem: string
+  sourceSystem: string,
+  complete = false
 ): MLSSyncResult {
   const finishedAt = new Date().toISOString();
   logSyncInfo("Cleanup completed", {
@@ -231,7 +204,7 @@ function buildCleanupResult(
     filtered: stats.filtered,
     created: stats.created,
     updated: stats.updated,
-    deleted: stats.archived,
+    hidden: stats.archived,
     completedAt: finishedAt
   });
   return {
@@ -241,7 +214,8 @@ function buildCleanupResult(
     startedAt,
     finishedAt,
     stats,
-    notes
+    notes,
+    complete
   };
 }
 
@@ -264,4 +238,9 @@ function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats
     counts[reason] = (counts[reason] || 0) + 1;
   }
   return counts;
+}
+
+export async function runStaleCleanup(connectorKind?: MLSConnectorKind, options?: { maxPagesPerRun?: number }): Promise<MLSSyncResult> {
+  await ensureServerSecretsLoaded();
+  return withSyncLease(() => runStaleCleanupInternal(connectorKind, options));
 }

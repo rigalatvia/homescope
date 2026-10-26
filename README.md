@@ -259,13 +259,16 @@ Response includes sync counts:
 - `archived`
 - `failed`
 
-### Hourly Scheduled Sync + Saved Search Alerts
+### Daily MLS Sync + Existing Saved Search Alerts
 
 Recommended scheduler endpoint:
 - `POST /api/internal/mls-sync/scheduled`
 - required header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
 - executes incremental DDF sync (`ddf-treb`) and returns counts
-- stale cleanup is throttled by `MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS` so hourly runs do not reconcile the full active feed every hour
+- runs once daily at 04:00 `America/Toronto` (`0 4 * * *`), followed by resumable reconciliation
+- unchanged listings are not written; unavailable listings are hidden, never deleted by these runners
+- shared lease prevents overlapping manual/automatic runs; incomplete runs return HTTP 503 for bounded retries
+- `MLS_SCHEDULED_SAFE_RUNTIME_SECONDS` defaults to 240; successful same-day redelivery skips the feed
 
 Saved-search alert endpoint:
 - `POST /api/internal/saved-search-alerts/daily`
@@ -273,11 +276,15 @@ Saved-search alert endpoint:
 - checks saved searches after listing data has synced
 - Instant alerts are checked on every scheduled alert run; Daily and Weekly alerts respect their saved frequency
 
-Use Cloud Scheduler (or Firebase scheduled function wiring) to call these endpoints hourly.
+Keep exactly one Cloud Scheduler job for MLS. Leave the existing saved-search alert schedule unchanged.
+The repository configuration must be applied to the deployed job; changing this file alone does not change Cloud Scheduler.
+Use `scripts/configure-mls-daily-schedule.ps1` to preview/apply the existing job update and pause duplicates of its exact HTTP target.
 
 Example crons:
-- MLS sync: `0 * * * *`
-- saved search alerts: `15 * * * *`
+- MLS sync: `0 4 * * *`, timezone `America/Toronto`
+- saved search alerts: `15 * * * *` (unchanged)
+
+See [MLS synchronization report](docs/mls-sync-cost-report-2026-10-25.md) for verification, deployment requirements, and cost limitations.
 
 ### DDF Environment Variables (Server-Only)
 

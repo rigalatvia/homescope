@@ -1,123 +1,49 @@
-﻿import { FieldValue } from "firebase-admin/firestore";
-import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-
-const SETTINGS_COLLECTION = "settings";
-const INCREMENTAL_CURSOR_DOC_ID = "mlsIncrementalCursor";
-const DEFAULT_LOOKBACK_MS = 24 * 60 * 60 * 1000;
-
-interface IncrementalCursorDocument {
-  sinceIso?: string;
-  nextPage?: number;
-  nextCursor?: string | null;
-  sweepStartedAt?: string | null;
-  updatedAt?: string;
-}
-
-const DEFAULT_START_PAGE = 1;
-
-export async function getIncrementalSyncSince(defaultLookbackMs: number = DEFAULT_LOOKBACK_MS): Promise<Date> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).get();
-
-  if (!snapshot.exists) {
-    return new Date(Date.now() - defaultLookbackMs);
-  }
-
-  const data = snapshot.data() as IncrementalCursorDocument;
-  const raw = data?.sinceIso;
-  if (!raw) {
-    return new Date(Date.now() - defaultLookbackMs);
-  }
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date(Date.now() - defaultLookbackMs);
-  }
-
-  return parsed;
-}
-
-export async function setIncrementalSyncSince(sinceIso: string): Promise<void> {
-  const parsed = new Date(sinceIso);
-  const safeIso = Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).set(
-    {
-      sinceIso: safeIso,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
-}
-
-export function getDefaultIncrementalStartPage(): number {
-  return DEFAULT_START_PAGE;
-}
+import { readCursor, writeCursor } from "@/lib/mls/sync/execution";
+const ID = "mlsIncrementalCursor";
+export function getDefaultIncrementalStartPage() { return 1; }
 
 export async function getIncrementalStartPage(): Promise<number> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return DEFAULT_START_PAGE;
-
-  const data = snapshot.data() as IncrementalCursorDocument;
-  const nextPage = Number(data.nextPage ?? DEFAULT_START_PAGE);
-  if (!Number.isFinite(nextPage) || nextPage < DEFAULT_START_PAGE) return DEFAULT_START_PAGE;
-  return Math.floor(nextPage);
+  const data = await readCursor(ID);
+  return Number.isInteger(data.nextPage) && data.nextPage > 0 ? data.nextPage : 1;
 }
 
-export async function setIncrementalStartPage(nextPage: number): Promise<void> {
-  const safePage = Number.isFinite(nextPage) && nextPage >= DEFAULT_START_PAGE ? Math.floor(nextPage) : DEFAULT_START_PAGE;
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).set(
-    {
-      nextPage: safePage,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setIncrementalStartPage(value: number) {
+  await writeCursor(ID, { nextPage: value });
 }
 
 export async function getIncrementalNextCursor(): Promise<string | null> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return null;
-
-  const data = snapshot.data() as IncrementalCursorDocument;
-  return typeof data.nextCursor === "string" && data.nextCursor.trim() ? data.nextCursor : null;
+  const data = await readCursor(ID);
+  return typeof data.nextCursor === "string" && data.nextCursor ? data.nextCursor : null;
 }
 
-export async function setIncrementalNextCursor(nextCursor: string | null): Promise<void> {
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).set(
-    {
-      nextCursor,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setIncrementalNextCursor(value: string | null) {
+  await writeCursor(ID, { nextCursor: value });
 }
 
 export async function getIncrementalSweepStartedAt(): Promise<string | null> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return null;
-
-  const data = snapshot.data() as IncrementalCursorDocument;
-  return typeof data.sweepStartedAt === "string" && data.sweepStartedAt.trim() ? data.sweepStartedAt : null;
+  const data = await readCursor(ID);
+  return typeof data.sweepStartedAt === "string" && data.sweepStartedAt ? data.sweepStartedAt : null;
 }
 
-export async function setIncrementalSweepStartedAt(sweepStartedAt: string | null): Promise<void> {
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(INCREMENTAL_CURSOR_DOC_ID).set(
-    {
-      sweepStartedAt,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setIncrementalSweepStartedAt(value: string | null) {
+  await writeCursor(ID, { sweepStartedAt: value });
+}
+
+export async function saveIncrementalCursor(data: { nextPage: number; nextCursor: string | null; sweepStartedAt: string | null; sinceIso?: string; sweepSinceIso?: string | null }) {
+  await writeCursor(ID, data);
+}
+
+export async function getIncrementalSyncSince(defaultLookbackMs = 24 * 60 * 60 * 1000): Promise<Date> {
+ const data = await readCursor(ID);
+ const value = data.sweepSinceIso ?? data.sinceIso ?? data.initialSinceIso;
+ if (typeof value === "string" && Number.isFinite(Date.parse(value))) return new Date(value);
+ // Persist the initial boundary before fetching: a failed first run must not slide the window forward.
+ const initial = new Date(Date.now() - defaultLookbackMs);
+ await writeCursor(ID, { initialSinceIso: initial.toISOString() });
+ return initial;
+}
+
+export async function setIncrementalSyncSince(sinceIso: string) {
+ if (!Number.isFinite(Date.parse(sinceIso))) throw new Error("Invalid MLS checkpoint");
+ await writeCursor(ID, { sinceIso });
 }

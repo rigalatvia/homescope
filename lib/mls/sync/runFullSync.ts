@@ -1,3 +1,6 @@
+import { saveFullSyncCursor } from "@/lib/mls/sync/fullSyncCursor";
+import { recordReconciliationPage, reconcileMissing, hasReconciliationManifest, IncompleteReconciliationError } from "@/lib/mls/sync/reconciliation";
+import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime } from "@/lib/mls/sync/execution";
 import type {
   MLSConnectorKind,
   MLSHiddenReason,
@@ -9,25 +12,19 @@ import type {
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
-import { cleanupMisclassifiedKingstonListings } from "@/lib/mls/sync/cleanupMisclassifiedKingstonListings";
 import { createMLSConnector } from "@/lib/mls/sync/createConnector";
 import {
   getDefaultFullSyncStartPage,
   getFullSyncNextCursor,
   getFullSyncStartPage,
   getFullSyncSweepStartedAt,
-  setFullSyncNextCursor,
-  setFullSyncStartPage,
-  setFullSyncSweepStartedAt
 } from "@/lib/mls/sync/fullSyncCursor";
-import { deleteListingsNotSeenSince, deleteStoredHiddenAndNonActiveListings } from "@/lib/mls/sync/staleCleanup";
 import { clearMLSSyncStop, isMLSSyncStopRequested } from "@/lib/mls/sync/stopSignal";
-import { deleteExistingListingDocuments } from "@/lib/mls/upsert/repository";
 import { upsertNormalizedListings } from "@/lib/mls/upsert/upsertListings";
 import { logSyncError, logSyncInfo } from "@/lib/mls/utils/logger";
 import { ensureServerSecretsLoaded } from "@/lib/server/secret-manager";
 
-export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+async function runFullSyncInternal(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
   await ensureServerSecretsLoaded();
 
   const startedAt = new Date().toISOString();
@@ -63,45 +60,31 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
   });
 
   try {
-    const cleanupRemoved = await cleanupMisclassifiedKingstonListings();
-    if (cleanupRemoved > 0) {
-      stats.archived += cleanupRemoved;
-      notes.push(`cleanup removed ${cleanupRemoved} Kingston listing(s) incorrectly mapped into King.`);
-    }
-
-    const preCleanup = await deleteStoredHiddenAndNonActiveListings();
-    if (preCleanup.deleted > 0) {
-      stats.archived += preCleanup.deleted;
-      stats.hidden += preCleanup.deleted;
-      notes.push(
-        `cleanup deleted ${preCleanup.deleted} listing(s) already stored as hidden or non-active before full sync processing.`
-      );
-    }
-
     const savedStartPage = await getFullSyncStartPage();
     let nextCursor = await getFullSyncNextCursor();
     let sweepStartedAt = await getFullSyncSweepStartedAt();
     let startPage = savedStartPage;
+    if (startPage > 1 && !await hasReconciliationManifest("full", connector.sourceSystem, sweepStartedAt)) {
+      startPage = 1; nextCursor = null; sweepStartedAt = null;
+      await saveFullSyncCursor({ nextPage: 1, nextCursor: null, sweepStartedAt: null });
+    }
 
     if (startPage > getDefaultFullSyncStartPage() && !nextCursor && connector.fetchAllListingsPage) {
       startPage = getDefaultFullSyncStartPage();
       nextCursor = null;
       sweepStartedAt = startedAt;
-      await setFullSyncStartPage(startPage);
-      await setFullSyncNextCursor(null);
-      await setFullSyncSweepStartedAt(sweepStartedAt);
+      await saveFullSyncCursor({ nextPage: startPage, nextCursor: null, sweepStartedAt });
       notes.push(
         `Full sync cursor was upgraded from legacy page-only pagination and restarted at page ${startPage}.`
       );
     } else if (startPage === getDefaultFullSyncStartPage()) {
       nextCursor = null;
-      await setFullSyncNextCursor(null);
       sweepStartedAt = startedAt;
-      await setFullSyncSweepStartedAt(sweepStartedAt);
+      await saveFullSyncCursor({ nextPage: 1, nextCursor: null, sweepStartedAt });
       notes.push(`Full sync sweep started at ${sweepStartedAt}.`);
     } else if (!sweepStartedAt) {
       notes.push(
-        "Full sync resumed without a sweep marker. End-of-feed stale deletion will be skipped for this cycle as a safety precaution."
+        "Full sync resumed without a sweep marker. End-of-feed stale hiding will be skipped for this cycle as a safety precaution."
       );
     }
     let page = startPage;
@@ -117,9 +100,12 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
     });
 
     while (page <= stopPage) {
+      if (remainingSyncTime() < 5000) {
+        notes.push("Runtime budget reached; saved cursor will resume on retry.");
+        break;
+      }
       if (await isMLSSyncStopRequested()) {
-        await setFullSyncStartPage(page);
-        await setFullSyncNextCursor(nextCursor);
+        await saveFullSyncCursor({ nextPage: page, nextCursor, sweepStartedAt });
         await clearMLSSyncStop();
         notes.push(`Full sync stop requested. Paused before page ${page}. Continue from page ${page} on next run.`);
         logSyncInfo("Full sync stop requested", { nextPage: page });
@@ -144,16 +130,19 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
         });
       }
 
-      if (rawPage.length === 0) {
+      if (rawPage.length === 0 && !nextCursorFromFeed) {
+        if (sweepStartedAt) await recordReconciliationPage("full", connector.sourceSystem, sweepStartedAt, page, [], 0);
         reachedEnd = true;
         break;
       }
 
       stats.fetched += rawPage.length;
+      recordRetrieved(rawPage.length);
       logSyncInfo("Full sync fetched page", { page, count: rawPage.length });
 
       const filteredRaw = filterRawListingsByTargetPostalAreas(rawPage);
       stats.filtered += filteredRaw.included.length;
+      recordFiltered(filteredRaw.included.length);
       if (filteredRaw.excludedCount > 0) {
         logSyncInfo("Full sync target-area filter applied", {
           page,
@@ -179,32 +168,27 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       ).length;
 
       const visibleListings = normalized.filter((listing) => listing.isVisible);
-      const hiddenListings = normalized.filter((listing) => !listing.isVisible);
 
-      const upsert = await upsertNormalizedListings(visibleListings, nowIso);
+      const upsert = await upsertNormalizedListings(normalized, nowIso);
       stats.created += upsert.created;
       stats.updated += upsert.updated;
       stats.upserted += upsert.upserted;
       stats.unchanged += upsert.unchanged;
       stats.snapshotsWritten += upsert.snapshotsWritten;
+      if (sweepStartedAt) await recordReconciliationPage("full", connector.sourceSystem, sweepStartedAt, page, visibleListings.map(listing => listing.listingId), rawPage.length);
 
-      if (hiddenListings.length > 0) {
-        const deleted = await deleteExistingListingDocuments(hiddenListings.map((listing) => listing.listingId));
-        stats.archived += deleted;
-        stats.hidden += deleted;
-        if (deleted > 0) {
-          notes.push(`full sync deleted ${deleted} non-active or hidden listing(s) from page ${page}.`);
-        }
-      }
+      stats.hidden += upsert.hidden;
+      stats.archived += upsert.hidden;
 
       if (connector.fetchAllListingsPage) {
-        if (!nextCursorFromFeed || rawPage.length < mlsSyncConfig.pageSize) {
+        if (!nextCursorFromFeed) {
           reachedEnd = true;
           break;
         }
 
         page += 1;
         nextCursor = nextCursorFromFeed;
+        await saveFullSyncCursor({ nextPage: page, nextCursor, sweepStartedAt });
       } else {
         if (rawPage.length < mlsSyncConfig.pageSize) {
           reachedEnd = true;
@@ -219,22 +203,19 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
 
     if (reachedEnd) {
       if (sweepStartedAt) {
-        const notReturnedDeleted = await deleteListingsNotSeenSince(sweepStartedAt);
+        const notReturnedDeleted = await reconcileMissing("full", connector.sourceSystem, sweepStartedAt, page);
         if (notReturnedDeleted > 0) {
           stats.archived += notReturnedDeleted;
           stats.hidden += notReturnedDeleted;
           stats.hiddenByReason.connector_not_returned =
             (stats.hiddenByReason.connector_not_returned || 0) + notReturnedDeleted;
-          notes.push(`Full sync deleted ${notReturnedDeleted} listing(s) not returned by the feed.`);
+          notes.push(`Full sync hidden ${notReturnedDeleted} listing(s) not returned by the feed.`);
         }
       }
-      await setFullSyncStartPage(getDefaultFullSyncStartPage());
-      await setFullSyncNextCursor(null);
-      await setFullSyncSweepStartedAt(null);
+      await saveFullSyncCursor({ nextPage: getDefaultFullSyncStartPage(), nextCursor: null, sweepStartedAt: null });
       notes.push("Full sync reached end of feed. Cursor reset to page 1.");
     } else if (!stopRequested) {
-      await setFullSyncStartPage(page);
-      await setFullSyncNextCursor(nextCursor);
+      await saveFullSyncCursor({ nextPage: page, nextCursor, sweepStartedAt });
       const pageLabel = Number.isFinite(maxPages) ? String(maxPages) : "unlimited";
       const note = `Full sync processed a batch (${pageLabel} pages) from page ${startPage}. Continue from page ${page} on next run.`;
       notes.push(note);
@@ -277,9 +258,13 @@ export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLS
       startedAt,
       finishedAt,
       stats,
+      complete: reachedEnd,
       notes
     };
   } catch (error) {
+    if (error instanceof IncompleteReconciliationError) {
+      await saveFullSyncCursor({ nextPage: 1, nextCursor: null, sweepStartedAt: null });
+    }
     stats.failed += 1;
     logSyncError("Full sync failed", error, { stats });
     throw error;
@@ -458,4 +443,9 @@ function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats
     counts[reason] = (counts[reason] || 0) + 1;
   }
   return counts;
+}
+
+export async function runFullSync(connectorKind?: MLSConnectorKind): Promise<MLSSyncResult> {
+  await ensureServerSecretsLoaded();
+  return withSyncLease(() => runFullSyncInternal(connectorKind));
 }

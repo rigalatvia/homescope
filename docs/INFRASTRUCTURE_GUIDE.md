@@ -643,12 +643,14 @@ Important groups:
 - `MLS_SYNC_ADMIN_TOKEN`
 - `MLS_SCHEDULER_TOKEN`
 
-#### Sync schedule declarations
+#### Legacy sync schedule declarations (inactive scaffolding)
 
 - `SYNC_FULL_CRON`
 - `SYNC_INCREMENTAL_CRON`
 - `SYNC_CLEANUP_CRON`
 - `SYNC_STALE_THRESHOLD_HOURS`
+
+These declarations do not create Cloud Scheduler jobs. The production HTTP route uses the daily configuration above. Do not deploy an additional MLS function schedule.
 
 ## 11. Deployment Model
 
@@ -763,19 +765,21 @@ Required header:
 
 - `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
 
-Current scheduler setup:
+Required scheduler setup after the MLS cost optimization (live update requires deployment/IAM access):
 
-- hourly MLS incremental sync:
+- daily MLS incremental sync and reconciliation:
   - `POST https://homescopegta.ca/api/internal/mls-sync/scheduled`
   - header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
-  - cron: `0 * * * *`
-- hourly saved-search alerts, after MLS sync:
+  - cron: `0 4 * * *`
+  - timezone: `America/Toronto`
+- hourly saved-search alerts (unchanged):
   - `POST https://homescopegta.ca/api/internal/saved-search-alerts/daily`
   - header: `x-scheduler-token: <MLS_SCHEDULER_TOKEN>`
   - cron: `15 * * * *`
 
-The saved-search alert job should run about 10-15 minutes after MLS sync so Instant alerts can react to newly synced data.
-The MLS scheduled endpoint is safe to run hourly; active-feed stale cleanup is throttled by `MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS` and defaults to once every 24 hours.
+Keep saved-search alerts and social processing schedules unchanged. The 04:15 alert run can see data completed by then; later runs see data from longer/retried MLS jobs.
+The MLS route shares a fenced lease with manual sync, skips successful same-day duplicate delivery, and returns 503 for incomplete work. Configure bounded retries on the single daily job. `MLS_SCHEDULED_CLEANUP_INTERVAL_HOURS` and `MLS_SCHEDULED_INCREMENTAL_RUN_LIMIT` are no longer used by this route.
+Use `scripts/configure-mls-daily-schedule.ps1` to preview/apply the existing job configuration without printing its authentication headers. See `docs/mls-sync-cost-report-2026-10-25.md` for the deployment order and remaining verification.
 
 #### Step 8. Run initial sync
 

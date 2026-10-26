@@ -1,83 +1,34 @@
-import { FieldValue } from "firebase-admin/firestore";
-import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
-
-const SETTINGS_COLLECTION = "settings";
-const CLEANUP_CURSOR_DOC_ID = "mlsCleanupCursor";
-const DEFAULT_START_PAGE = 1;
-
-interface CleanupCursorDocument {
-  nextPage?: number;
-  nextCursor?: string | null;
-  updatedAt?: string;
-  sweepStartedAt?: string | null;
-}
-
-export function getDefaultCleanupStartPage(): number {
-  return DEFAULT_START_PAGE;
-}
+import { readCursor, writeCursor } from "@/lib/mls/sync/execution";
+const ID = "mlsCleanupCursor";
+export function getDefaultCleanupStartPage() { return 1; }
 
 export async function getCleanupStartPage(): Promise<number> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return DEFAULT_START_PAGE;
-
-  const data = snapshot.data() as CleanupCursorDocument;
-  const nextPage = Number(data.nextPage ?? DEFAULT_START_PAGE);
-  if (!Number.isFinite(nextPage) || nextPage < DEFAULT_START_PAGE) return DEFAULT_START_PAGE;
-  return Math.floor(nextPage);
+  const data = await readCursor(ID);
+  return Number.isInteger(data.nextPage) && data.nextPage > 0 ? data.nextPage : 1;
 }
 
-export async function setCleanupStartPage(nextPage: number): Promise<void> {
-  const safePage = Number.isFinite(nextPage) && nextPage >= DEFAULT_START_PAGE ? Math.floor(nextPage) : DEFAULT_START_PAGE;
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).set(
-    {
-      nextPage: safePage,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setCleanupStartPage(value: number) {
+  await writeCursor(ID, { nextPage: value });
 }
 
 export async function getCleanupNextCursor(): Promise<string | null> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return null;
-
-  const data = snapshot.data() as CleanupCursorDocument;
-  return typeof data.nextCursor === "string" && data.nextCursor.trim() ? data.nextCursor : null;
+  const data = await readCursor(ID);
+  return typeof data.nextCursor === "string" && data.nextCursor ? data.nextCursor : null;
 }
 
-export async function setCleanupNextCursor(nextCursor: string | null): Promise<void> {
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).set(
-    {
-      nextCursor,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setCleanupNextCursor(value: string | null) {
+  await writeCursor(ID, { nextCursor: value });
 }
 
 export async function getCleanupSweepStartedAt(): Promise<string | null> {
-  const firestore = getFirebaseAdminFirestore();
-  const snapshot = await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).get();
-  if (!snapshot.exists) return null;
-
-  const data = snapshot.data() as CleanupCursorDocument;
-  return typeof data.sweepStartedAt === "string" && data.sweepStartedAt.trim() ? data.sweepStartedAt : null;
+  const data = await readCursor(ID);
+  return typeof data.sweepStartedAt === "string" && data.sweepStartedAt ? data.sweepStartedAt : null;
 }
 
-export async function setCleanupSweepStartedAt(sweepStartedAt: string | null): Promise<void> {
-  const firestore = getFirebaseAdminFirestore();
-  await firestore.collection(SETTINGS_COLLECTION).doc(CLEANUP_CURSOR_DOC_ID).set(
-    {
-      sweepStartedAt,
-      updatedAt: new Date().toISOString(),
-      updatedAtServer: FieldValue.serverTimestamp()
-    },
-    { merge: true }
-  );
+export async function setCleanupSweepStartedAt(value: string | null) {
+  await writeCursor(ID, { sweepStartedAt: value });
+}
+
+export async function saveCleanupCursor(data: { nextPage: number; nextCursor: string | null; sweepStartedAt: string | null }) {
+  await writeCursor(ID, data);
 }

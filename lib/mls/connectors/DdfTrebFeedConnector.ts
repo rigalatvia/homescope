@@ -1,6 +1,7 @@
 import { logSyncInfo, logSyncWarn } from "@/lib/mls/utils/logger";
 import { verifiedDdfOffice } from "@/lib/mls/config/listing-offices";
 import { withRetry } from "@/lib/mls/utils/retry";
+import { remainingSyncTime } from "@/lib/mls/sync/execution";
 import type {
   MLSConnectorHealth,
   MLSFetchOptions,
@@ -303,7 +304,7 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
 
     return withRetry(attemptRequest, {
       retries: this.config.maxRetries,
-      shouldRetry: (error) => shouldRetryDdfError(error)
+      shouldRetry: (error) => remainingSyncTime() > 5000 && shouldRetryDdfError(error)
     });
   }
 
@@ -346,12 +347,14 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
 
   private async fetchWithTimeout(url: string, init: RequestInit, operationLabel: string): Promise<Response> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.config.requestTimeoutMs);
+    const timeoutMs = Math.min(this.config.requestTimeoutMs, remainingSyncTime());
+    if (timeoutMs <= 0) throw new Error("MLS runtime budget reached; resume from saved cursor.");
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
       return await fetch(url, { ...init, signal: controller.signal, cache: "no-store" });
     } catch (error) {
       if (isAbortError(error)) {
-        throw new Error(`DDF ${operationLabel} timed out after ${this.config.requestTimeoutMs}ms.`);
+        throw new Error(`DDF ${operationLabel} timed out after ${timeoutMs}ms.`);
       }
       throw error;
     } finally {
@@ -361,7 +364,8 @@ export class DdfTrebFeedConnector implements MLSFeedConnector {
 
   private mapDdfRecordToRawListing(record: JsonObject, index: number): RawMLSFeedListing {
     const sourceListingKey =
-      pickString(record, ["ListingKey", "listingKey", "Id", "id", "ListingId"]) || `${Date.now()}-${index}`;
+      pickString(record, ["ListingKey", "listingKey", "Id", "id", "ListingId"]);
+    if (!sourceListingKey) throw new Error(`DDF record ${index} has no stable listing identifier; checkpoint retained.`);
     const leaseAmount = pickNumber(record, ["LeaseAmount", "LeasePrice"]);
     const leasePrice = pickNumber(record, ["LeasePrice"]);
     const totalActualRent = pickNumber(record, ["TotalActualRent"]);
@@ -574,23 +578,26 @@ function isDisplayableImage(url: string, mediaCategory: string): boolean {
 }
 
 function extractListingsArray(payload: unknown): JsonObject[] {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload.filter(isJsonObject);
-  if (!isJsonObject(payload)) return [];
+  const validate = (rows: unknown[]): JsonObject[] => {
+    if (!rows.every(isJsonObject)) throw new Error("DDF page contains malformed records; checkpoint retained.");
+    return rows;
+  };
+  if (Array.isArray(payload)) return validate(payload);
+  if (!isJsonObject(payload)) throw new Error("Invalid DDF response; checkpoint retained.");
 
   const candidates = ["value", "results", "data", "listings", "Listings", "items"];
   for (const key of candidates) {
     const value = payload[key];
     if (Array.isArray(value)) {
-      return value.filter(isJsonObject);
+      return validate(value);
     }
   }
 
   if (isJsonObject(payload["d"]) && Array.isArray((payload["d"] as JsonObject)["results"])) {
-    return ((payload["d"] as JsonObject)["results"] as unknown[]).filter(isJsonObject);
+    return validate((payload["d"] as JsonObject)["results"] as unknown[]);
   }
 
-  return [];
+  throw new Error("DDF response has no listing array; checkpoint retained.");
 }
 
 function extractNextUrl(payload: unknown): string | null {
@@ -640,7 +647,7 @@ function buildDefaultResidentialFilter(): string {
   const residentialSubTypes = ["Single Family", "Multi-family"];
   const subTypeFilter = residentialSubTypes.map((value) => `PropertySubType eq '${value}'`).join(" or ");
   // Do not filter by active status at the feed level. We need non-active rows too so
-  // incremental and full syncs can delete listings that changed from active to sold,
+  // incremental and full syncs can hide listings that changed from active to sold,
   // suspended, terminated, expired, or similar non-displayable states.
   return `(${subTypeFilter})`;
 }

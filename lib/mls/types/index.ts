@@ -152,6 +152,8 @@ export interface NormalizedMLSListing {
 export interface MLSListingFirestoreDocument extends NormalizedMLSListing {
   createdAt: string;
   updatedAt: string;
+  // Legacy field retained for compatibility; unchanged listings are not touched.
+  // Reconciliation manifests, never this timestamp, determine source absence.
   lastSeenInSourceAt: string;
 }
 
@@ -204,6 +206,7 @@ export interface MLSSyncStats {
 }
 
 export interface MLSSyncResult {
+  complete?: boolean;
   mode: MLSSyncMode;
   startedAt: string;
   finishedAt: string;
