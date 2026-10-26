@@ -19,7 +19,8 @@ function formatDateTime(value: string | null): string {
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("en-CA", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "America/Toronto"
   }).format(date);
 }
 
@@ -50,14 +51,14 @@ export default async function AdminCrmCampaignsPage() {
         <CrmMetricCard label="Failed" value={String(status.failed)} detail="Latest daily campaign run failures." />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)]">
+      <div className="grid min-w-0 gap-6">
         <section className="space-y-5 rounded-[32px] border border-brand-100 bg-white p-6 shadow-soft lg:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">Campaign Monitor</p>
               <h2 className="mt-2 font-heading text-3xl text-brand-900">Daily birthday and holiday automation</h2>
               <p className="mt-3 text-sm leading-6 text-brand-700">
-                This page shows the latest CRM automation result and the recent send log written by the daily campaign runner.
+                This page shows the latest CRM automation result and the recent send log written by the daily campaign runner. All times are shown in Toronto time.
               </p>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(status.lastRunStatus)}`}>
@@ -117,9 +118,9 @@ export default async function AdminCrmCampaignsPage() {
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-brand-100">
-            <div className="overflow-x-auto">
+            <div className="max-h-[640px] overflow-auto" tabIndex={0} role="region" aria-label="Recent campaign activity; scroll to view all columns and entries">
               <table className="min-w-[920px] w-full text-left text-sm">
-                <thead className="bg-brand-50 text-brand-800">
+                <thead className="sticky top-0 bg-brand-50 text-brand-800">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Sent At</th>
                     <th className="px-4 py-3 font-semibold">Template</th>

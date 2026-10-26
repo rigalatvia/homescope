@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin/authorize-request";
 import { socialAction, socialOverview } from "@/lib/social/admin";
+import { isValidSocialOrigin } from "@/lib/social/request-origin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     const denied = await authorizeAdminRequest();
     if (denied)
         return denied;
-    if (request.headers.get("x-social-admin") !== "1" || (request.headers.get("origin") && request.headers.get("origin") !== new URL(request.url).origin))
+    if (!isValidSocialOrigin(request))
         return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     try {
         if (Number(request.headers.get("content-length") || 0) > 16000)
