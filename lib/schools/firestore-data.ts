@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { singleFlight } from "@/lib/server/single-flight";
 import { applySchoolRankingOverride, applySchoolRankingOverrides } from "@/data/school-ranking-overrides";
 import { schools as seedSchools } from "@/data/schools";
 import { COLLECTIONS } from "@/lib/firebase-sync/firestore/collections";
@@ -19,7 +20,7 @@ const getCachedSchoolsFromFirestore = unstable_cache(
   { revalidate: 3600, tags: [SCHOOLS_CACHE_TAG] }
 );
 
-export async function getSchoolDirectory(): Promise<School[]> {
+export const getSchoolDirectory = singleFlight(async (): Promise<School[]> => {
   try {
     const schools = await getCachedSchoolsFromFirestore();
     if (schools.length > 0) return applySchoolRankingOverrides(schools);
@@ -28,7 +29,7 @@ export async function getSchoolDirectory(): Promise<School[]> {
   }
 
   return applySchoolRankingOverrides(seedSchools);
-}
+});
 
 export async function importSeedSchoolsToFirestore(): Promise<{
   imported: number;

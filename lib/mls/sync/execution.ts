@@ -27,8 +27,9 @@ export function listingReadCache() { return context.getStore()?.listingCache; }
 export function cacheListing(id: string, data: MLSListingFirestoreDocument | null) {
   const cache = listingReadCache(); if (!cache) return;
   cache.delete(id); cache.set(id, data);
-  // Bound memory even during a large reconciliation.
-  if (cache.size > 2000) cache.delete(cache.keys().next().value!);
+  // Retain at most one feed page. Full documents contain image lists and
+  // descriptions; keeping thousands across a daily sweep raises peak memory.
+  if (cache.size > 100) cache.delete(cache.keys().next().value!);
 }
 export class SyncBusyError extends Error {}
 export function recordReads(count: number) { const c = context.getStore(); if (c) c.reads += count; }
@@ -65,7 +66,7 @@ export async function withSyncLease<T>(work: () => Promise<T>): Promise<T> {
       tx.set(ref, { owner: state.owner, expiresAt: Date.now() + LEASE_MS });
     });
     state.writes++;
-    console.info(JSON.stringify({ event: "mls_sync_started", startedAt, executionId: state.owner }));
+    console.info(JSON.stringify({ event: "mls_sync_started", startedAt, executionId: state.owner, memoryBytes: process.memoryUsage() }));
     try { return await work(); }
     catch (error) { state.failedOperations++; throw error; }
     finally {
@@ -82,7 +83,7 @@ export async function withSyncLease<T>(work: () => Promise<T>): Promise<T> {
         throw error;
       } finally {
         console.info(JSON.stringify({ event: "mls_sync_finished", startedAt, finishedAt: new Date().toISOString(),
-          durationMs: Date.now() - Date.parse(startedAt), executionId: state.owner, ...syncOperationCounts() }));
+          durationMs: Date.now() - Date.parse(startedAt), executionId: state.owner, memoryBytes: process.memoryUsage(), ...syncOperationCounts() }));
       }
     }
   });

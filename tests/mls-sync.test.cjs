@@ -74,6 +74,15 @@ function seed(id, changes) {
   records.set(path(id), { ...normalized(id, changes), createdAt: old, updatedAt: old, lastSeenInSourceAt: old });
 }
 const listingWrites = () => writes.filter(w => w.path.startsWith('listings/'));
+test('sync listing cache retains only one page and releases evicted documents', async () => {
+  const { cacheListing, listingReadCache } = require('../lib/mls/sync/execution.ts');
+  await withSyncLease(async () => {
+    for (let i = 0; i < 250; i++) cacheListing(String(i), normalized(String(i)));
+    assert.equal(listingReadCache().size, 100);
+    assert.equal(listingReadCache().has('0'), false);
+    assert.equal(listingReadCache().has('249'), true);
+  });
+});
 const snapshotWrites = () => writes.filter(w => w.path.startsWith('listingSnapshots/'));
 beforeEach(() => {
   records.clear(); writes = []; reads = []; failCommit = null; calls = [];
