@@ -48,9 +48,20 @@ export function SocialAutomationPanel() {
         setMessage("");
         try {
             const response = await fetch("/api/admin/social", { method: "POST", headers: { "Content-Type": "application/json", "x-social-admin": "1" }, body: JSON.stringify(payload) });
-            const result = await response.json();
+            let result = await response.json();
             if (!response.ok)
                 throw new Error(result.error || "Action failed.");
+            if (payload.action === "importExisting") {
+                let imported = result.imported;
+                while (!result.complete) {
+                    setMessage(`Imported ${imported} brokerage drafts. Loading more…`);
+                    const next = await fetch("/api/admin/social", { method: "POST", headers: { "Content-Type": "application/json", "x-social-admin": "1" }, body: JSON.stringify(payload) });
+                    result = await next.json();
+                    if (!next.ok) throw new Error(result.error || "Import interrupted. Click import to resume.");
+                    imported += result.imported;
+                }
+                result.imported = imported;
+            }
             if (payload.action === "health")
                 setHealth(result);
             const fresh = await load();
@@ -59,7 +70,7 @@ export function SocialAutomationPanel() {
                 if (updated)
                     setSelected(updated);
             }
-            setMessage(payload.action === "importExisting" ? `Imported ${result.imported} existing drafts. ${result.complete ? "Existing inventory scan complete." : "Click again to scan the next 100 listings."}` : payload.action === "dryRun" ? "Dry run generated. Open the campaign to inspect every slide and caption." : payload.action === "publishNow" ? "Publishing started. The worker will publish as soon as the media is ready." : "Changes saved.");
+            setMessage(payload.action === "importExisting" ? `Imported ${result.imported} existing drafts. ${result.complete ? "Brokerage import complete." : "Loading matching brokerage listings."}` : payload.action === "dryRun" ? "Dry run generated. Open the campaign to inspect every slide and caption." : payload.action === "publishNow" ? "Publishing started. The worker will publish as soon as the media is ready." : "Changes saved.");
         }
         catch (e) {
             setError(e instanceof Error ? e.message : "Action failed.");
@@ -87,7 +98,7 @@ export function SocialAutomationPanel() {
       {health && <div className="mt-4 rounded-xl border border-brand-200 p-4 text-sm"><p className="font-semibold">{health.ok ? "Connections verified" : "Connection requires attention"}</p><p>Facebook: {health.pageName} ({health.pageId})</p><p>Instagram: @{health.username} ({health.instagramId})</p><p>Token expiry: {health.expiresAt ? date(health.expiresAt) : "No scheduled expiry returned"}</p>{health.missingScopes.length > 0 && <p>Missing permissions: {health.missingScopes.join(", ")}</p>}<p>Checked {date(health.checkedAt)}</p></div>}
     </section>}
     <section className="rounded-2xl border border-brand-100 bg-white p-6 shadow-soft"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-lg font-semibold text-brand-900">Add an existing listing draft</h2><p className="mt-1 text-sm text-brand-600">Enter an eligible listing ID to generate a preview without publishing, or import existing inventory below.</p></div><div className="flex w-full gap-2 sm:w-auto"><input aria-label="Listing ID" placeholder="Listing ID (source:key)" value={listingId} onChange={e => setListingId(e.target.value)} className={`${field} !mt-0 sm:w-72`}/><button className={button} disabled={busy || !listingId.trim()} onClick={() => { setGroup("existing"); void act({ action: "dryRun", listingId: listingId.trim() }); }}><Camera size={16}/>Generate</button></div></div></section>
-    <div className="flex flex-wrap gap-3" aria-label="Listing groups"><button className={button} aria-pressed={group === "new"} onClick={() => setGroup("new")}>New listings</button><button className={button} aria-pressed={group === "existing"} onClick={() => setGroup("existing")}>Existing listings</button>{group === "existing" && <button className={button} disabled={busy} onClick={() => act({ action: "importExisting" })}>Import next existing batch</button>}</div>
+    <div className="flex flex-wrap gap-3" aria-label="Listing groups"><button className={button} aria-pressed={group === "new"} onClick={() => setGroup("new")}>New listings</button><button className={button} aria-pressed={group === "existing"} onClick={() => setGroup("existing")}>Existing listings</button>{group === "existing" && <button className={button} disabled={busy} onClick={() => act({ action: "importExisting" })}>Import brokerage listings</button>}</div>
     <p className="text-sm text-brand-600">New listings are first added by MLS sync after this update. Earlier inventory and manual previews appear under Existing listings. Dates use Toronto time.</p>
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{data?.campaigns.filter(c => c.state !== "skipped" && (c.listingGroup || "existing") === group).map(c => <article key={c.id} className="overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-soft">
       <div className="relative aspect-[16/9] bg-slate-100">{c.assets[0] || c.property.photo ? <img src={c.assets[0] || c.property.photo!} alt={`Property in ${c.property.city}`} className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-brand-400"><Camera size={36}/></div>}<div className="absolute left-3 top-3"><Status value={c.dryRun ? (c.assets.length ? "Ready for review" : "Draft") : c.state}/></div></div>

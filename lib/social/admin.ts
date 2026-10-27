@@ -1,7 +1,7 @@
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 import { campaignRef, getListing, getSettings, withSocialLock, settingsRef, COLLECTION } from "./store";
-import { eligibilityReason, newCampaign, validateSettings, reference, stopCampaign } from "./policy";
+import { BROKERAGE, eligibilityReason, newCampaign, validateSettings, reference, stopCampaign } from "./policy";
 import { MetaClient, metaConfig, reconcile, advanceFirstComment, commentRetryAt } from "./meta";
 import { generateCampaign, runSocialWorker } from "./worker";
 import { NEVER, PLATFORMS, type SocialCampaign, type SocialSettings, type Platform } from "./types";
@@ -31,9 +31,12 @@ export async function socialAction(input: Record<string, unknown>) {
         if (action === "importExisting") {
             return withSyncLease(async () => {
             const state = (await settingsRef().get()).data() || {};
-            if (state.reviewImportComplete) return { imported: 0, complete: true };
-            let query = getFirebaseAdminFirestore().collection("listings").orderBy(FieldPath.documentId()).limit(100);
-            if (state.reviewImportCursor) query = query.startAfter(state.reviewImportCursor);
+            // Separate cursor from the old whole-inventory scan: previously
+            // completed scans must not suppress this targeted import.
+            let query = getFirebaseAdminFirestore().collection("listings")
+                .where("brokerageName", "==", BROKERAGE)
+                .orderBy(FieldPath.documentId()).limit(100);
+            if (state.brokerageNameReviewImportCursor) query = query.startAfter(state.brokerageNameReviewImportCursor);
             const rows = await query.get();
             let imported = 0;
             for (const row of rows.docs) {
@@ -48,8 +51,9 @@ export async function socialAction(input: Record<string, unknown>) {
                 catch (error) { if ((error as { code?: number }).code !== 6) throw error; }
             }
             await lock.check();
-            await settingsRef().set({ reviewImportCursor: rows.docs.at(-1)?.id || state.reviewImportCursor || null,
-                reviewImportComplete: rows.size < 100 }, { merge: true });
+            // Reset on completion so a later import can find newly backfilled
+            // office identities. Deterministic campaign IDs prevent duplicates.
+            await settingsRef().set({ brokerageNameReviewImportCursor: rows.size < 100 ? null : rows.docs.at(-1)!.id }, { merge: true });
             return { imported, complete: rows.size < 100 };
             });
         }

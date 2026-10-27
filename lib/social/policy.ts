@@ -15,13 +15,13 @@ export function matchesOfficeName(value: unknown): boolean {
     const normalized = value.normalize("NFKC").toUpperCase().replace(/[^A-Z0-9]/g, "");
     return normalized === "REMAXMETROPOLISREALTY" || normalized === "REMAXMETROPOLISREALTYBROKERAGE";
 }
-export function isMetropolisRealtyListing(listing: Pick<SocialListing, "listingOfficeName" | "listingOfficeKey" | "sourceSystem">): boolean {
-    return listing.listingOfficeKey ? !!verifiedDdfOffice(listing.listingOfficeKey, listing.sourceSystem) : matchesOfficeName(listing.listingOfficeName);
+export function isMetropolisRealtyListing(listing: Pick<SocialListing, "brokerageName" | "listingOfficeName" | "listingOfficeKey" | "sourceSystem">): boolean {
+    return listing.listingOfficeKey ? !!verifiedDdfOffice(listing.listingOfficeKey, listing.sourceSystem) : matchesOfficeName(listing.brokerageName || listing.listingOfficeName);
 }
 export function eligibilityReason(listing: SocialListing | null): string | null {
     if (!listing)
         return "Listing no longer exists.";
-    if (!listing.listingOfficeName && !listing.listingOfficeKey)
+    if (!listing.brokerageName && !listing.listingOfficeName && !listing.listingOfficeKey)
         return "Source listing-office identity is unavailable; sync this listing first.";
     if (!isMetropolisRealtyListing(listing))
         return "Listing office does not match RE/MAX METROPOLIS REALTY.";
@@ -73,7 +73,7 @@ export function newCampaign(listing: SocialListing, now: string, dryRun: boolean
     const captions = buildCaptions(listing, id);
     const platform = (caption: string): Publication => ({ status: "queued", caption, mediaIds: [], containerId: null, preparedAt: null, submittedAt: null, postId: null, permalink: null, publishedAt: null, retries: 0, retryAt: null, lastError: null });
     return { id, listingGroup: "existing", listingCreatedAt: listing.createdAt, publishApprovedAt: null, listingId: listing.listingId, mlsNumber: listing.mlsNumber, campaignType: "just_listed", discoveredAt: listing.socialDiscoveredAt || listing.createdAt, createdAt: now, updatedAt: now, scheduledAt: null, startedAt: null, nextAttemptAt: now, state: "queued", dryRun, manual, assets: [], assetPaths: [], generation: 0, contentHash: null, lastError: null,
-        property: { city: listing.municipality || "GTA", address: listing.address.fullAddress || "", price: listing.price, brokerage: listing.listingOfficeName || BROKERAGE, photo: listing.images[0] || null, url: propertyUrl(listing) }, instagram: platform(captions.instagram), facebook: platform(captions.facebook) };
+        property: { city: listing.municipality || "GTA", address: listing.address.fullAddress || "", price: listing.price, brokerage: listing.brokerageName || listing.listingOfficeName || BROKERAGE, photo: listing.images[0] || null, url: propertyUrl(listing) }, instagram: platform(captions.instagram), facebook: platform(captions.facebook) };
 }
 export function contentHash(listing: SocialListing): string {
     return createHash("sha256").update(JSON.stringify(["first-comment-v2", listing.slug, listing.mlsNumber, listing.price, listing.transactionType, listing.municipality, listing.area, listing.address.fullAddress, facts(listing), listing.images])).digest("hex");

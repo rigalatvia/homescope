@@ -171,11 +171,8 @@ export async function getNearbyListingCandidates(options: {
   try {
     return await getListingsNearCoordinateFromFirestore(options);
   } catch (error) {
-    console.error("[listings] Nearby coordinate lookup failed; falling back to municipality listings", error);
-    if (options.municipality) {
-      return getPublicListingsFromFirestore({ city: options.municipality });
-    }
-    return getPublicListingsFromFirestore({});
+    console.error("[listings] Nearby coordinate lookup failed; refusing an inventory-wide fallback", error);
+    throw new Error("Nearby listings are temporarily unavailable. Please try again later.");
   }
 }
 
@@ -192,20 +189,15 @@ export async function getSimilarListingsForListing(listing: Listing, limit = 8):
   }
 
   if (candidateMap.size < limit + 1) {
-    const layoutCandidates = await getPublicListings(
+    const layoutCandidates = await getPublicListingsPageFromFirestore(
       {
         transactionType: listing.transactionType,
-        bedrooms: listing.bedrooms,
-        bedroomsMatch: "exact",
-        bathrooms: listing.bathrooms,
-        bathroomsMatch: "exact",
         page: 1,
         pageSize: 50
-      },
-      { includeAllItems: true }
+      }
     );
 
-    for (const candidate of layoutCandidates.allItems ?? layoutCandidates.items) {
+    for (const candidate of layoutCandidates.items) {
       candidateMap.set(candidate.id, candidate);
     }
   }

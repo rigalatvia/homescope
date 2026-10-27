@@ -30,6 +30,14 @@ test("public captions omit MLS, property URLs and listing-agent claims",()=>{
   assert.match(caption,/RE\/MAX METROPOLIS REALTY/);
  }
 });
+
+test("legacy brokerageName documents qualify without duplicate office-name fields",()=>{
+ const legacy={...listing,listingOfficeKey:null,listingOfficeName:null,brokerageName:"RE/MAX METROPOLIS REALTY"};
+ assert.equal(policy.eligibilityReason(legacy),null);
+ assert.ok(policy.eligibilityReason({...legacy,brokerageName:"OTHER BROKERAGE"}));
+ assert.ok(policy.eligibilityReason({...legacy,listingOfficeKey:"999"}));
+ assert.equal(policy.newCampaign(legacy,"2026-10-26T23:00:00Z",true).property.brokerage,legacy.brokerageName);
+});
 test("every new property is immediately eligible regardless of legacy limits or local hour",()=>{
  const now=new Date("2026-11-01T04:30:00.000Z");
  const legacy={...policy.DEFAULT_SETTINGS,dailyLimit:2,minimumHours:4,windowStart:9,windowEnd:20};

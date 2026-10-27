@@ -35,6 +35,7 @@ const getCachedFeaturedMLSListings = unstable_cache(
 
 const getCachedFilteredMLSListings = unstable_cache(
   async (filters: {
+    transactionType?: "sale" | "lease";
     municipality?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -117,6 +118,7 @@ const getCachedPublicListingsByIds = unstable_cache(
 export async function getPublicListings(filters?: ListingFilters): Promise<Listing[]> {
   const listings = filters
     ? await getCachedFilteredMLSListings({
+        transactionType: filters.transactionType,
         municipality: filters.city,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,

@@ -317,6 +317,7 @@ function roundNullable(value: number | null | undefined): number | null {
 }
 
 export async function getFilteredListings(filters: {
+  transactionType?: "sale" | "lease";
   municipality?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -327,16 +328,16 @@ export async function getFilteredListings(filters: {
 
   if (filters.municipality) {
     listings = await getPublicListingsForMunicipality(filters.municipality, {
-      minPrice: filters.minPrice,
+      transactionType: filters.transactionType, minPrice: filters.minPrice,
       maxPrice: filters.maxPrice
     });
   } else if (filters.minPrice != null || filters.maxPrice != null) {
     listings = await getAllPublicListings(500, {
-      minPrice: filters.minPrice,
+      transactionType: filters.transactionType, minPrice: filters.minPrice,
       maxPrice: filters.maxPrice
     });
   } else {
-    listings = await getAllPublicListings();
+    listings = await getAllPublicListings(500, { transactionType: filters.transactionType });
   }
 
   if (filters.municipality) listings = listings.filter((item) => item.municipality === filters.municipality);
@@ -412,6 +413,7 @@ async function getAllPublicListings(
   filters?: {
     minPrice?: number;
     maxPrice?: number;
+    transactionType?: "sale" | "lease";
   }
 ): Promise<MLSListingFirestoreDocument[]> {
   const firestore = getFirebaseAdminFirestore();
@@ -440,6 +442,7 @@ async function getPublicListingsForMunicipality(
   filters?: {
     minPrice?: number;
     maxPrice?: number;
+    transactionType?: "sale" | "lease";
   },
   batchSize = 500
 ): Promise<MLSListingFirestoreDocument[]> {
@@ -471,9 +474,11 @@ function buildPublicListingsQuery(
   filters?: {
     minPrice?: number;
     maxPrice?: number;
+    transactionType?: "sale" | "lease";
   }
 ): Query {
   let nextQuery = query;
+  if (filters?.transactionType) nextQuery = nextQuery.where("transactionType", "==", filters.transactionType);
 
   if (filters?.minPrice != null) {
     nextQuery = nextQuery.where("price", ">=", filters.minPrice);
