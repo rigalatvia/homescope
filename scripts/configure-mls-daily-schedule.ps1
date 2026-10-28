@@ -44,7 +44,7 @@ if ($primary.Count -ne 1) { throw 'Selected job is missing or its HTTP target di
 $duplicates = @($mlsJobs | Where-Object { $_.name -ne $JobName -and $_.state -eq 'ENABLED' })
 $config = @{
   name = $JobName; schedule = '0 4 * * *'; timeZone = 'America/Toronto'; attemptDeadline = '900s'
-  retryConfig = @{ retryCount = 30; maxRetryDuration = '21600s'; minBackoffDuration = '300s'; maxBackoffDuration = '1800s'; maxDoublings = 3 }
+  retryConfig = @{ retryCount = 5; maxRetryDuration = '21600s'; minBackoffDuration = '300s'; maxBackoffDuration = '300s'; maxDoublings = 3 }
 }
 @{
   mode = $(if ($Apply) { 'apply' } else { 'preview' })

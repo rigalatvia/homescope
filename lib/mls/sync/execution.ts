@@ -14,7 +14,9 @@ const context = new AsyncLocalStorage<{
   deadline: number;
   listings: { retrieved: number; filtered: number; created: number; changed: number; unchanged: number; markedInactive: number };
 }>();
-const LEASE_MS = 20 * 60 * 1000;
+// Writes renew this lease. A crashed worker must not block all daily retries.
+// An expired or replaced worker is fenced from committing by writeSyncDocuments.
+const LEASE_MS = 2 * 60 * 1000;
 export function remainingSyncTime() { return Math.max(0, (context.getStore()?.deadline ?? Infinity) - Date.now()); }
 export function setSyncDeadline(deadline: number) { const c = context.getStore(); if (c) c.deadline = deadline; }
 export function cachedSyncConnector(key: string, create: () => MLSFeedConnector): MLSFeedConnector {
@@ -82,6 +84,7 @@ export async function withSyncLease<T>(work: () => Promise<T>): Promise<T> {
         state.failedOperations++;
         throw error;
       } finally {
+        state.cache.clear(); state.listingCache.clear(); state.connectors.clear();
         console.info(JSON.stringify({ event: "mls_sync_finished", startedAt, finishedAt: new Date().toISOString(),
           durationMs: Date.now() - Date.parse(startedAt), executionId: state.owner, memoryBytes: process.memoryUsage(), ...syncOperationCounts() }));
       }

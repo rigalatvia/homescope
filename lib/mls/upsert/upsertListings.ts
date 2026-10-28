@@ -2,8 +2,6 @@ import type { MLSListingFirestoreDocument, NormalizedMLSListing } from "@/lib/ml
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import { campaignId, eligibilityReason, newCampaign } from "@/lib/social/policy";
-import { NEVER } from "@/lib/social/types";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { cacheListing, listingReadCache, recordReads, recordListingChanges, writeSyncDocuments } from "@/lib/mls/sync/execution";
 
@@ -72,18 +70,6 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
       updated += 1;
     } else {
       created += 1;
-      // Lightweight review draft only: no images, uploads or Meta calls in sync.
-      if (!eligibilityReason(doc)) {
-        const ref = db.collection("propertySocialPosts").doc(campaignId(doc.listingId));
-        const previous = await ref.get(); recordReads(1);
-        // Preserve publication history when a previously imported ID returns.
-        if (!previous.exists) {
-          const draft = newCampaign(doc, nowIso, true);
-          draft.listingGroup = "new";
-          draft.nextAttemptAt = NEVER;
-          writes.push({ ref, data: { ...draft } });
-        }
-      }
     }
 
     if (mlsSyncConfig.featureFlags.snapshotsEnabled) {
@@ -101,8 +87,8 @@ export async function upsertNormalizedListings(listings: NormalizedMLSListing[],
     }
   }
 
-  // A page is at most 100 listings (300 writes with snapshots and drafts), so
-  // each listing, snapshot and review draft commit in one bounded transaction.
+  // A page is at most 100 listings (200 writes with snapshots), so
+  // each listing and snapshot commit in one bounded transaction.
   if (writes.length > 400) throw new Error("MLS upsert page exceeds atomic write limit");
   await writeSyncDocuments(writes);
   for (const write of writes) if (write.ref.parent.id === "listings") {
@@ -125,9 +111,6 @@ function toFirestoreDoc(
 ): MLSListingFirestoreDocument {
   return {
     ...listing,
-    // Durable discovery outbox. The social worker consumes this independently;
-    // Meta/storage failures never run inside or fail MLS synchronization.
-    ...(!existing ? { socialDiscoveredAt: nowIso, socialDiscoveryPendingAt: nowIso } : {}),
     createdAt: existing?.createdAt || nowIso,
     updatedAt: nowIso,
     lastSeenInSourceAt: nowIso

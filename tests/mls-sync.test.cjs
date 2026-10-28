@@ -23,13 +23,17 @@ function apply(path, data, merge) {
   writes.push({ path, data: clone(data) });
   records.set(path, merge ? { ...records.get(path), ...clone(data) } : clone(data));
 }
-function collection(path, predicates = []) {
+function collection(path, predicates = [], cap = Infinity, afterId = null) {
   return { doc: id => ref(`${path}/${id}`),
-    where: (field, op, value) => collection(path, [...predicates, d => op === '==' && d[field] === value]),
+    where: (field, op, value) => collection(path, [...predicates, d => op === '==' && d[field] === value], cap, afterId),
     select() { return this; },
+    orderBy() { return this; },
+    limit(n) { return collection(path, predicates, n, afterId); },
+    startAfter(doc) { return collection(path, predicates, cap, doc.id); },
     get: async () => {
       const docs = [...records.keys()].filter(key => key.startsWith(path + '/') && key.split('/').length === path.split('/').length + 1)
-        .filter(key => predicates.every(predicate => predicate(records.get(key)))).map(snap);
+        .filter(key => predicates.every(predicate => predicate(records.get(key))))
+        .sort().filter(key => !afterId || key.split('/').at(-1) > afterId).slice(0, cap).map(snap);
       return { docs, size: docs.length, empty: !docs.length };
     }
   };
@@ -84,25 +88,18 @@ test('sync listing cache retains only one page and releases evicted documents', 
   });
 });
 const snapshotWrites = () => writes.filter(w => w.path.startsWith('listingSnapshots/'));
-test('new eligible MLS listing creates one unapproved review draft atomically; updates preserve it', async () => {
+test('MLS saves brokerage name without creating social drafts or discovery work', async () => {
   const item = normalized('review-home');
-  item.listingOfficeKey = undefined;
-  item.listingOfficeName = 'RE/MAX METROPOLIS REALTY';
+  item.brokerageName = 'RE/MAX METROPOLIS REALTY';
+  item.listingOfficeKey = undefined; item.listingOfficeName = item.brokerageName;
   item.isVisible = true; item.status = 'active'; item.permToAdvertise = true;
   item.slug = 'review-home'; item.mlsNumber = 'C12345678';
-  const { campaignId } = require('../lib/social/policy.ts');
-  const key = `propertySocialPosts/${campaignId(item.listingId)}`;
   await withSyncLease(() => upsertNormalizedListings([item], old));
-  const draft = records.get(key);
-  assert.equal(draft.listingGroup, 'new');
-  assert.equal(draft.publishApprovedAt, null);
-  assert.equal(draft.dryRun, true);
-  assert.equal(draft.listingCreatedAt, old);
-  assert.equal(draft.nextAttemptAt, '9999-12-31T00:00:00.000Z');
-  records.set(key, { ...draft, publishApprovedAt: old });
-  await withSyncLease(() => upsertNormalizedListings([{ ...item, price: item.price + 1 }], old));
-  assert.equal(records.get(key).publishApprovedAt, old);
-  assert.equal(writes.filter(w => w.path === key).length, 1);
+  assert.equal(records.get(path('review-home')).brokerageName, item.brokerageName);
+  assert.equal(records.get(path('review-home')).socialDiscoveryPendingAt, undefined);
+  assert.equal(records.get(path('review-home')).socialDiscoveredAt, undefined);
+  assert.equal(reads.filter(p => p.startsWith('propertySocialPosts/')).length, 0);
+  assert.equal(writes.filter(w => w.path.startsWith('propertySocialPosts/')).length, 0);
 });
 beforeEach(() => {
   records.clear(); writes = []; reads = []; failCommit = null; calls = [];
@@ -354,7 +351,7 @@ test('DDF emits a modified-since query, reuses OAuth and rejects malformed or un
 
 test('partial reconciliation batch failure reports committed hides and retries only the remainder', async () => {
   seed('one');
-  for (let i = 0; i < 401; i++) seed('missing' + i);
+  for (let i = 0; i < 401; i++) seed('missing' + String(i).padStart(3, '0'));
   feed = () => ({ items: [raw('one')], nextCursor: null });
   failCommit = pending => pending.some(([key]) => key === path('missing400'));
   const eventStart = events.length;
@@ -366,4 +363,44 @@ test('partial reconciliation batch failure reports committed hides and retries o
   const recovered = await runStaleCleanup();
   assert.equal(recovered.complete, true); assert.equal(recovered.stats.hidden, 1);
   assert.equal(listingWrites().length, 401);
+});
+
+
+test('daily cleanup builds manifest without rereading or updating each feed listing', async () => {
+  seed('one'); seed('removed');
+  feed = () => ({ items: [raw('one', { price: 999999 })], nextCursor: 'next' });
+  const result = await runStaleCleanup(undefined, { maxPagesPerRun: 1, reconciliationOnly: true });
+  assert.equal(result.complete, false);
+  assert.equal(reads.filter(p => p.startsWith('listings/')).length, 0);
+  assert.equal(listingWrites().length, 0);
+  assert.equal(records.get(path('removed')).isVisible, true);
+});
+
+test('crashed lease expires after two minutes and stale owner cannot write', async () => {
+  const originalNow = Date.now;
+  let now = originalNow(); Date.now = () => now;
+  try {
+    await withSyncLease(async () => {
+      assert.equal(records.get('settings/mlsSyncLease').expiresAt, now + 120000);
+      now += 120001;
+      await assert.rejects(writeSyncDocuments([{ ref: ref(path('one')), data: { isVisible: false } }]), /lease expired/);
+    });
+    records.set('settings/mlsSyncLease', { owner: 'crashed', expiresAt: now - 1 });
+    await withSyncLease(async () => { await writeSyncDocuments([{ ref: ref(path('one')), data: { isVisible: true } }]); });
+    assert.equal(records.get(path('one')).isVisible, true);
+  } finally { Date.now = originalNow; }
+});
+
+
+test('daily request stops after ten cleanup pages and resumes without repeating incremental', async () => {
+  seed('one');
+  feed = (mode, options) => ({ items: [raw('one')], nextCursor: mode === 'cleanup' && options.page < 12 ? 'next' : null });
+  const first = await runDailyMLSSync();
+  assert.equal(first.partial, true);
+  assert.equal(calls.filter(c => c.mode === 'cleanup').length, 10);
+  assert.equal(records.get('settings/mlsCleanupCursor').nextPage, 11);
+  const incrementalCalls = calls.filter(c => c.mode === 'incremental').length;
+  assert.equal((await runDailyMLSSync()).success, true);
+  assert.equal(calls.filter(c => c.mode === 'incremental').length, incrementalCalls);
+  assert.deepEqual(calls.filter(c => c.mode === 'cleanup').map(c => c.page), Array.from({length:12}, (_, i) => i + 1));
 });

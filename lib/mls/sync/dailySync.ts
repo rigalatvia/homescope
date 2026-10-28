@@ -21,18 +21,20 @@ export async function runDailyMLSSync() {
     let cleanupComplete = false;
     let failure: unknown;
     try {
-      // One invocation drains resumable batches. Partial runs return 503 so
-      // the SAME daily job can retry its saved cursor, without another cron.
-      while (!incrementalComplete && Date.now() + 5000 < deadline) {
+      // Preserve the previous incremental batch cap and runtime budget.
+      // Partial responses continue the same daily job from its checkpoint.
+      const configuredRuns = Number(process.env.MLS_SCHEDULED_INCREMENTAL_RUN_LIMIT || 20);
+      const maxRuns = Number.isFinite(configuredRuns) ? Math.max(1, Math.floor(configuredRuns)) : 20;
+      for (let run = 0; run < maxRuns && !incrementalComplete && Date.now() + 5000 < deadline; run++) {
         const result = await runIncrementalSync({ connectorKind: "ddf-treb" });
         incrementalComplete = result.complete === true;
         if (incrementalComplete) await writeCursor(STATUS, { incrementalCompletedDay: day });
         if (result.notes?.some(note => /stop requested/i.test(note))) break;
       }
-      while (incrementalComplete && !cleanupComplete && Date.now() + 5000 < deadline) {
-        const result = await runStaleCleanup("ddf-treb", { maxPagesPerRun: 1 });
+      // As before the daily rewrite, run only ONE bounded cleanup batch.
+      if (incrementalComplete && Date.now() + 5000 < deadline) {
+        const result = await runStaleCleanup("ddf-treb", { maxPagesPerRun: 10, reconciliationOnly: true });
         cleanupComplete = result.complete === true;
-        if (result.notes?.some(note => /stop requested/i.test(note))) break;
       }
     } catch (error) { failure = error; }
     const complete = incrementalComplete && cleanupComplete && !failure;

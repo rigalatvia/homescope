@@ -22,7 +22,7 @@ function Invoke-RestMethod {
     $patch = $Body | ConvertFrom-Json
     $global:schedulerFixtureJobs[0].schedule = $patch.schedule
     $global:schedulerFixtureJobs[0].timeZone = $patch.timeZone
-    if ($patch.attemptDeadline -ne '900s' -or $patch.retryConfig.maxRetryDuration -ne '21600s') { throw 'Unexpected retry configuration' }
+    if ($patch.attemptDeadline -ne '900s' -or $patch.retryConfig.maxRetryDuration -ne '21600s' -or $patch.retryConfig.retryCount -ne 5 -or $patch.retryConfig.maxBackoffDuration -ne '300s') { throw 'Unexpected retry configuration' }
     if ($patch.httpTarget) { throw 'Must preserve authentication and target' }
     return @{}
   }

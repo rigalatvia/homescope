@@ -6,7 +6,6 @@ import { MetaClient, metaConfig, reconcile, advanceFirstComment, commentRetryAt 
 import { generateCampaign, runSocialWorker } from "./worker";
 import { NEVER, PLATFORMS, type SocialCampaign, type SocialSettings, type Platform } from "./types";
 import { FieldPath } from "firebase-admin/firestore";
-import { withSyncLease } from "@/lib/mls/sync/execution";
 import type { SocialListing } from "./types";
 export async function socialOverview(before?: string) {
     const db = getFirebaseAdminFirestore(), collection = db.collection(COLLECTION);
@@ -29,7 +28,6 @@ export async function socialAction(input: Record<string, unknown>) {
         return runSocialWorker(typeof input.id === "string" ? campaignRef(input.id).id : undefined);
     const result = await withSocialLock(async (lock) => {
         if (action === "importExisting") {
-            return withSyncLease(async () => {
             const state = (await settingsRef().get()).data() || {};
             // Separate cursor from the old whole-inventory scan: previously
             // completed scans must not suppress this targeted import.
@@ -55,7 +53,6 @@ export async function socialAction(input: Record<string, unknown>) {
             // office identities. Deterministic campaign IDs prevent duplicates.
             await settingsRef().set({ brokerageNameReviewImportCursor: rows.size < 100 ? null : rows.docs.at(-1)!.id }, { merge: true });
             return { imported, complete: rows.size < 100 };
-            });
         }
         if (action === "settings") {
             const settings = await getSettings();

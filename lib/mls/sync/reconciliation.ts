@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { FieldPath } from "firebase-admin/firestore";
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { listingReadCache, recordReads, recordListingChanges, writeSyncDocuments } from "@/lib/mls/sync/execution";
 
@@ -38,18 +39,25 @@ export async function reconcileMissing(mode: string, source: string, sweep: stri
     }
   }
   if (!fetched || !seen.size) throw new Error("Empty MLS reconciliation; refusing to hide inventory.");
-  const candidates = await db.collection("listings").where("sourceSystem", "==", source).where("isVisible", "==", true)
-    .select("listingId", "isVisible", "updatedAt").get();
-  recordReads(Math.max(1, candidates.size));
-  const missing = candidates.docs.filter(doc => doc.data().isVisible && !seen.has(doc.id)
-    // A manual/incremental update after this sweep started must survive it.
-    && (!doc.data().updatedAt || doc.data().updatedAt < sweep));
-  const now = new Date().toISOString();
-  await writeSyncDocuments(missing.map(doc => ({ ref: doc.ref, data: {
-    isVisible: false, hiddenReason: "connector_not_returned", updatedAt: now
-  } })), committed => {
-    recordListingChanges({ hidden: committed.length });
-    for (const item of committed) listingReadCache()?.delete(item.ref.id);
-  });
-  return missing.length;
+  let query = db.collection("listings").where("sourceSystem", "==", source).where("isVisible", "==", true)
+    .orderBy(FieldPath.documentId()).select("listingId", "isVisible", "updatedAt").limit(400);
+  let hidden = 0;
+  while (true) {
+    const candidates = await query.get();
+    recordReads(Math.max(1, candidates.size));
+    const missing = candidates.docs.filter(doc => doc.data().isVisible && !seen.has(doc.id)
+      // A manual/incremental update after this sweep started must survive it.
+      && (!doc.data().updatedAt || doc.data().updatedAt < sweep));
+    const now = new Date().toISOString();
+    await writeSyncDocuments(missing.map(doc => ({ ref: doc.ref, data: {
+      isVisible: false, hiddenReason: "connector_not_returned", updatedAt: now
+    } })), committed => {
+      recordListingChanges({ hidden: committed.length });
+      for (const item of committed) listingReadCache()?.delete(item.ref.id);
+    });
+    hidden += missing.length;
+    if (candidates.size < 400) break;
+    query = query.startAfter(candidates.docs[candidates.docs.length - 1]);
+  }
+  return hidden;
 }

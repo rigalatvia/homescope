@@ -19,7 +19,7 @@ import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, No
 
 async function runStaleCleanupInternal(
   connectorKind?: MLSConnectorKind,
-  options?: { maxPagesPerRun?: number }
+  options?: { maxPagesPerRun?: number; reconciliationOnly?: boolean }
 ): Promise<MLSSyncResult> {
   await ensureServerSecretsLoaded();
 
@@ -130,7 +130,11 @@ async function runStaleCleanupInternal(
 
       const visibleListings = normalized.filter((listing) => listing.isVisible);
 
-      const upsert = await upsertNormalizedListings(normalized, nowIso);
+      // Daily incremental sync already applies changed records. Cleanup only needs
+      // the manifest, avoiding a second full-document read of every active record.
+      const upsert = options?.reconciliationOnly
+        ? { created: 0, updated: 0, upserted: 0, unchanged: 0, snapshotsWritten: 0, hidden: 0 }
+        : await upsertNormalizedListings(normalized, nowIso);
       stats.created += upsert.created;
       stats.updated += upsert.updated;
       stats.upserted += upsert.upserted;
@@ -199,7 +203,8 @@ function buildCleanupResult(
   complete = false
 ): MLSSyncResult {
   const finishedAt = new Date().toISOString();
-  logSyncInfo("Cleanup completed", {
+  logSyncInfo("Cleanup batch finished", {
+    complete,
     fetched: stats.fetched,
     filtered: stats.filtered,
     created: stats.created,
@@ -240,7 +245,7 @@ function buildHiddenReasonCounts(listings: NormalizedMLSListing[]): MLSSyncStats
   return counts;
 }
 
-export async function runStaleCleanup(connectorKind?: MLSConnectorKind, options?: { maxPagesPerRun?: number }): Promise<MLSSyncResult> {
+export async function runStaleCleanup(connectorKind?: MLSConnectorKind, options?: { maxPagesPerRun?: number; reconciliationOnly?: boolean }): Promise<MLSSyncResult> {
   await ensureServerSecretsLoaded();
   return withSyncLease(() => runStaleCleanupInternal(connectorKind, options));
 }
