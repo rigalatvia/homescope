@@ -47,7 +47,7 @@ export function SiteStructuredData() {
     "@type": "WebSite",
     "@id": `${siteUrl}#website`,
     name: SITE_CONFIG.name,
-    alternateName: ["HomeScopeGTA", "Home Scope GTA", "homescopegta.ca"],
+    alternateName: ["HomeScopeGTA", "Home Scope GTA"],
     url: siteUrl,
     publisher: {
       "@id": `${siteUrl}#organization`
