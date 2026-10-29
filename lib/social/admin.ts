@@ -146,8 +146,8 @@ export async function socialAction(input: Record<string, unknown>) {
         }
         else if (action === "retry") {
             const state = campaign[platform];
-            if (state.status !== "failed" || state.submittedAt || state.postId)
-                throw new Error("Only definitively failed, unpublished attempts can be retried. Reconcile uncertain outcomes.");
+            if (!["failed", "queued", "publishing"].includes(state.status) || state.submittedAt || state.postId)
+                throw new Error("Only unpublished attempts with no submitted request can be retried. Reconcile uncertain outcomes.");
             state.status = "queued";
             state.retries = 0;
             state.retryAt = null;
@@ -186,7 +186,7 @@ export async function socialAction(input: Record<string, unknown>) {
         await lock.save(campaign);
         return { id: campaign.id };
     });
-    if (action === "publishNow" && "id" in result)
-        await runSocialWorker(result.id);
+    if (["publishNow", "retry", "retryComment"].includes(action) && "id" in result)
+        await runSocialWorker(result.id, action === "publishNow" ? undefined : input.platform as Platform);
     return result;
 }

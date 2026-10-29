@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { getServerConfigValue } from "@/lib/server/secret-manager";
+import { getServerConfigValue, getServerSecretValue } from "@/lib/server/secret-manager";
 import type { Platform, SocialCampaign, Publication } from "./types";
 import { reference } from "./policy";
 export interface MetaConfig {
@@ -11,13 +11,13 @@ export interface MetaConfig {
     appSecret: string;
 }
 export class MetaError extends Error {
-    constructor(public readonly code: number, public readonly transient = false, public readonly ambiguous = false) {
-        super(ambiguous ? "Meta publication outcome is uncertain; reconciliation required." : code === 190 ? "Meta token expired or invalid. Reconnect before retrying." : `Meta request failed (code ${code}). Check permissions, media and connection health.`);
+    constructor(public readonly code: number, public readonly transient = false, public readonly ambiguous = false, public readonly subcode?: number) {
+        super(ambiguous ? "Meta publication outcome is uncertain; reconciliation required." : code === 190 ? `Meta rejected the access token (190${subcode ? "/" + subcode : ""}). Check token validity and authorization in Meta.` : `Meta request failed (code ${code}). Check permissions, media and connection health.`);
     }
 }
 export async function metaConfig(): Promise<MetaConfig> {
     const keys = ["META_GRAPH_API_VERSION", "META_FACEBOOK_PAGE_ID", "META_INSTAGRAM_ACCOUNT_ID", "META_PAGE_ACCESS_TOKEN", "META_APP_ID", "META_APP_SECRET"];
-    const values = await Promise.all(keys.map(key => getServerConfigValue(key)));
+    const values = await Promise.all(keys.map(key => key === "META_PAGE_ACCESS_TOKEN" ? getServerSecretValue(key) : getServerConfigValue(key)));
     if (values.some(value => !value))
         throw new Error("Configure all Meta server-side credentials and an explicitly supported API version.");
     if (!/^v\d+\.0$/.test(values[0]!))
@@ -38,6 +38,7 @@ export class MetaClient {
             let result: {
                 error?: {
                     code?: number;
+                    error_subcode?: number;
                     is_transient?: boolean;
                 };
             };
@@ -50,7 +51,7 @@ export class MetaClient {
             if (!response.ok || result.error) {
                 const code = result.error?.code || response.status;
                 const transient = response.status === 429 || response.status >= 500 || [1, 2, 4, 17, 32, 613].includes(code) || result.error?.is_transient === true;
-                throw new MetaError(code, transient, publication && response.status >= 500);
+                throw new MetaError(code, transient, publication && response.status >= 500, result.error?.error_subcode);
             }
             return result as T;
         }

@@ -1,12 +1,12 @@
 import { getFirebaseAdminFirestore } from "@/lib/firebase/admin";
 import { getServerConfigValue } from "@/lib/server/secret-manager";
 import { eligibilityReason, contentHash, stopCampaign, newCampaign } from "./policy";
-import { getSettings, getListing, withSocialLock, discover, COLLECTION, settingsRef, type WorkerLock } from "./store";
+import { getSettings, getListing, withSocialLock, COLLECTION, settingsRef, type WorkerLock } from "./store";
 import { renderCarousel } from "./render";
 import { selectPhotos } from "./images";
 import { storeCarousel } from "./storage";
 import { advancePlatform, commentRetryAt, MetaClient, metaConfig } from "./meta";
-import { NEVER, PLATFORMS, type SocialCampaign, type SocialSettings } from "./types";
+import { NEVER, PLATFORMS, type SocialCampaign, type SocialSettings, type Platform } from "./types";
 export async function validatePropertyUrl(url: string) {
     const parsed = new URL(url);
     if (parsed.origin !== "https://homescopegta.ca" || !parsed.pathname.startsWith("/listings/"))
@@ -61,7 +61,7 @@ export async function generateCampaign(campaign: SocialCampaign, lock: WorkerLoc
     if (campaign.dryRun)
         await settingsRef().set({ dryRunPassedAt: new Date().toISOString() }, { merge: true });
 }
-async function processCampaign(campaign: SocialCampaign, settings: SocialSettings, lock: WorkerLock) {
+async function processCampaign(campaign: SocialCampaign, settings: SocialSettings, lock: WorkerLock, targetPlatform?: Platform) {
     if (["cancelled", "skipped"].includes(campaign.state))
         return;
     // Every platform publication requires an explicit approval on this campaign.
@@ -104,7 +104,7 @@ async function processCampaign(campaign: SocialCampaign, settings: SocialSetting
     }
     const client = new MetaClient(await metaConfig());
     campaign.state = "publishing";
-    for (const platform of PLATFORMS) {
+    for (const platform of targetPlatform ? [targetPlatform] : PLATFORMS) {
         await lock.check();
         try {
             await advancePlatform(client, campaign, platform, () => lock.save(campaign), async () => {
@@ -132,10 +132,10 @@ async function processCampaign(campaign: SocialCampaign, settings: SocialSetting
     campaign.nextAttemptAt = campaign.state === "published" ? (commentRetryAt(campaign) || NEVER) : campaign.state === "failed" ? ([retry, commentRetryAt(campaign)].filter((v): v is string => !!v).sort()[0] || NEVER) : (retry || new Date().toISOString());
     await lock.save(campaign);
 }
-export async function runSocialWorker(targetId?: string) {
+export async function runSocialWorker(targetId?: string, targetPlatform?: Platform) {
     return withSocialLock(async (lock) => {
         const settings = await getSettings();
-        // Sync creates review drafts directly. Worker ticks only advance work;
+        // Admin import creates review drafts. Worker ticks only advance work;
         // they never discover listings for automatic publication.
         const discovery = null;
         const snapshot = targetId ? await getFirebaseAdminFirestore().collection(COLLECTION).doc(targetId).get() : null;
@@ -153,7 +153,7 @@ export async function runSocialWorker(targetId?: string) {
             const deadline = Date.now() + 180000;
             for (let step = 0; step < 20; step++) {
                 const before = JSON.stringify(campaign);
-                await processCampaign(campaign, settings, lock);
+                await processCampaign(campaign, settings, lock, targetPlatform);
                 if (campaign.dryRun || Date.now() >= deadline || Date.parse(campaign.nextAttemptAt) > Date.now() || JSON.stringify(campaign) === before) break;
             }
         }
