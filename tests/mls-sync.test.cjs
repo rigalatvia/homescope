@@ -6,8 +6,11 @@ const Module = require('node:module');
 const records = new Map();
 const events = [];
 const originalInfo = console.info;
+const originalMemoryUsage = process.memoryUsage;
+let fixtureRss = 200 * 1024 * 1024;
+process.memoryUsage = () => ({ ...originalMemoryUsage(), rss: fixtureRss });
 console.info = (message, detail) => events.push({ message, detail });
-after(() => { console.info = originalInfo; Module._load = originalLoad; });
+after(() => { console.info = originalInfo; Module._load = originalLoad; process.memoryUsage = originalMemoryUsage; });
 let writes = [], reads = [], failCommit = null, feed, calls = [];
 const clone = value => value === undefined ? undefined : structuredClone(value);
 function ref(path) {
@@ -102,6 +105,7 @@ test('MLS saves brokerage name without creating social drafts or discovery work'
   assert.equal(writes.filter(w => w.path.startsWith('propertySocialPosts/')).length, 0);
 });
 beforeEach(() => {
+  fixtureRss = 200 * 1024 * 1024;
   records.clear(); writes = []; reads = []; failCommit = null; calls = [];
   mlsSyncConfig.incrementalMaxPagesPerRun = 10; mlsSyncConfig.fullSyncMaxPagesPerRun = 1;
   feed = () => ({ items: [], nextCursor: null });
@@ -392,14 +396,47 @@ test('crashed lease expires after two minutes and stale owner cannot write', asy
 });
 
 
-test('daily request stops after ten cleanup pages and resumes without repeating incremental', async () => {
+test('daily request continues cleanup beyond ten pages while capacity remains', async () => {
   seed('one');
   feed = (mode, options) => ({ items: [raw('one')], nextCursor: mode === 'cleanup' && options.page < 12 ? 'next' : null });
   const first = await runDailyMLSSync();
-  assert.equal(first.partial, true);
-  assert.equal(calls.filter(c => c.mode === 'cleanup').length, 10);
-  assert.equal(records.get('settings/mlsCleanupCursor').nextPage, 11);
+  assert.equal(first.success, true);
+  assert.equal(calls.filter(c => c.mode === 'cleanup').length, 12);
   const incrementalCalls = calls.filter(c => c.mode === 'incremental').length;
+  assert.equal((await runDailyMLSSync()).success, true);
+  assert.equal(calls.filter(c => c.mode === 'incremental').length, incrementalCalls);
+  assert.deepEqual(calls.filter(c => c.mode === 'cleanup').map(c => c.page), Array.from({length:12}, (_, i) => i + 1));
+});
+
+test('memory pressure yields after a committed page and retry resumes without losing listings', async () => {
+  feed = (_mode, options) => {
+    if (options.page === 1) fixtureRss = 420 * 1024 * 1024;
+    return { items: [raw('page' + options.page)], nextCursor: options.page < 2 ? 'next' : null };
+  };
+  const first = await runDailyMLSSync();
+  assert.equal(first.partial, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].pageSize, 50);
+  assert.equal(records.get('settings/mlsIncrementalCursor').nextPage, 2);
+  assert.ok(records.has(path('page1')));
+  assert.equal(records.get('settings/mlsSyncLease').expiresAt, 0);
+  fixtureRss = 200 * 1024 * 1024;
+  feed = () => ({ items: [raw('page2')], nextCursor: null });
+  assert.equal((await runDailyMLSSync()).success, true);
+  assert.equal(calls[1].page, 2);
+  assert.ok(records.has(path('page2')));
+});
+
+test('cleanup memory yield retains manifest and resumes without rerunning incremental', async () => {
+  seed('one');
+  feed = (mode, options) => {
+    if (mode === 'cleanup' && options.page === 3) fixtureRss = 420 * 1024 * 1024;
+    return { items: [raw('one')], nextCursor: mode === 'cleanup' && options.page < 12 ? 'next' : null };
+  };
+  assert.equal((await runDailyMLSSync()).partial, true);
+  assert.equal(records.get('settings/mlsCleanupCursor').nextPage, 4);
+  const incrementalCalls = calls.filter(c => c.mode === 'incremental').length;
+  fixtureRss = 200 * 1024 * 1024;
   assert.equal((await runDailyMLSSync()).success, true);
   assert.equal(calls.filter(c => c.mode === 'incremental').length, incrementalCalls);
   assert.deepEqual(calls.filter(c => c.mode === 'cleanup').map(c => c.page), Array.from({length:12}, (_, i) => i + 1));

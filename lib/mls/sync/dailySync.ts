@@ -20,6 +20,7 @@ export async function runDailyMLSSync() {
     let incrementalComplete = status.incrementalCompletedDay === day;
     let cleanupComplete = false;
     let failure: unknown;
+    let paused = false;
     try {
       // Preserve the previous incremental batch cap and runtime budget.
       // Partial responses continue the same daily job from its checkpoint.
@@ -29,12 +30,16 @@ export async function runDailyMLSSync() {
         const result = await runIncrementalSync({ connectorKind: "ddf-treb" });
         incrementalComplete = result.complete === true;
         if (incrementalComplete) await writeCursor(STATUS, { incrementalCompletedDay: day });
-        if (result.notes?.some(note => /stop requested/i.test(note))) break;
+        paused = !!result.notes?.some(note => /stop requested|Memory budget|Runtime budget/i.test(note));
+        if (paused) break;
       }
-      // As before the daily rewrite, run only ONE bounded cleanup batch.
-      if (incrementalComplete && Date.now() + 5000 < deadline) {
+      // Continue bounded pages while this request has capacity. Stopping after
+      // ten pages stranded large sweeps when Scheduler exhausted its retries.
+      while (incrementalComplete && !cleanupComplete && !paused && Date.now() + 5000 < deadline) {
         const result = await runStaleCleanup("ddf-treb", { maxPagesPerRun: 10, reconciliationOnly: true });
         cleanupComplete = result.complete === true;
+        paused = !!result.notes?.some(note => /stop requested|Memory budget|Runtime budget/i.test(note));
+        if (!cleanupComplete && result.stats.fetched === 0) break;
       }
     } catch (error) { failure = error; }
     const complete = incrementalComplete && cleanupComplete && !failure;

@@ -1,5 +1,5 @@
 import { saveIncrementalCursor } from "@/lib/mls/sync/incrementalSyncCursor";
-import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime } from "@/lib/mls/sync/execution";
+import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime, syncMemoryPressure, releaseSyncPage } from "@/lib/mls/sync/execution";
 import type { MLSConnectorKind, MLSHiddenReason, MLSSyncResult, MLSSyncStats, NormalizedMLSListing } from "@/lib/mls/types";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
@@ -95,6 +95,11 @@ async function runIncrementalSyncInternal(params?: {
     const stopPage = startPage + maxPages - 1;
 
     while (page <= stopPage) {
+      releaseSyncPage();
+      if (syncMemoryPressure()) {
+        notes.push("Memory budget reached; saved cursor will resume on retry.");
+        break;
+      }
       if (remainingSyncTime() < 5000) {
         notes.push("Runtime budget reached; saved cursor will resume on retry.");
         break;
@@ -108,7 +113,7 @@ async function runIncrementalSyncInternal(params?: {
 
       const rawPage = await connector.fetchUpdatedListingsPage(since, {
         page,
-        pageSize: mlsSyncConfig.pageSize,
+        pageSize: Math.min(50, mlsSyncConfig.pageSize),
         cursor: nextCursor
       });
 

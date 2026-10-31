@@ -1,6 +1,6 @@
 import { saveCleanupCursor } from "@/lib/mls/sync/cleanupCursor";
 import { recordReconciliationPage, reconcileMissing, hasReconciliationManifest, IncompleteReconciliationError } from "@/lib/mls/sync/reconciliation";
-import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime } from "@/lib/mls/sync/execution";
+import { withSyncLease, recordRetrieved, recordFiltered, remainingSyncTime, syncMemoryPressure, releaseSyncPage } from "@/lib/mls/sync/execution";
 import { mlsSyncConfig } from "@/lib/mls/config";
 import { filterRawListingsByTargetPostalAreas } from "@/lib/mls/filter/targetPostalAreas";
 import { normalizeListing } from "@/lib/mls/normalize/normalizeListing";
@@ -87,6 +87,11 @@ async function runStaleCleanupInternal(
     const stopPage = startPage + maxPages - 1;
 
     while (page <= stopPage) {
+      releaseSyncPage();
+      if (syncMemoryPressure()) {
+        notes.push("Memory budget reached; saved cursor will resume on retry.");
+        break;
+      }
       if (remainingSyncTime() < 5000) {
         notes.push("Runtime budget reached; saved cursor will resume on retry.");
         break;
@@ -100,7 +105,7 @@ async function runStaleCleanupInternal(
 
       const activePage = await connector.fetchActiveListingsPage({
         page,
-        pageSize: mlsSyncConfig.pageSize,
+        pageSize: Math.min(50, mlsSyncConfig.pageSize),
         cursor: nextCursor
       });
 

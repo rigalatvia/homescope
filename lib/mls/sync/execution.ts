@@ -19,6 +19,16 @@ const context = new AsyncLocalStorage<{
 const LEASE_MS = 2 * 60 * 1000;
 export function remainingSyncTime() { return Math.max(0, (context.getStore()?.deadline ?? Infinity) - Date.now()); }
 export function setSyncDeadline(deadline: number) { const c = context.getStore(); if (c) c.deadline = deadline; }
+// Leave headroom for the next feed page and concurrent website requests in the
+// existing 512 MiB instance. Yield at a persisted page boundary, never mid-write.
+export function syncMemoryPressure(): boolean {
+  const rss = process.memoryUsage().rss;
+  const limit = 400 * 1024 * 1024;
+  if (rss < limit) return false;
+  console.info(JSON.stringify({ event: "mls_sync_memory_yield", rss, limit }));
+  return true;
+}
+export function releaseSyncPage() { context.getStore()?.listingCache.clear(); }
 export function cachedSyncConnector(key: string, create: () => MLSFeedConnector): MLSFeedConnector {
   const cache = context.getStore()?.connectors;
   if (!cache) return create();
